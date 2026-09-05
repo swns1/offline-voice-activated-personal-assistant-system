@@ -42,3 +42,32 @@ def match_app(target: str, registry: Registry) -> MatchResult | None:
 
     matched_name, score, _ = best
     return MatchResult(entry=name_to_entry[matched_name], score=score)
+
+
+def match_candidates(target: str, registry: Registry, limit: int = 3) -> list[MatchResult]:
+    """Like match_app, but returns up to `limit` candidates above the
+    fuzzy cutoff instead of just the best one -- lets a caller detect
+    genuine ambiguity (multiple close-scoring apps) instead of silently
+    picking whichever scored highest."""
+    normalized = target.strip().lower()
+    if not normalized:
+        return []
+
+    name_to_entry = {name: entry for entry in registry.apps for name in entry.names}
+    if not name_to_entry:
+        return []
+
+    results = process.extract(
+        normalized, name_to_entry.keys(), scorer=fuzz.WRatio,
+        processor=utils.default_process, score_cutoff=FUZZY_SCORE_CUTOFF, limit=limit,
+    )
+
+    candidates: list[MatchResult] = []
+    seen_ids: set[str] = set()
+    for matched_name, score, _ in results:
+        entry = name_to_entry[matched_name]
+        if entry.id in seen_ids:
+            continue  # a second alias of an app already in the list
+        seen_ids.add(entry.id)
+        candidates.append(MatchResult(entry=entry, score=score))
+    return candidates

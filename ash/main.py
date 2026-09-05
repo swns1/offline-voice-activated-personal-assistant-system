@@ -51,7 +51,20 @@ def main() -> None:
             text = stt.transcribe(utterance)
             print(f"  heard: {text!r}")
             log.info("Transcript: %r", text)
-            dispatch(text, registry, tts, log, config)
+            result = dispatch(text, registry, tts, log, config)
+
+            while not result.done:
+                tts.say(result.question)
+                followup_audio = listener.listen_for_followup(
+                    timeout_seconds=6.0, on_state_change=on_state_change
+                )
+                if followup_audio is None:
+                    tts.say("Never mind.")
+                    break
+                answer = stt.transcribe(followup_audio)
+                print(f"  heard (follow-up): {answer!r}")
+                log.info("Follow-up transcript: %r", answer)
+                result = result.resume(answer)
     except KeyboardInterrupt:
         pass
     finally:

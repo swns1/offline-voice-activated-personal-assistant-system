@@ -10,6 +10,7 @@ from ash.actions.spotify import (
     handle_spotify_resume,
     handle_spotify_skip,
 )
+from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.grammar import parse
@@ -27,11 +28,12 @@ _HANDLERS = {
 }
 
 
-def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
+def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
     command = parse(text)
     handler = _HANDLERS.get(command.intent)
     if handler is None:
         log.info("Unrecognized command: %r", text)
         tts.say("I didn't catch that.")
-        return
-    handler(command.target, registry, tts, log, config)
+        return HandlerResult()
+    result = handler(command.target, registry, tts, log, config)
+    return result if result is not None else HandlerResult()

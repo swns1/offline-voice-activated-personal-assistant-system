@@ -28,6 +28,27 @@ Speak the configured wake word (`hey_jarvis` by default — see
 `config/config.yaml`), then a command such as "open notepad" or "search
 for the weather". Ctrl+C to quit.
 
+If a command is ambiguous (e.g. two similarly-named apps, or more than
+one browser profile with none pinned in config), Ash asks a clarifying
+follow-up question — no wake word needed for your answer, just speak it
+within a few seconds.
+
+## Spotify
+
+Playback control ("spotify play X", "pause", "skip", "what's playing")
+needs a Spotify Developer Dashboard app:
+
+1. Create an app at https://developer.spotify.com/dashboard, add a
+   redirect URI (matching `spotify.redirect_uri` in `config/config.yaml`,
+   default `http://127.0.0.1:8888/callback`).
+2. Set `spotify.enabled: true` and `spotify.client_id` in
+   `config/config.yaml`.
+3. Export the app's client secret as an environment variable:
+   `setx SPOTIPY_CLIENT_SECRET "..."` (new terminal needed after).
+
+The first Spotify command opens a browser to authorize once; playback
+control requires a Spotify Premium account.
+
 ## Configuration
 
 - `config/config.yaml` — wake word, audio, browser, and hotkey settings.
