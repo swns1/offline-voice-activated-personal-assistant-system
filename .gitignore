@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+config/registry.auto.yaml
+models/
+*.ppn
+.env

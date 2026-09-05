@@ -1,0 +1,37 @@
+# Phase 0-1: launch + TTS smoke test
+pyttsx3
+pywin32
+sounddevice
+numpy
+
+# Phase 2: speech-to-text
+faster-whisper
+
+# Phase 3-4: config/registry + fuzzy matching
+pydantic
+PyYAML
+rapidfuzz
+
+# Phase 5: wake word (fully open-source, no account/API key)
+openwakeword
+
+# Phase 6-7: Steam/app discovery
+vdf
+
+# Phase 8: nothing extra (stdlib json + pywin32 already present)
+
+# Phase 9: media/volume
+pycaw
+
+# Phase 9 (v1.1, optional): Spotify Web API
+# spotipy
+
+# Phase 10: tray icon
+pystray
+Pillow
+
+# Phase 2 (recording cutoff)
+webrtcvad-wheels
+
+# Dev/test
+pytest

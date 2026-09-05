@@ -1,0 +1,21 @@
+wake_word:
+  engine: openwakeword
+  # Bundled pretrained openWakeWord model name, fully offline/free, no
+  # account needed. A real "Hey Ash" phrase would need local training
+  # (openWakeWord's synthetic-data pipeline) -- see README for notes.
+  keyword: hey_jarvis
+  threshold: 0.5
+
+audio:
+  input_device: null
+  silence_ms: 900
+  max_record_seconds: 8.0
+
+browser:
+  default: chrome
+  profile_directory: null   # set in Phase 8 once a profile is pinned
+
+hotkey:
+  toggle_mute: "ctrl+alt+m"
+
+autostart: false

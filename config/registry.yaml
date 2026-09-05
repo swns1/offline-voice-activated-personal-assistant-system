@@ -1,0 +1,31 @@
+# Hand-authored registry entries: launcher-gated apps, search, and other
+# special cases. Plain installed apps get auto-populated into
+# registry.auto.yaml by the Start Menu scanner (Phase 6) instead of being
+# hand-written here.
+
+apps:
+  - id: notepad
+    names: ["notepad", "note pad"]
+    launch:
+      type: exe
+      target: "%WINDIR%\\System32\\notepad.exe"
+    source: manual
+
+  - id: steam_client
+    names: ["steam"]
+    launch:
+      type: uri
+      protocol: steam
+      uri_template: "steam://open/main"
+    source: manual
+    # A specific game entry looks like:
+    #   launch: { type: uri, protocol: steam, uri_template: "steam://rungameid/{appid}", appid: "1245620" }
+    # Phase 7's steam_scan.py auto-fills appid for installed games.
+
+intents:
+  search:
+    verbs: ["search", "search for", "look up", "what is", "what's", "who is", "who's", "google"]
+    launch:
+      type: browser_search
+      engine_url: "https://www.google.com/search?q={query}"
+      browser: default   # becomes "chrome"/"edge" + profile_directory once Phase 8 pins a profile
