@@ -11,12 +11,14 @@ from ash.audio.tts import TtsWorker
 from ash.audio.wake_word import WakeWordDetector
 from ash.config import load_config
 from ash.registry.loader import load_registry
+from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.logging_setup import setup_logging
 
 
 def main() -> None:
     log = setup_logging()
     config = load_config()
+    check_wake_word_models(config.wake_word.keyword)
 
     tts = TtsWorker()
     tts.start()
