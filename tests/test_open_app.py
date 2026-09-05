@@ -94,3 +94,18 @@ def test_ambiguous_follow_up_unresolved_says_never_mind(monkeypatch):
     assert final == HandlerResult()
     assert launched == []
     assert tts.said == ["Never mind."]
+
+
+def test_no_match_with_ollama_enabled_falls_back_to_converse(monkeypatch):
+    calls = []
+    monkeypatch.setattr(open_app, "handle_converse",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+    tts = FakeTts()
+
+    result = open_app.handle_open("what is the capital of france", _registry(), tts, log, config)
+
+    assert result == HandlerResult()
+    assert calls == ["what is the capital of france"]
+    assert tts.said == []  # handle_open itself says nothing -- the fallback owns the reply

@@ -39,11 +39,24 @@ class SpotifyConfig(BaseModel):
     redirect_uri: str = "http://127.0.0.1:8888/callback"
 
 
+class OllamaConfig(BaseModel):
+    enabled: bool = False
+    host: str = "http://localhost:11434"
+    model: str = "llama3.2"
+    system_prompt: str = (
+        "You are Ash, a local voice assistant running entirely offline on "
+        "the user's PC. Keep answers brief (1-3 sentences) since they will "
+        "be read aloud by text-to-speech. Do not use markdown, bullet "
+        "points, or any formatting -- plain spoken sentences only."
+    )
+
+
 class Config(BaseModel):
     wake_word: WakeWordConfig = WakeWordConfig()
     audio: AudioConfig = AudioConfig()
     browser: BrowserConfig = BrowserConfig()
     spotify: SpotifyConfig = SpotifyConfig()
+    ollama: OllamaConfig = OllamaConfig()
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:

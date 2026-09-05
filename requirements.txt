@@ -26,6 +26,11 @@ pycaw
 # Phase 9 (v1.1, optional): Spotify Web API
 spotipy
 
+# Local AI conversational fallback (Ollama, a separate local install --
+# see README). requests is already pulled in transitively by spotipy,
+# listed explicitly here since converse.py imports it directly.
+requests
+
 # Phase 10: tray icon
 pystray
 Pillow

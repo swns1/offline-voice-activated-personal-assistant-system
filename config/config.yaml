@@ -27,3 +27,16 @@ spotify:
   # SPOTIPY_CLIENT_SECRET environment variable instead.
   client_id: null
   redirect_uri: "http://127.0.0.1:8888/callback"
+
+ollama:
+  enabled: false
+  # Ollama itself is a separate local install (https://ollama.com), not
+  # a pip package -- see README for setup. Ash falls back to asking this
+  # model anything that isn't a known command and doesn't match an app.
+  host: "http://localhost:11434"
+  model: "llama3.2"
+  system_prompt: >
+    You are Ash, a local voice assistant running entirely offline on the
+    user's PC. Keep answers brief (1-3 sentences) since they will be read
+    aloud by text-to-speech. Do not use markdown, bullet points, or any
+    formatting -- plain spoken sentences only.

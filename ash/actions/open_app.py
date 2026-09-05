@@ -1,5 +1,6 @@
 import logging
 
+from ash.actions.converse import handle_converse
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -20,6 +21,8 @@ def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Lo
     result = match_app(target, registry)
     if result is None:
         log.info("No match for open target: %r", target)
+        if config.ollama.enabled:
+            return handle_converse(target, registry, tts, log, config)
         tts.say(f"I'm not sure what you mean by {target}.")
         return HandlerResult()
 
