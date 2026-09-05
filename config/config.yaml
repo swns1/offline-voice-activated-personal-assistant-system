@@ -19,3 +19,11 @@ hotkey:
   toggle_mute: "ctrl+alt+m"
 
 autostart: false
+
+spotify:
+  enabled: false
+  # From a Spotify Developer Dashboard app you create yourself -- see
+  # README for setup. client_secret is NOT set here: export it as the
+  # SPOTIPY_CLIENT_SECRET environment variable instead.
+  client_id: null
+  redirect_uri: "http://127.0.0.1:8888/callback"

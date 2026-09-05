@@ -24,7 +24,7 @@ vdf
 pycaw
 
 # Phase 9 (v1.1, optional): Spotify Web API
-# spotipy
+spotipy
 
 # Phase 10: tray icon
 pystray

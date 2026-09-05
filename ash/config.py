@@ -30,10 +30,20 @@ class BrowserConfig(BaseModel):
     profile_directory: str | None = None
 
 
+class SpotifyConfig(BaseModel):
+    enabled: bool = False
+    # Not secret in the same sense as client_secret (which comes from the
+    # SPOTIPY_CLIENT_SECRET env var instead, see ash/actions/spotify.py) --
+    # a client_id is meant to be paired with a registered redirect_uri.
+    client_id: str | None = None
+    redirect_uri: str = "http://127.0.0.1:8888/callback"
+
+
 class Config(BaseModel):
     wake_word: WakeWordConfig = WakeWordConfig()
     audio: AudioConfig = AudioConfig()
     browser: BrowserConfig = BrowserConfig()
+    spotify: SpotifyConfig = SpotifyConfig()
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:

@@ -8,18 +8,46 @@ import re
 
 from ash.nlu.intents import ParsedCommand
 
-# Order matters: groups are tried top-to-bottom, first match wins.
+# Order matters: groups are tried top-to-bottom, first match wins. Spotify
+# playback must come before "open" -- "open"'s own verb list already
+# includes bare "play" (so "play elden ring" launches a game), so Spotify
+# phrases need an explicit disambiguator ("spotify play X" / "play on
+# spotify X") rather than reusing bare "play", which would either collide
+# with or have to steal the existing game-launch phrasing.
 _VERB_GROUPS: list[tuple[str, list[str]]] = [
     ("search", ["search for", "search", "look up", "what is", "what's",
                 "who is", "who's", "google"]),
+    ("spotify_play", ["play something on spotify", "play on spotify", "spotify play"]),
     ("open", ["open", "launch", "start", "run", "play"]),
 ]
+
+# Target-less commands: the whole normalized utterance is the trigger, not
+# a verb prefix with something after it.
+_BARE_PHRASES: dict[str, str] = {
+    "pause": "spotify_pause",
+    "pause spotify": "spotify_pause",
+    "resume": "spotify_resume",
+    "resume spotify": "spotify_resume",
+    "unpause": "spotify_resume",
+    "skip": "spotify_skip",
+    "skip song": "spotify_skip",
+    "next song": "spotify_skip",
+    "next track": "spotify_skip",
+    "previous song": "spotify_previous",
+    "previous track": "spotify_previous",
+    "what's playing": "spotify_now_playing",
+    "whats playing": "spotify_now_playing",
+}
 
 
 def parse(text: str) -> ParsedCommand:
     normalized = _normalize(text)
     if not normalized:
         return ParsedCommand(intent="unknown", target="")
+
+    bare_intent = _BARE_PHRASES.get(normalized)
+    if bare_intent:
+        return ParsedCommand(intent=bare_intent, target="")
 
     for intent, phrases in _VERB_GROUPS:
         for phrase in sorted(phrases, key=len, reverse=True):
