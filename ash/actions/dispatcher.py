@@ -11,6 +11,7 @@ from ash.actions.spotify import (
     handle_spotify_skip,
 )
 from ash.actions.results import HandlerResult
+from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.volume import (
     handle_mute,
     handle_unmute,
@@ -37,6 +38,9 @@ _HANDLERS = {
     "volume_set": handle_volume_set,
     "mute": handle_mute,
     "unmute": handle_unmute,
+    "lock": handle_lock,
+    "sleep": handle_sleep,
+    "shutdown": handle_shutdown,
 }
 
 
