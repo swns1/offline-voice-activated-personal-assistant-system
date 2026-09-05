@@ -11,6 +11,13 @@ from ash.actions.spotify import (
     handle_spotify_skip,
 )
 from ash.actions.results import HandlerResult
+from ash.actions.volume import (
+    handle_mute,
+    handle_unmute,
+    handle_volume_down,
+    handle_volume_set,
+    handle_volume_up,
+)
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.grammar import parse
@@ -25,6 +32,11 @@ _HANDLERS = {
     "spotify_skip": handle_spotify_skip,
     "spotify_previous": handle_spotify_previous,
     "spotify_now_playing": handle_spotify_now_playing,
+    "volume_up": handle_volume_up,
+    "volume_down": handle_volume_down,
+    "volume_set": handle_volume_set,
+    "mute": handle_mute,
+    "unmute": handle_unmute,
 }
 
 

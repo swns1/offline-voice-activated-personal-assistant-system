@@ -18,6 +18,10 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
     ("search", ["search for", "search", "look up", "what is", "what's",
                 "who is", "who's", "google"]),
     ("spotify_play", ["play something on spotify", "play on spotify", "spotify play"]),
+    ("reminder_set", ["remind me to", "remind me in", "remind me"]),
+    ("timer_set", ["set a timer for", "set timer for", "start a timer for", "timer for",
+                   "set an alarm for", "set alarm for", "start an alarm for"]),
+    ("volume_set", ["set the volume to", "set volume to", "volume to"]),
     ("open", ["open", "launch", "start", "run", "play"]),
 ]
 
@@ -37,6 +41,36 @@ _BARE_PHRASES: dict[str, str] = {
     "previous track": "spotify_previous",
     "what's playing": "spotify_now_playing",
     "whats playing": "spotify_now_playing",
+
+    "mute": "mute",
+    "mute the volume": "mute",
+    "unmute": "unmute",
+    "unmute the volume": "unmute",
+    "volume up": "volume_up",
+    "turn the volume up": "volume_up",
+    "turn up the volume": "volume_up",
+    "volume down": "volume_down",
+    "turn the volume down": "volume_down",
+    "turn down the volume": "volume_down",
+
+    "lock my computer": "lock",
+    "lock the computer": "lock",
+    "lock my pc": "lock",
+    "lock computer": "lock",
+    "go to sleep": "sleep",
+    "put the computer to sleep": "sleep",
+    "shut down": "shutdown",
+    "shut down the computer": "shutdown",
+    "shutdown": "shutdown",
+    "turn off the computer": "shutdown",
+
+    "cancel my timer": "timer_cancel",
+    "cancel my timers": "timer_cancel",
+    "cancel the timer": "timer_cancel",
+    "stop my timer": "timer_cancel",
+    "list my timers": "timer_list",
+    "what timers do i have": "timer_list",
+    "how much time is left": "timer_list",
 }
 
 
