@@ -5,3 +5,4 @@ config/registry.auto.yaml
 models/
 *.ppn
 .env
+debug.log
