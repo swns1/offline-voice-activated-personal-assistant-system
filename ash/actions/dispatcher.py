@@ -12,6 +12,12 @@ from ash.actions.spotify import (
 )
 from ash.actions.results import HandlerResult
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
+from ash.actions.timers import (
+    handle_reminder_set,
+    handle_timer_cancel,
+    handle_timer_list,
+    handle_timer_set,
+)
 from ash.actions.volume import (
     handle_mute,
     handle_unmute,
@@ -41,6 +47,10 @@ _HANDLERS = {
     "lock": handle_lock,
     "sleep": handle_sleep,
     "shutdown": handle_shutdown,
+    "timer_set": handle_timer_set,
+    "reminder_set": handle_reminder_set,
+    "timer_cancel": handle_timer_cancel,
+    "timer_list": handle_timer_list,
 }
 
 
