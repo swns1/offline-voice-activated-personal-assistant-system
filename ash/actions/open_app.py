@@ -1,6 +1,7 @@
 import logging
 
 from ash.audio.tts import TtsWorker
+from ash.config import Config
 from ash.launchers.exe_launcher import ExeLauncher
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.matcher import match_app
@@ -9,7 +10,7 @@ from ash.registry.schema import Registry
 _LAUNCHERS = [ExeLauncher(), UriLauncher()]
 
 
-def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger) -> None:
+def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     result = match_app(target, registry)
     if result is None:
         log.info("No match for open target: %r", target)

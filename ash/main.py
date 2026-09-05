@@ -51,7 +51,7 @@ def main() -> None:
             text = stt.transcribe(utterance)
             print(f"  heard: {text!r}")
             log.info("Transcript: %r", text)
-            dispatch(text, registry, tts, log)
+            dispatch(text, registry, tts, log, config)
     except KeyboardInterrupt:
         pass
     finally:

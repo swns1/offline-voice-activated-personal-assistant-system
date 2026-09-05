@@ -22,9 +22,18 @@ class AudioConfig(BaseModel):
     max_record_seconds: float = 8.0
 
 
+class BrowserConfig(BaseModel):
+    default: str = "chrome"
+    # Spoken/display profile name (e.g. "Work"), resolved to the browser's
+    # internal profile folder key at launch time -- see
+    # ash/launchers/browser_profiles.py.
+    profile_directory: str | None = None
+
+
 class Config(BaseModel):
     wake_word: WakeWordConfig = WakeWordConfig()
     audio: AudioConfig = AudioConfig()
+    browser: BrowserConfig = BrowserConfig()
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:

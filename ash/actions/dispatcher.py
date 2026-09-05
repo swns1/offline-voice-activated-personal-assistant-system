@@ -3,6 +3,7 @@ import logging
 from ash.actions.open_app import handle_open
 from ash.actions.search import handle_search
 from ash.audio.tts import TtsWorker
+from ash.config import Config
 from ash.nlu.grammar import parse
 from ash.registry.schema import Registry
 
@@ -12,11 +13,11 @@ _HANDLERS = {
 }
 
 
-def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger) -> None:
+def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     command = parse(text)
     handler = _HANDLERS.get(command.intent)
     if handler is None:
         log.info("Unrecognized command: %r", text)
         tts.say("I didn't catch that.")
         return
-    handler(command.target, registry, tts, log)
+    handler(command.target, registry, tts, log, config)
