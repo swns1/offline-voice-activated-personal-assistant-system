@@ -11,6 +11,7 @@ from ash.actions.spotify import (
     handle_spotify_skip,
 )
 from ash.actions.results import HandlerResult
+from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.timers import (
     handle_reminder_set,
@@ -51,6 +52,7 @@ _HANDLERS = {
     "reminder_set": handle_reminder_set,
     "timer_cancel": handle_timer_cancel,
     "timer_list": handle_timer_list,
+    "stop": handle_stop,
 }
 
 

@@ -115,3 +115,15 @@ def test_timer_set_verb_group_does_not_collide_with_open():
 def test_bare_timer_cancel_and_list():
     assert parse("cancel my timer").intent == "timer_cancel"
     assert parse("list my timers").intent == "timer_list"
+
+
+def test_bare_stop_and_cancel():
+    assert parse("stop").intent == "stop"
+    assert parse("cancel").intent == "stop"
+    assert parse("be quiet").intent == "stop"
+
+
+def test_cancel_my_timer_does_not_collide_with_bare_cancel():
+    # "cancel" alone -> stop, but the longer exact phrase "cancel my
+    # timer" is a distinct dict key and must still resolve separately.
+    assert parse("cancel my timer").intent == "timer_cancel"

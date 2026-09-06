@@ -71,6 +71,12 @@ _BARE_PHRASES: dict[str, str] = {
     "list my timers": "timer_list",
     "what timers do i have": "timer_list",
     "how much time is left": "timer_list",
+
+    "stop": "stop",
+    "cancel": "stop",
+    "stop talking": "stop",
+    "be quiet": "stop",
+    "quiet": "stop",
 }
 
 
