@@ -10,6 +10,7 @@ from ash.actions.spotify import (
     handle_spotify_resume,
     handle_spotify_skip,
 )
+from ash.actions.chain import looks_like_chain, resolve_chain, run_chain
 from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
@@ -64,6 +65,13 @@ _HANDLERS = {
 
 
 def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    if config.ollama.enabled and looks_like_chain(text):
+        steps = resolve_chain(text, config)
+        if steps is not None:
+            log.info("Resolved %r into a %d-step chain", text, len(steps))
+            return run_chain(steps, _HANDLERS, registry, tts, log, config)
+        log.info("Chain-like utterance %r didn't resolve to a usable chain, handling as one command", text)
+
     command = parse(text)
     handler = _HANDLERS.get(command.intent)
     if handler is None:

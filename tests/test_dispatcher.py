@@ -52,6 +52,49 @@ def test_handler_returning_not_done_propagates(monkeypatch):
     assert callable(result.resume)
 
 
+def test_chain_like_utterance_with_ollama_disabled_uses_normal_path():
+    # config.ollama.enabled defaults to False -- "then" in the text must
+    # not trigger any chain resolution attempt.
+    result = dispatch("open notepad and then close it", Registry(), FakeTts(), log, Config())
+    assert isinstance(result, HandlerResult)
+
+
+def test_chain_like_utterance_with_ollama_enabled_resolves_and_runs_steps(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    monkeypatch.setattr(dispatcher_module, "resolve_chain",
+                         lambda text, config: [{"intent": "open", "target": "notepad"}])
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    result = dispatch("open notepad and then close it", Registry(), FakeTts(), log, config)
+
+    assert result == HandlerResult()
+    assert calls == ["notepad"]
+
+
+def test_chain_resolution_failure_falls_back_to_normal_single_intent_path(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    monkeypatch.setattr(dispatcher_module, "resolve_chain", lambda text, config: None)
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    # Falls through to the ordinary grammar-based path, same as if
+    # ollama were disabled -- "open notepad and then close it" parses
+    # as a normal (if slightly odd) single "open" command.
+    result = dispatch("open notepad and then close it", Registry(), FakeTts(), log, config)
+
+    assert result == HandlerResult()
+    assert calls == ["notepad and then close it"]
+
+
 def test_shutdown_intent_is_intercepted_for_confirmation_before_the_handler_runs(monkeypatch):
     import ash.actions.dispatcher as dispatcher_module
 
