@@ -106,6 +106,12 @@ def test_reminder_set_verb_group():
     assert cmd.target == "5 minutes to check the oven"
 
 
+def test_reminder_set_with_absolute_time_phrasing():
+    cmd = parse("remind me at 3pm to check the oven")
+    assert cmd.intent == "reminder_set"
+    assert cmd.target == "at 3pm to check the oven"
+
+
 def test_timer_set_verb_group_does_not_collide_with_open():
     cmd = parse("start a timer for 5 minutes")
     assert cmd.intent == "timer_set"

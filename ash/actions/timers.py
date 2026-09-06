@@ -15,7 +15,7 @@ import time
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
-from ash.nlu.duration import format_duration, parse_duration
+from ash.nlu.duration import format_duration, parse_absolute_time, parse_duration
 from ash.registry.schema import Registry
 from ash.utils.notifications import show_toast
 from ash.utils.paths import TIMERS_STATE_PATH, ensure_app_data_dirs
@@ -107,11 +107,17 @@ def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) -> 
     return timer_id
 
 
+def _parse_when(text: str):
+    """Either a relative duration ("5 minutes") or an absolute
+    time-of-day ("3pm") -- callers don't need to care which."""
+    return parse_duration(text) or parse_absolute_time(text)
+
+
 def handle_timer_set(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    parsed = parse_duration(target)
+    parsed = _parse_when(target)
     if parsed is None:
         def resume(answer: str) -> HandlerResult:
-            reparsed = parse_duration(answer)
+            reparsed = _parse_when(answer)
             if reparsed is None:
                 tts.say("Never mind.")
                 return HandlerResult()
@@ -130,10 +136,10 @@ def _start_timer(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) 
 
 
 def handle_reminder_set(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    parsed = parse_duration(target)
+    parsed = _parse_when(target)
     if parsed is None:
         def resume(answer: str) -> HandlerResult:
-            reparsed = parse_duration(answer)
+            reparsed = _parse_when(answer)
             if reparsed is None:
                 tts.say("Never mind.")
                 return HandlerResult()

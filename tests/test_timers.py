@@ -130,6 +130,26 @@ def test_timer_set_follow_up_unresolved_says_never_mind():
     assert FakeTimer.instances == []
 
 
+def test_timer_set_with_absolute_time():
+    tts = FakeTts()
+
+    result = timers.handle_timer_set("3pm", Registry(), tts, log, Config())
+
+    assert result == HandlerResult()
+    assert len(FakeTimer.instances) == 1
+    assert FakeTimer.instances[0].seconds > 0
+    assert "Timer set for" in tts.said[-1]
+
+
+def test_reminder_set_with_absolute_time_and_message():
+    tts = FakeTts()
+
+    timers.handle_reminder_set("3pm to check the oven", Registry(), tts, log, Config())
+
+    assert len(FakeTimer.instances) == 1
+    assert "check the oven" in tts.said[-1]
+
+
 def test_reminder_set_speaks_message_and_time():
     tts = FakeTts()
 
