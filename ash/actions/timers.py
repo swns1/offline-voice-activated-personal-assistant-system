@@ -1,11 +1,13 @@
-"""Timers and reminders via threading.Timer -- in-memory only, no
-persistence across restarts (same as a kitchen timer app). The fired
-callback runs on its own thread and only ever calls tts.say(), which is
-just a queue.Queue.put on TtsWorker's own independent queue -- no
-shared state with ContinuousListener's queue, so this is safe no matter
-what the main thread is blocked on.
+"""Timers and reminders via threading.Timer. Active timers are mirrored
+to a small JSON file so a restart/crash doesn't silently lose them --
+see rehydrate(), called once at startup. The fired callback runs on its
+own thread and only ever calls tts.say(), which is just a
+queue.Queue.put on TtsWorker's own independent queue -- no shared state
+with ContinuousListener's queue, so this is safe no matter what the
+main thread is blocked on.
 """
 import itertools
+import json
 import logging
 import threading
 import time
@@ -16,6 +18,7 @@ from ash.config import Config
 from ash.nlu.duration import format_duration, parse_duration
 from ash.registry.schema import Registry
 from ash.utils.notifications import show_toast
+from ash.utils.paths import TIMERS_STATE_PATH, ensure_app_data_dirs
 
 _MAX_ACTIVE_TIMERS = 20
 
@@ -29,10 +32,55 @@ class _ActiveTimer:
         self.id = timer_id
         self.label = label
         self.fires_at = time.monotonic() + seconds
+        # Wall-clock equivalent, for persistence across restarts --
+        # time.monotonic() has no stable meaning across process runs.
+        self.fires_at_wall = time.time() + seconds
         self.timer = timer
 
     def seconds_remaining(self) -> int:
         return max(0, round(self.fires_at - time.monotonic()))
+
+
+def _persist() -> None:
+    with _lock:
+        snapshot = [{"label": a.label, "fires_at_wall": a.fires_at_wall} for a in _active.values()]
+    try:
+        ensure_app_data_dirs()
+        with open(TIMERS_STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(snapshot, f)
+    except OSError:
+        pass  # best-effort -- losing persistence shouldn't break the timer itself
+
+
+def rehydrate(tts: TtsWorker, log: logging.Logger) -> None:
+    """Reschedules timers/reminders that were still pending the last time
+    Ash ran. Anything that should have already fired while Ash was down
+    is announced immediately instead of silently dropped."""
+    if not TIMERS_STATE_PATH.exists():
+        return
+    try:
+        with open(TIMERS_STATE_PATH, "r", encoding="utf-8") as f:
+            saved = json.load(f)
+    except (OSError, ValueError):
+        return
+
+    now = time.time()
+    for entry in saved:
+        label = entry.get("label", "")
+        remaining = entry.get("fires_at_wall", 0) - now
+        if remaining <= 0:
+            message = label or "Time's up."
+            tts.say(message)
+            show_toast("Ash", message, log)
+            log.info("Rehydrated timer had already elapsed while Ash was down: %r", label)
+        else:
+            _schedule(round(remaining), label, tts, log)
+            log.info("Rehydrated timer, %d seconds remaining: %r", round(remaining), label)
+
+    # Elapsed entries were never re-added to _active -- persist now so
+    # they're dropped from disk too, instead of being re-announced on
+    # every future restart.
+    _persist()
 
 
 def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) -> int | None:
@@ -44,6 +92,7 @@ def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) -> 
     def fire():
         with _lock:
             _active.pop(timer_id, None)
+        _persist()
         message = label or "Time's up."
         tts.say(message)
         show_toast("Ash", message, log)
@@ -53,6 +102,7 @@ def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) -> 
     t.daemon = True
     with _lock:
         _active[timer_id] = _ActiveTimer(timer_id, label, seconds, t)
+    _persist()
     t.start()
     return timer_id
 
@@ -109,6 +159,7 @@ def handle_timer_cancel(target: str, registry: Registry, tts: TtsWorker, log: lo
     with _lock:
         cancelled = list(_active.values())
         _active.clear()
+    _persist()
     for active in cancelled:
         active.timer.cancel()
 

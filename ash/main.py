@@ -5,6 +5,7 @@ the configured keyword starts a VAD-gated recording, which is
 transcribed and dispatched exactly as in Phase 3/4.
 """
 from ash.actions.dispatcher import dispatch
+from ash.actions.timers import rehydrate as rehydrate_timers
 from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
 from ash.audio.tts import TtsWorker
@@ -40,6 +41,7 @@ def main() -> None:
         max_record_seconds=config.audio.max_record_seconds,
     )
 
+    rehydrate_timers(tts, log)
     tts.say("Ash is listening.")
     print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
 

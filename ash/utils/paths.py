@@ -13,6 +13,7 @@ SECRETS_DIR = APP_DATA_DIR
 CONFIG_PATH = CONFIG_DIR / "config.yaml"
 REGISTRY_MANUAL_PATH = CONFIG_DIR / "registry.yaml"
 REGISTRY_AUTO_PATH = CONFIG_DIR / "registry.auto.yaml"
+TIMERS_STATE_PATH = APP_DATA_DIR / "timers.json"
 
 
 def ensure_app_data_dirs() -> None:

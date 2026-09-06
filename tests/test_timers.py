@@ -1,5 +1,7 @@
 import itertools
+import json
 import logging
+import time
 
 import pytest
 
@@ -43,12 +45,14 @@ class FakeTimer:
 
 
 @pytest.fixture(autouse=True)
-def _reset_timers_state(monkeypatch):
+def _reset_timers_state(monkeypatch, tmp_path):
     timers._active.clear()
     monkeypatch.setattr(timers, "_ids", itertools.count(1))
     FakeTimer.instances.clear()
     monkeypatch.setattr(timers.threading, "Timer", FakeTimer)
     monkeypatch.setattr(timers, "show_toast", lambda title, body, log=None: None)
+    monkeypatch.setattr(timers, "TIMERS_STATE_PATH", tmp_path / "timers.json")
+    monkeypatch.setattr(timers, "ensure_app_data_dirs", lambda: None)
     yield
 
 
@@ -193,3 +197,109 @@ def test_max_active_timers_enforced():
     assert result == HandlerResult()
     assert tts.said[-1] == "You already have too many timers running."
     assert len(FakeTimer.instances) == timers._MAX_ACTIVE_TIMERS
+
+
+def test_persist_writes_active_timers_to_disk():
+    tts = FakeTts()
+    timers.handle_timer_set("5 minutes to check the oven", Registry(), tts, log, Config())
+
+    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+
+    assert len(saved) == 1
+    assert saved[0]["label"] == "check the oven"
+    assert saved[0]["fires_at_wall"] > time.time()
+
+
+def test_persist_removes_entry_on_fire():
+    tts = FakeTts()
+    timers.handle_timer_set("5 minutes", Registry(), tts, log, Config())
+
+    FakeTimer.instances[0].trigger()
+
+    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    assert saved == []
+
+
+def test_persist_clears_on_cancel():
+    tts = FakeTts()
+    timers.handle_timer_set("5 minutes", Registry(), tts, log, Config())
+
+    timers.handle_timer_cancel("", Registry(), tts, log, Config())
+
+    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    assert saved == []
+
+
+def test_rehydrate_with_no_file_is_a_noop():
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)  # must not raise
+
+    assert tts.said == []
+    assert timers._active == {}
+
+
+def test_rehydrate_with_malformed_file_is_a_noop():
+    timers.TIMERS_STATE_PATH.write_text("not valid json {{{", encoding="utf-8")
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)  # must not raise
+
+    assert tts.said == []
+
+
+def test_rehydrate_reschedules_a_pending_timer():
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{"label": "check the oven", "fires_at_wall": time.time() + 300}]),
+        encoding="utf-8",
+    )
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)
+
+    assert tts.said == []  # not elapsed -- no catch-up message
+    assert len(FakeTimer.instances) == 1
+    assert 295 <= FakeTimer.instances[0].seconds <= 300
+    assert len(timers._active) == 1
+
+
+def test_rehydrate_announces_an_already_elapsed_timer():
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{"label": "check the oven", "fires_at_wall": time.time() - 60}]),
+        encoding="utf-8",
+    )
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)
+
+    assert tts.said == ["check the oven"]
+    assert FakeTimer.instances == []  # nothing rescheduled -- it already fired
+    assert timers._active == {}
+
+
+def test_rehydrate_removes_elapsed_entry_from_disk():
+    # Regression test: an elapsed entry that's only announced (not
+    # rescheduled) must still be dropped from the persisted file, or
+    # it gets re-announced on every future restart forever.
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{"label": "check the oven", "fires_at_wall": time.time() - 60}]),
+        encoding="utf-8",
+    )
+
+    timers.rehydrate(FakeTts(), log)
+
+    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    assert saved == []
+
+
+def test_rehydrate_announces_elapsed_toast(monkeypatch):
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{"label": "check the oven", "fires_at_wall": time.time() - 60}]),
+        encoding="utf-8",
+    )
+    toasts = []
+    monkeypatch.setattr(timers, "show_toast", lambda title, body, log=None: toasts.append((title, body)))
+
+    timers.rehydrate(FakeTts(), log)
+
+    assert toasts == [("Ash", "check the oven")]
