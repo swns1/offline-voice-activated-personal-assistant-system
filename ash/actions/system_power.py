@@ -1,9 +1,9 @@
 """Lock/sleep/shut down the PC. Lock and sleep are cheap to undo (log
-back in, wake the PC) so they run immediately; shut down closes every
-open app and any unsaved work, so it requires a spoken yes/no
-confirmation via the HandlerResult follow-up mechanism -- the same
-shape open_app.py already uses for "did you mean X or Y", just with a
-yes/no check instead of a candidate lookup.
+back in, wake the PC) so they run immediately here; shut down closes
+every open app and any unsaved work, so it's gated behind a spoken
+yes/no confirmation -- but that gating now lives centrally in
+ash/actions/confirmation.py (dispatch() intercepts "shutdown" before
+this handler ever runs), not hand-rolled in this module.
 """
 import ctypes
 import logging
@@ -19,8 +19,6 @@ from ash.registry.schema import Registry
 # the OS call below can suspend/kill the process before the queued
 # speech actually plays, cutting it off audibly.
 _SPEAK_GUARD_SECONDS = 1.5
-
-_AFFIRMATIVE = {"yes", "yeah", "yep", "yes please", "confirm", "do it", "sure"}
 
 
 def handle_lock(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
@@ -47,23 +45,12 @@ def handle_sleep(target: str, registry: Registry, tts: TtsWorker, log: logging.L
 
 
 def handle_shutdown(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() in _AFFIRMATIVE:
-            tts.say("Shutting down.")
-            time.sleep(_SPEAK_GUARD_SECONDS)
-            try:
-                subprocess.run(["shutdown", "/s", "/t", "0"], check=True)
-                log.info("Shutdown command issued")
-            except Exception:
-                log.exception("Shutdown command failed")
-                tts.say("I couldn't shut down.")
-        else:
-            log.info("Shutdown not confirmed: %r", answer)
-            tts.say("Never mind.")
-        return HandlerResult()
-
-    return HandlerResult(
-        done=False,
-        question="Are you sure you want to shut down? Say yes to confirm.",
-        resume=resume,
-    )
+    tts.say("Shutting down.")
+    time.sleep(_SPEAK_GUARD_SECONDS)
+    try:
+        subprocess.run(["shutdown", "/s", "/t", "0"], check=True)
+        log.info("Shutdown command issued")
+    except Exception:
+        log.exception("Shutdown command failed")
+        tts.say("I couldn't shut down.")
+    return HandlerResult()

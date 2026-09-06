@@ -10,6 +10,7 @@ from ash.actions.spotify import (
     handle_spotify_resume,
     handle_spotify_skip,
 )
+from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
 from ash.actions.stop import handle_stop
@@ -69,5 +70,7 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         log.info("Unrecognized command: %r", text)
         tts.say("I didn't catch that.")
         return HandlerResult()
+    if needs_confirmation(command.intent):
+        return wrap_with_confirmation(command.intent, handler, command.target, registry, tts, log, config)
     result = handler(command.target, registry, tts, log, config)
     return result if result is not None else HandlerResult()

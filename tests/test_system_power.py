@@ -57,42 +57,20 @@ def test_sleep_calls_set_suspend_state(monkeypatch):
     assert calls == [(False, True, False)]
 
 
-def test_shutdown_asks_for_confirmation():
-    tts = FakeTts()
-
-    result = system_power.handle_shutdown("", Registry(), tts, log, Config())
-
-    assert result.done is False
-    assert "sure" in result.question.lower()
-    assert tts.said == []  # nothing spoken/executed until confirmed
-
-
-def test_shutdown_confirmed_runs_shutdown_command(monkeypatch):
+def test_shutdown_runs_shutdown_command_directly(monkeypatch):
+    # handle_shutdown no longer asks for confirmation itself -- that's
+    # now dispatch()'s job, before this handler is ever called. See
+    # test_confirmation.py and test_dispatcher.py.
     _no_sleep(monkeypatch)
     calls = []
     monkeypatch.setattr(system_power.subprocess, "run", lambda args, **kwargs: calls.append(args))
     tts = FakeTts()
+
     result = system_power.handle_shutdown("", Registry(), tts, log, Config())
 
-    final = result.resume("yes")
-
-    assert final == HandlerResult()
+    assert result == HandlerResult()
     assert calls == [["shutdown", "/s", "/t", "0"]]
     assert "Shutting down." in tts.said
-
-
-def test_shutdown_declined_does_not_run_shutdown_command(monkeypatch):
-    _no_sleep(monkeypatch)
-    calls = []
-    monkeypatch.setattr(system_power.subprocess, "run", lambda args, **kwargs: calls.append(args))
-    tts = FakeTts()
-    result = system_power.handle_shutdown("", Registry(), tts, log, Config())
-
-    final = result.resume("no thanks")
-
-    assert final == HandlerResult()
-    assert calls == []
-    assert tts.said == ["Never mind."]
 
 
 def test_shutdown_command_failure_is_swallowed(monkeypatch):
@@ -102,9 +80,8 @@ def test_shutdown_command_failure_is_swallowed(monkeypatch):
         raise RuntimeError("access denied")
     monkeypatch.setattr(system_power.subprocess, "run", boom)
     tts = FakeTts()
+
     result = system_power.handle_shutdown("", Registry(), tts, log, Config())
 
-    final = result.resume("yes")
-
-    assert final == HandlerResult()
+    assert result == HandlerResult()
     assert "I couldn't shut down." in tts.said

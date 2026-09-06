@@ -50,3 +50,17 @@ def test_handler_returning_not_done_propagates(monkeypatch):
     assert result.done is False
     assert result.question == "Which one?"
     assert callable(result.resume)
+
+
+def test_shutdown_intent_is_intercepted_for_confirmation_before_the_handler_runs(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "shutdown",
+                         lambda *a, **k: calls.append(True) or HandlerResult())
+
+    result = dispatch("shut down", Registry(), FakeTts(), log, Config())
+
+    assert result.done is False
+    assert "sure" in result.question.lower()
+    assert calls == []  # the real handler hasn't run yet -- confirmation comes first
