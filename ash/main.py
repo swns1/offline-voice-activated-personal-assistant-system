@@ -56,7 +56,8 @@ def main() -> None:
             result = dispatch(text, registry, tts, log, config)
 
             while not result.done:
-                tts.say(result.question)
+                if result.question:  # None for a conversational continuation --
+                    tts.say(result.question)  # the reply just spoken is prompt enough
                 followup_audio = listener.listen_for_followup(
                     timeout_seconds=6.0, on_state_change=on_state_change
                 )

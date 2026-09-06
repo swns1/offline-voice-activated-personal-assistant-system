@@ -5,10 +5,14 @@ entry. No special trigger phrase needed: anything that isn't a known
 command and doesn't match an app just gets asked to the model, matching
 how a Siri-like assistant behaves.
 
-Single-turn only -- no conversation memory across follow-ups. See the
-project plan for why: it would need a materially different interaction
-model (no natural "end the conversation" phrase, listen_for_followup's
-timeout would apply every turn, no barge-in), not just plumbing.
+Carries a short rolling message history across follow-ups (via
+Ollama's /api/chat instead of the earlier single-shot /api/generate),
+chained through HandlerResult.resume() the same way every other
+multi-turn flow in this codebase works -- so "what's the capital of
+France" -> "what's its population" resolves "its" correctly. Bounded to
+_MAX_MESSAGES so a long-running chat doesn't grow the prompt forever,
+and ends immediately (without asking the model) if the user says
+"stop"/"cancel" instead of continuing the conversation.
 """
 import logging
 
@@ -17,15 +21,21 @@ import requests
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.nlu.grammar import parse
 from ash.registry.schema import Registry
 
 _TIMEOUT_SECONDS = 30.0
+_MAX_MESSAGES = 20  # ~10 exchanges -- keeps the prompt bounded and gives a long chat a natural end
 
 
 def handle_converse(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    return _ask_and_continue([{"role": "user", "content": target}], tts, log, config)
+
+
+def _ask_and_continue(messages: list[dict], tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
     tts.say("Let me think.")  # CPU inference can take several seconds
     try:
-        reply = _ask(target, config)
+        reply = _ask(messages, config)
     except requests.exceptions.ConnectionError:
         log.warning("Ollama not reachable at %s", config.ollama.host)
         tts.say("I can't reach the local AI model right now.")
@@ -36,19 +46,32 @@ def handle_converse(target: str, registry: Registry, tts: TtsWorker, log: loggin
         return HandlerResult()
 
     tts.say(reply)
-    return HandlerResult()
+    messages = messages + [{"role": "assistant", "content": reply}]
+
+    if len(messages) >= _MAX_MESSAGES:
+        log.info("Conversation reached %d messages, ending without offering a follow-up", len(messages))
+        return HandlerResult()
+
+    def resume(answer: str) -> HandlerResult:
+        if parse(answer).intent == "stop":
+            tts.say("OK.")
+            return HandlerResult()
+        return _ask_and_continue(messages + [{"role": "user", "content": answer}], tts, log, config)
+
+    # question=None: the reply above already spoken is the "prompt" for
+    # whatever comes next -- main.py's loop only speaks result.question
+    # when it's set, so this just keeps listening without repeating
+    # anything.
+    return HandlerResult(done=False, question=None, resume=resume)
 
 
-def _ask(prompt: str, config: Config) -> str:
+def _ask(messages: list[dict], config: Config) -> str:
+    payload_messages = [{"role": "system", "content": config.ollama.system_prompt}] + messages
     response = requests.post(
-        f"{config.ollama.host}/api/generate",
-        json={
-            "model": config.ollama.model,
-            "prompt": prompt,
-            "system": config.ollama.system_prompt,
-            "stream": False,
-        },
+        f"{config.ollama.host}/api/chat",
+        json={"model": config.ollama.model, "messages": payload_messages, "stream": False},
         timeout=_TIMEOUT_SECONDS,
     )
     response.raise_for_status()
-    return response.json().get("response", "").strip() or "I don't have anything to say to that."
+    content = response.json().get("message", {}).get("content", "").strip()
+    return content or "I don't have anything to say to that."
