@@ -28,6 +28,13 @@ spotify:
   client_id: null
   redirect_uri: "http://127.0.0.1:8888/callback"
 
+search:
+  # DuckDuckGo's Instant Answer API -- free, no account/key, but a real
+  # network call (a small, deliberate departure from fully-offline
+  # operation). Set to false to keep "search for X" fully offline; it'll
+  # point you at "search in browser for X" instead.
+  enabled: true
+
 ollama:
   enabled: false
   # Ollama itself is a separate local install (https://ollama.com), not

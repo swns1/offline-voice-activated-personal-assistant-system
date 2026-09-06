@@ -15,6 +15,9 @@ from ash.nlu.intents import ParsedCommand
 # spotify X") rather than reusing bare "play", which would either collide
 # with or have to steal the existing game-launch phrasing.
 _VERB_GROUPS: list[tuple[str, list[str]]] = [
+    # Must precede "search" below -- "search in browser for X" would
+    # otherwise be swallowed by "search"'s own bare "search " prefix.
+    ("browser_search", ["search in browser for", "browser search for", "search the web for"]),
     ("search", ["search for", "search", "look up", "what is", "what's",
                 "who is", "who's", "google"]),
     ("spotify_play", ["play something on spotify", "play on spotify", "spotify play"]),

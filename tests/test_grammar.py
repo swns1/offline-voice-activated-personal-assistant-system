@@ -7,6 +7,20 @@ def test_open_verb():
     assert cmd.target == "notepad"
 
 
+def test_browser_search_verb_group():
+    cmd = parse("search in browser for the weather")
+    assert cmd.intent == "browser_search"
+    assert cmd.target == "the weather"
+
+
+def test_browser_search_does_not_collide_with_plain_search():
+    # "search in browser for X" must NOT be swallowed by "search"'s own
+    # bare "search " prefix.
+    cmd = parse("search in browser for cats")
+    assert cmd.intent == "browser_search"
+    assert cmd.target == "cats"
+
+
 def test_search_verb_prefers_longest_phrase():
     cmd = parse("search for the meaning of ubiquitous")
     assert cmd.intent == "search"

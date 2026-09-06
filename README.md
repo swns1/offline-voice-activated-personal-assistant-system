@@ -2,14 +2,15 @@
 
 A local, fully-offline, wake-word-activated voice assistant for Windows.
 
-Say the wake word, speak a command, and Ash opens an app/game, searches
-the web, controls Spotify, adjusts the volume, sets timers/reminders,
+Say the wake word, speak a command, and Ash opens an app/game, answers
+a question, controls Spotify, adjusts the volume, sets timers/reminders,
 locks/sleeps/shuts down the PC, or — for anything else — asks a local AI
 model. Transcription, wake-word detection, and text-to-speech all run
 locally; nothing is sent to a cloud API. The only network calls Ash ever
-makes are to Spotify's API (only if you use Spotify commands) and to
-your own local Ollama server (only if you enable it) — never anything
-else, and never your files.
+makes are to DuckDuckGo's free Instant Answer API (for "what is X"-style
+questions — no account/key, can be turned off), Spotify's API (only if
+you use Spotify commands), and your own local Ollama server (only if you
+enable it) — never anything else, and never your files.
 
 ## Setup
 
@@ -30,8 +31,8 @@ startup and will tell you to run this if they're missing.
 ```
 
 Speak the configured wake word (`hey_jarvis` by default — see
-`config/config.yaml`), then a command such as "open notepad" or "search
-for the weather". Ctrl+C to quit.
+`config/config.yaml`), then a command such as "open notepad" or "what
+is the Eiffel Tower". Ctrl+C to quit.
 
 If a command is ambiguous (e.g. two similarly-named apps, or more than
 one browser profile with none pinned in config), Ash asks a clarifying
@@ -47,6 +48,18 @@ that itself.)
 
 Say "stop" (or "cancel", "be quiet") anytime to interrupt whatever Ash
 is currently saying.
+
+## Search
+
+"search for X" / "what is X" / "look up X" answers directly via
+DuckDuckGo's free Instant Answer API (`search.enabled: true` in
+`config/config.yaml`, on by default) — no account or key, but coverage
+is patchy: great for named topics ("Eiffel Tower", "Python programming
+language"), nothing for question-style phrasing, calculators, or
+dictionary lookups. If it can't find an answer, it says so and suggests
+the explicit browser-opening phrasing instead: "search in browser for
+X" always opens a real search in your browser (with profile-picking, if
+you have more than one), regardless of whether DuckDuckGo has anything.
 
 ## System control
 
@@ -104,7 +117,7 @@ control requires a Spotify Premium account.
 
 ## Configuration
 
-- `config/config.yaml` — wake word, audio, browser, hotkey, Spotify, and Ollama settings.
+- `config/config.yaml` — wake word, audio, browser, hotkey, Spotify, search, and Ollama settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.

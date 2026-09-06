@@ -1,7 +1,7 @@
 import logging
 
 from ash.actions.open_app import handle_open
-from ash.actions.search import handle_search
+from ash.actions.search import handle_browser_search, handle_search
 from ash.actions.spotify import (
     handle_spotify_now_playing,
     handle_spotify_pause,
@@ -40,6 +40,7 @@ from ash.registry.schema import Registry
 _HANDLERS = {
     "open": handle_open,
     "search": handle_search,
+    "browser_search": handle_browser_search,
     "spotify_play": handle_spotify_play,
     "spotify_pause": handle_spotify_pause,
     "spotify_resume": handle_spotify_resume,

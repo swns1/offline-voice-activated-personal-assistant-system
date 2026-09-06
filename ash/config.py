@@ -39,6 +39,15 @@ class SpotifyConfig(BaseModel):
     redirect_uri: str = "http://127.0.0.1:8888/callback"
 
 
+class SearchConfig(BaseModel):
+    # DuckDuckGo's Instant Answer API -- free, no account/key needed,
+    # but it IS a real network call, a small departure from fully-offline
+    # operation. On by default since (unlike Spotify/Ollama) it needs no
+    # setup to work; set to false to keep "search for X" fully offline
+    # (it'll just point you at "search in browser for X" instead).
+    enabled: bool = True
+
+
 class OllamaConfig(BaseModel):
     enabled: bool = False
     host: str = "http://localhost:11434"
@@ -56,6 +65,7 @@ class Config(BaseModel):
     audio: AudioConfig = AudioConfig()
     browser: BrowserConfig = BrowserConfig()
     spotify: SpotifyConfig = SpotifyConfig()
+    search: SearchConfig = SearchConfig()
     ollama: OllamaConfig = OllamaConfig()
 
 
