@@ -38,6 +38,13 @@ one browser profile with none pinned in config), Ash asks a clarifying
 follow-up question — no wake word needed for your answer, just speak it
 within a few seconds.
 
+Ash remembers the last app you opened, search you made, and Spotify
+track you played, so "open discord" then "close it", or "search for
+pizza" then "search that again", resolves "it"/"that"/"this" instead
+of needing everything repeated. ("pause"/"resume"/"skip" already work
+on whatever's currently playing without needing this — Spotify tracks
+that itself.)
+
 Say "stop" (or "cancel", "be quiet") anytime to interrupt whatever Ash
 is currently saying.
 

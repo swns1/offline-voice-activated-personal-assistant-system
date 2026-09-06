@@ -3,6 +3,7 @@ import logging
 from ash.actions import search
 from ash.actions.results import HandlerResult
 from ash.config import Config
+from ash.nlu import context
 from ash.registry.schema import IntentConfig, Registry
 
 log = logging.getLogger("test")
@@ -58,6 +59,15 @@ def test_search_with_configured_profile_resolves_it(monkeypatch):
 
     assert result == HandlerResult()
     assert launched[0]["profile_directory"] == "Profile 2"
+
+
+def test_search_remembers_the_query(monkeypatch):
+    _no_real_launches(monkeypatch)
+    monkeypatch.setattr(search, "list_profiles", lambda browser: {})
+
+    search.handle_search("weather tomorrow", _registry(), FakeTts(), log, Config())
+
+    assert context.resolve_target("search", "that") == "weather tomorrow"
 
 
 def test_search_with_multiple_profiles_and_none_configured_asks(monkeypatch):

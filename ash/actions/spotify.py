@@ -21,6 +21,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.uri_launcher import UriLauncher
+from ash.nlu.context import remember_spotify_track
 from ash.registry.schema import Registry
 from ash.utils.paths import SECRETS_DIR, ensure_app_data_dirs
 
@@ -85,6 +86,7 @@ def _play(client: spotipy.Spotify, target: str, tts: TtsWorker, log: logging.Log
 
     client.start_playback(uris=[track["uri"]])
     log.info("Playing on Spotify: %s - %s", track["name"], target)
+    remember_spotify_track(track["name"])
     tts.say(f"Playing {track['name']}.")
 
 

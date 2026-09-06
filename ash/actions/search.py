@@ -6,6 +6,7 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.browser_launcher import BrowserLauncher
 from ash.launchers.browser_profiles import list_profiles, resolve_profile
+from ash.nlu.context import remember_search
 from ash.registry.schema import Registry
 
 _browser_launcher = BrowserLauncher()
@@ -48,6 +49,7 @@ def _run_search(query: str, url: str, browser: str, profile_directory: str | Non
     }
     _browser_launcher.launch(launch)
     log.info("Searched: %r", query)
+    remember_search(query)
     tts.say(f"Searching for {query}.")
     return HandlerResult()
 

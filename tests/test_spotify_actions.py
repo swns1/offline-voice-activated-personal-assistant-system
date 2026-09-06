@@ -3,6 +3,7 @@ import logging
 import pytest
 
 from ash.actions import spotify
+from ash.nlu import context
 
 log = logging.getLogger("test")
 
@@ -57,6 +58,14 @@ def test_play_starts_playback_on_active_device():
 
     assert ("start_playback", ["spotify:track:123"]) in client.calls
     assert any("Bohemian Rhapsody" in msg for msg in tts.said)
+
+
+def test_play_remembers_the_track():
+    client = FakeSpotify(search_result=_track_result())
+
+    spotify._play(client, "bohemian rhapsody", FakeTts(), log)
+
+    assert context.resolve_target("spotify_play", "it") == "Bohemian Rhapsody"
 
 
 def test_play_no_track_found_says_so():

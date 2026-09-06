@@ -6,6 +6,7 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.exe_launcher import ExeLauncher
 from ash.launchers.uri_launcher import UriLauncher
+from ash.nlu.context import remember_app
 from ash.nlu.matcher import MatchResult, match_app, match_candidates
 from ash.registry.schema import Registry
 
@@ -44,6 +45,7 @@ def _launch_entry(result: MatchResult, target: str, tts: TtsWorker, log: logging
 
     launcher.launch(entry.launch)
     log.info("Launched %s (matched %r, score %.0f)", entry.id, target, result.score)
+    remember_app(entry.id.replace("_", " "))
     tts.say(f"Opening {entry.id.replace('_', ' ')}.")
     return HandlerResult()
 

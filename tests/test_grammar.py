@@ -70,6 +70,16 @@ def test_whats_playing_is_spotify_now_playing():
     assert cmd.intent == "spotify_now_playing"
 
 
+def test_pause_it_and_pause_that():
+    assert parse("pause it").intent == "spotify_pause"
+    assert parse("pause that").intent == "spotify_pause"
+
+
+def test_skip_it_and_resume_it():
+    assert parse("skip it").intent == "spotify_skip"
+    assert parse("resume it").intent == "spotify_resume"
+
+
 def test_bare_mute_and_unmute():
     assert parse("mute").intent == "mute"
     assert parse("unmute").intent == "unmute"

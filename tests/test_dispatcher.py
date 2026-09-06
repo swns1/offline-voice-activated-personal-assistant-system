@@ -95,6 +95,21 @@ def test_chain_resolution_failure_falls_back_to_normal_single_intent_path(monkey
     assert calls == ["notepad and then close it"]
 
 
+def test_pronoun_target_resolves_before_handler_runs(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+    from ash.nlu import context
+
+    context.remember_app("discord")
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "close_app",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+
+    result = dispatch("close it", Registry(), FakeTts(), log, Config())
+
+    assert result == HandlerResult()
+    assert calls == ["discord"]
+
+
 def test_routine_run_executes_configured_steps(monkeypatch):
     import ash.actions.dispatcher as dispatcher_module
 

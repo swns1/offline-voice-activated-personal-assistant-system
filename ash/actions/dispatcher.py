@@ -33,6 +33,7 @@ from ash.actions.volume import (
 from ash.actions.window import handle_close_app, handle_close_window, handle_minimize_window
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.nlu.context import resolve_target
 from ash.nlu.grammar import parse
 from ash.registry.schema import Registry
 
@@ -90,7 +91,8 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         log.info("Unrecognized command: %r", text)
         tts.say("I didn't catch that.")
         return HandlerResult()
+    target = resolve_target(command.intent, command.target)
     if needs_confirmation(command.intent):
-        return wrap_with_confirmation(command.intent, handler, command.target, registry, tts, log, config)
-    result = handler(command.target, registry, tts, log, config)
+        return wrap_with_confirmation(command.intent, handler, target, registry, tts, log, config)
+    result = handler(target, registry, tts, log, config)
     return result if result is not None else HandlerResult()

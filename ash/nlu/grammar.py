@@ -35,11 +35,17 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
 # a verb prefix with something after it.
 _BARE_PHRASES: dict[str, str] = {
     "pause": "spotify_pause",
+    "pause it": "spotify_pause",
+    "pause that": "spotify_pause",
     "pause spotify": "spotify_pause",
     "resume": "spotify_resume",
+    "resume it": "spotify_resume",
+    "resume that": "spotify_resume",
     "resume spotify": "spotify_resume",
     "unpause": "spotify_resume",
     "skip": "spotify_skip",
+    "skip it": "spotify_skip",
+    "skip that": "spotify_skip",
     "skip song": "spotify_skip",
     "next song": "spotify_skip",
     "next track": "spotify_skip",

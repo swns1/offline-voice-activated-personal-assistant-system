@@ -4,6 +4,7 @@ from ash.actions import open_app
 from ash.actions.results import HandlerResult
 from ash.config import Config
 from ash.launchers.exe_launcher import ExeLauncher
+from ash.nlu import context
 from ash.registry.schema import AppEntry, Registry
 
 log = logging.getLogger("test")
@@ -94,6 +95,15 @@ def test_ambiguous_follow_up_unresolved_says_never_mind(monkeypatch):
     assert final == HandlerResult()
     assert launched == []
     assert tts.said == ["Never mind."]
+
+
+def test_successful_launch_remembers_the_app(monkeypatch):
+    _no_real_launches(monkeypatch)
+    tts = FakeTts()
+
+    open_app.handle_open("notepad", _registry(), tts, log, Config())
+
+    assert context.resolve_target("open", "it") == "notepad"
 
 
 def test_no_match_with_ollama_enabled_falls_back_to_converse(monkeypatch):
