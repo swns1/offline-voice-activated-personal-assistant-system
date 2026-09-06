@@ -20,6 +20,14 @@ class AudioConfig(BaseModel):
     input_device: int | None = None
     silence_ms: int = 900
     max_record_seconds: float = 8.0
+    # Lets you talk over Ash mid-response instead of waiting it out --
+    # no wake word needed, it just stops and listens. Detects "the user
+    # is making sound", not "and it isn't an echo of Ash's own voice"
+    # (no acoustic echo cancellation), so on hardware where the mic
+    # picks up the speakers (no headset, close-range laptop mic+
+    # speakers), Ash's own voice can occasionally trigger a false
+    # barge-in -- set to false if that happens on your setup.
+    barge_in_enabled: bool = True
 
 
 class BrowserConfig(BaseModel):

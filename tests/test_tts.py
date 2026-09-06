@@ -39,3 +39,18 @@ def test_stop_speaking_with_empty_queue_still_stops_engine():
     worker.stop_speaking()
 
     assert fake_engine.stop_calls == 1
+
+
+def test_is_speaking_false_initially():
+    worker = TtsWorker()
+    assert worker.is_speaking() is False
+
+
+def test_is_speaking_reflects_internal_event():
+    worker = TtsWorker()
+
+    worker._speaking.set()
+    assert worker.is_speaking() is True
+
+    worker._speaking.clear()
+    assert worker.is_speaking() is False

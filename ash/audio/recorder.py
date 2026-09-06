@@ -3,9 +3,24 @@ kept for the standalone STT smoke test. `ContinuousListener` is the
 real Phase 5+ pipeline: one continuous sounddevice.InputStream (not
 repeatedly opened/closed, per the plan) multiplexed between wake-word
 detection and VAD-gated command recording.
+
+Barge-in (talking over an in-progress TTS response, no wake word
+needed): _wait_for_wake()/_wait_for_speech() also watch for sustained
+speech while TtsWorker.is_speaking() is true, via the SAME
+single-threaded frame-consumption loop that's already processing every
+incoming frame -- no second thread or queue needed, so no new
+cross-thread access to self._pending (the one piece of state that
+would be genuinely unsafe to touch from two threads at once). This
+only detects "the user is making sound", not "and it isn't an echo of
+Ash's own voice" -- there's no acoustic echo cancellation here, so on
+hardware where the mic picks up the speakers (no headset, close-range
+laptop mic+speakers), Ash's own voice can occasionally trigger a false
+barge-in. config.audio.barge_in_enabled is the escape hatch if that
+happens on your setup.
 """
 import queue
 import time
+from typing import Callable
 
 import numpy as np
 import sounddevice as sd
@@ -16,6 +31,18 @@ from ash.audio.wake_word import WakeWordDetector
 
 _VAD_FRAME_MS = 30
 _VAD_FRAME_SAMPLES = SAMPLE_RATE * _VAD_FRAME_MS // 1000  # 480 samples at 16kHz
+
+# Sub-framing for barge-in checks specifically: wake frames are 1280
+# samples (80ms), which isn't a whole multiple of the 480-sample (30ms)
+# VAD frame used elsewhere -- 320 samples (20ms) is a valid webrtcvad
+# frame size AND divides 1280 evenly (exactly 4 sub-frames), so barge-in
+# detection uses its own frame size rather than disturbing the existing
+# silence-cutoff VAD framing.
+_BARGE_IN_SUBFRAME_SAMPLES = SAMPLE_RATE * 20 // 1000  # 320 samples at 16kHz
+# Consecutive wake-frame-level (80ms) detections required before
+# treating it as real barge-in rather than a one-off noise blip --
+# 2 frames = 160ms of continuous detected speech.
+_BARGE_IN_FRAMES_NEEDED = 2
 
 
 def record_fixed(seconds: float = 4.0) -> np.ndarray:
@@ -40,7 +67,9 @@ class ContinuousListener:
 
     def __init__(self, wake_detector: WakeWordDetector, input_device: int | None = None,
                  silence_ms: int = 900, max_record_seconds: float = 8.0,
-                 vad_aggressiveness: int = 2):
+                 vad_aggressiveness: int = 2,
+                 is_speaking: Callable[[], bool] | None = None,
+                 on_barge_in: Callable[[], None] | None = None):
         self._wake = wake_detector
         self._input_device = input_device
         self._silence_frames_needed = max(1, silence_ms // _VAD_FRAME_MS)
@@ -52,6 +81,10 @@ class ContinuousListener:
         # running. Shared instance state, not a local variable, so
         # listen_for_followup() can pick up where listen() left off.
         self._pending = np.zeros(0, dtype="int16")
+        # Barge-in hooks -- no-ops by default, so ContinuousListener works
+        # unchanged for callers (and tests) that don't wire them up.
+        self._is_speaking = is_speaking or (lambda: False)
+        self._on_barge_in = on_barge_in or (lambda: None)
 
     def _callback(self, indata, frames, time_info, status):
         self._queue.put(indata[:, 0].copy())
@@ -87,12 +120,33 @@ class ContinuousListener:
         return utterance
 
     def _wait_for_wake(self, wake_frame_len: int) -> None:
+        barge_in_streak = 0
         while True:
             self._pending = np.concatenate([self._pending, self._queue.get()])
             while len(self._pending) >= wake_frame_len:
                 frame, self._pending = self._pending[:wake_frame_len], self._pending[wake_frame_len:]
                 if self._wake.process(frame):
                     return
+
+                if self._is_speaking() and self._frame_has_speech(frame):
+                    barge_in_streak += 1
+                    if barge_in_streak >= _BARGE_IN_FRAMES_NEEDED:
+                        self._on_barge_in()
+                        return
+                else:
+                    barge_in_streak = 0
+
+    def _frame_has_speech(self, frame: np.ndarray) -> bool:
+        """frame: wake_frame_len (1280) int16 samples -- webrtcvad needs
+        10/20/30ms frames, not 80ms, so this checks it in 20ms
+        sub-frames (320 samples, dividing 1280 evenly) rather than
+        reusing the 30ms framing _record_until_silence()/_wait_for_speech()
+        use for the (differently-sized) command-recording buffer."""
+        for start in range(0, len(frame) - _BARGE_IN_SUBFRAME_SAMPLES + 1, _BARGE_IN_SUBFRAME_SAMPLES):
+            sub_frame = frame[start:start + _BARGE_IN_SUBFRAME_SAMPLES]
+            if self._vad.is_speech(sub_frame.tobytes(), SAMPLE_RATE):
+                return True
+        return False
 
     def _wait_for_speech(self, timeout_seconds: float) -> bool:
         deadline = time.monotonic() + timeout_seconds
@@ -109,6 +163,8 @@ class ContinuousListener:
 
             frame = self._pending[:_VAD_FRAME_SAMPLES]
             if self._vad.is_speech(frame.tobytes(), SAMPLE_RATE):
+                if self._is_speaking():
+                    self._on_barge_in()
                 return True
             # Silence -- discard this frame (not part of the answer) and
             # keep waiting on the same deadline.

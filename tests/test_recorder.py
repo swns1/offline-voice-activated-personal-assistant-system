@@ -35,12 +35,12 @@ def _content_based_is_speech(frame_bytes, rate):
     return bool(np.any(frame != 0))
 
 
-def _speech_frame() -> np.ndarray:
-    return np.ones(_VAD_FRAME_SAMPLES, dtype="int16")
+def _speech_frame(length: int = _VAD_FRAME_SAMPLES) -> np.ndarray:
+    return np.ones(length, dtype="int16")
 
 
-def _silence_frame() -> np.ndarray:
-    return np.zeros(_VAD_FRAME_SAMPLES, dtype="int16")
+def _silence_frame(length: int = _VAD_FRAME_SAMPLES) -> np.ndarray:
+    return np.zeros(length, dtype="int16")
 
 
 def _make_listener(silence_ms=90, max_record_seconds=10.0) -> ContinuousListener:
@@ -134,6 +134,144 @@ def test_listen_for_followup_records_when_speech_detected():
 
     assert utterance is not None
     assert len(utterance) == 2 * _VAD_FRAME_SAMPLES
+
+
+_REAL_WAKE_FRAME_LEN = 1280  # the real WakeWordDetector.frame_length, not the test default
+
+
+def _make_barge_in_listener(is_speaking, on_barge_in) -> ContinuousListener:
+    wake = _FakeWake(frame_length=_REAL_WAKE_FRAME_LEN)  # never triggers unless fed its exact frame
+    listener = ContinuousListener(wake, is_speaking=is_speaking, on_barge_in=on_barge_in)
+    listener._vad.is_speech = _content_based_is_speech
+    return listener
+
+
+def test_default_barge_in_hooks_are_noop():
+    listener = ContinuousListener(_FakeWake())
+    assert listener._is_speaking() is False
+    listener._on_barge_in()  # must not raise
+
+
+def test_frame_has_speech_detects_uniform_speech_frame():
+    listener = _make_barge_in_listener(lambda: True, lambda: None)
+    frame = _speech_frame(_REAL_WAKE_FRAME_LEN)
+    assert listener._frame_has_speech(frame) is True
+
+
+def test_frame_has_speech_returns_false_for_silence():
+    listener = _make_barge_in_listener(lambda: True, lambda: None)
+    frame = _silence_frame(_REAL_WAKE_FRAME_LEN)
+    assert listener._frame_has_speech(frame) is False
+
+
+def test_wait_for_wake_barge_in_triggers_on_consecutive_speech():
+    calls = []
+    listener = _make_barge_in_listener(lambda: True, lambda: calls.append(1))
+    for _ in range(2):  # _BARGE_IN_FRAMES_NEEDED
+        listener._queue.put(_speech_frame(_REAL_WAKE_FRAME_LEN))
+
+    listener._wait_for_wake(_REAL_WAKE_FRAME_LEN)  # must return via barge-in, not hang
+
+    assert calls == [1]
+
+
+def test_wait_for_wake_no_barge_in_when_tts_not_speaking():
+    calls = []
+    listener = _make_barge_in_listener(lambda: False, lambda: calls.append(1))
+    speech = _speech_frame(_REAL_WAKE_FRAME_LEN)
+    for _ in range(3):
+        listener._queue.put(speech)
+    # A real wake-triggering frame so the loop terminates via the normal
+    # path (barge-in must not have fired, or this frame is unreachable).
+    wake_frame = _silence_frame(_REAL_WAKE_FRAME_LEN)
+    listener._wake = _FakeWake(frame_length=_REAL_WAKE_FRAME_LEN, triggers_on_frame=wake_frame.tobytes())
+    listener._queue.put(wake_frame)
+
+    listener._wait_for_wake(_REAL_WAKE_FRAME_LEN)
+
+    assert calls == []
+
+
+def test_wait_for_wake_barge_in_streak_resets_on_silence():
+    calls = []
+    listener = _make_barge_in_listener(lambda: True, lambda: calls.append(1))
+    # speech, silence (resets the streak), speech -- never two in a row.
+    listener._queue.put(_speech_frame(_REAL_WAKE_FRAME_LEN))
+    listener._queue.put(_silence_frame(_REAL_WAKE_FRAME_LEN))
+    listener._queue.put(_speech_frame(_REAL_WAKE_FRAME_LEN))
+    wake_frame = np.full(_REAL_WAKE_FRAME_LEN, 2, dtype="int16")  # distinct from speech(1)/silence(0)
+    listener._wake = _FakeWake(frame_length=_REAL_WAKE_FRAME_LEN, triggers_on_frame=wake_frame.tobytes())
+    listener._queue.put(wake_frame)
+
+    listener._wait_for_wake(_REAL_WAKE_FRAME_LEN)
+
+    assert calls == []  # streak never reached 2 in a row
+
+
+def test_wait_for_wake_prefers_actual_wake_word_over_barge_in():
+    calls = []
+    speech = _speech_frame(_REAL_WAKE_FRAME_LEN)
+    listener = _make_barge_in_listener(lambda: True, lambda: calls.append(1))
+    listener._wake = _FakeWake(frame_length=_REAL_WAKE_FRAME_LEN, triggers_on_frame=speech.tobytes())
+    listener._queue.put(speech)  # matches the wake word AND looks like speech
+
+    listener._wait_for_wake(_REAL_WAKE_FRAME_LEN)
+
+    assert calls == []  # wake-word check runs first and returns immediately
+
+
+def test_wait_for_speech_barge_in_stops_tts_when_speaking():
+    calls = []
+    listener = _make_barge_in_listener(lambda: True, lambda: calls.append(1))
+    listener._queue.put(_speech_frame())
+
+    found = listener._wait_for_speech(timeout_seconds=1.0)
+
+    assert found is True
+    assert calls == [1]
+
+
+def test_wait_for_speech_no_barge_in_when_tts_not_speaking():
+    calls = []
+    listener = _make_barge_in_listener(lambda: False, lambda: calls.append(1))
+    listener._queue.put(_speech_frame())
+
+    found = listener._wait_for_speech(timeout_seconds=1.0)
+
+    assert found is True
+    assert calls == []
+
+
+def test_listen_records_via_barge_in_without_the_wake_word(monkeypatch):
+    monkeypatch.setattr(recorder_module.sd, "InputStream", lambda **kwargs: _NullStream())
+
+    speaking_calls = []
+    barge_in_calls = []
+
+    def is_speaking():
+        return len(barge_in_calls) == 0  # "speaking" only until barge-in stops it, like real TtsWorker
+
+    def on_barge_in():
+        barge_in_calls.append(1)
+
+    wake = _FakeWake(frame_length=_REAL_WAKE_FRAME_LEN)  # never actually triggers
+    listener = ContinuousListener(wake, silence_ms=30, is_speaking=is_speaking, on_barge_in=on_barge_in)
+    listener._vad.is_speech = _content_based_is_speech
+
+    speech = _speech_frame(_REAL_WAKE_FRAME_LEN)
+    for _ in range(2):  # trips the barge-in streak inside _wait_for_wake
+        listener._queue.put(speech)
+    # _record_until_silence() re-uses whatever's left in _pending/queue at
+    # its own (smaller) frame size -- feed enough to form a real command.
+    listener._queue.put(_speech_frame())
+    listener._queue.put(_silence_frame())
+
+    gen = listener.listen()
+    utterance = next(gen)
+    gen.close()
+
+    assert barge_in_calls == [1]
+    assert len(utterance) > 0
 
 
 def test_listen_yields_one_utterance_per_wake_cycle(monkeypatch):

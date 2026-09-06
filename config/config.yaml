@@ -10,6 +10,9 @@ audio:
   input_device: null
   silence_ms: 900
   max_record_seconds: 8.0
+  # Talk over Ash mid-response instead of waiting it out -- see the
+  # caveat about echo on speaker+mic setups (no headset) in config.py.
+  barge_in_enabled: true
 
 browser:
   default: chrome
@@ -49,6 +52,9 @@ ollama:
   # model anything that isn't a known command and doesn't match an app.
   host: "http://localhost:11434"
   model: "llama3.2"
+  # A separate pull from `model` -- needed only for "what's on my
+  # screen"-style requests. See README's "Screen understanding" section.
+  vision_model: "llama3.2-vision"
   system_prompt: >
     You are Ash, a local voice assistant running entirely offline on the
     user's PC. Keep answers brief (1-3 sentences) since they will be read

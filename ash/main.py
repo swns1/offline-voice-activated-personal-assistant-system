@@ -39,6 +39,8 @@ def main() -> None:
         input_device=config.audio.input_device,
         silence_ms=config.audio.silence_ms,
         max_record_seconds=config.audio.max_record_seconds,
+        is_speaking=tts.is_speaking if config.audio.barge_in_enabled else None,
+        on_barge_in=tts.stop_speaking if config.audio.barge_in_enabled else None,
     )
 
     rehydrate_timers(tts, log)

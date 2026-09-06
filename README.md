@@ -49,7 +49,15 @@ on whatever's currently playing without needing this — Spotify tracks
 that itself.)
 
 Say "stop" (or "cancel", "be quiet") anytime to interrupt whatever Ash
-is currently saying.
+is currently saying — or just start talking over it (barge-in): if you
+speak while Ash is mid-response, it stops and starts listening to what
+you're saying instead, no wake word needed. This is plain VAD-based
+speech detection with no acoustic echo cancellation, so on hardware
+where the mic picks up the speakers directly (no headset, a laptop's
+built-in mic sitting right next to its speakers), Ash's own voice can
+occasionally trigger a false barge-in on itself. Set
+`audio.barge_in_enabled: false` in `config/config.yaml` if that happens
+on your setup.
 
 ## Search
 
