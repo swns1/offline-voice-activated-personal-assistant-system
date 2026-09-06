@@ -18,6 +18,7 @@ from ash.audio.stt import SpeechToText
 from ash.audio.tts import TtsWorker
 from ash.audio.wake_word import WakeWordDetector
 from ash.config import Config, load_config
+from ash.registry.auto_build import refresh_registry_auto
 from ash.registry.loader import load_registry
 from ash.tray.icon import run_with_tray
 from ash.utils.autostart import sync_autostart
@@ -45,6 +46,13 @@ def main() -> None:
 def _run_assistant(config: Config, log: logging.Logger) -> None:
     tts = TtsWorker()
     tts.start()
+
+    if config.registry.auto_rescan_on_startup:
+        try:
+            count = refresh_registry_auto()
+            log.info("Rescanned Start Menu/Steam: %d auto-discovered entries", count)
+        except Exception:
+            log.exception("Auto-rescan of registry.auto.yaml failed; using existing file")
 
     print("Loading speech-to-text model...")
     stt = SpeechToText()

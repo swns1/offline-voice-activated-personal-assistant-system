@@ -194,7 +194,8 @@ wake_word:
 ## Configuration
 
 - `config/config.yaml` — wake word, audio, browser, hotkey, tray,
-  autostart, Spotify, search, calendar, and Ollama settings.
+  autostart, registry auto-rescan, Spotify, search, calendar, and Ollama
+  settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.
@@ -209,10 +210,20 @@ be hand-added to `config/registry.yaml`:
 ```
 
 This scans the Start Menu and, if installed, your Steam library, writing
-`config/registry.auto.yaml`. Re-run it after installing new apps/games.
-Entries in `config/registry.yaml` always take precedence over
-auto-discovered ones with the same name, so hand-author an entry there
-if you need to override how something launches.
+`config/registry.auto.yaml`. Entries in `config/registry.yaml` always
+take precedence over auto-discovered ones with the same name, so
+hand-author an entry there if you need to override how something
+launches.
+
+You don't normally need to run this yourself: Ash rescans automatically
+at every startup (`registry.auto_rescan_on_startup: true`, the default —
+takes about a second), so a game downloaded since Ash last ran is
+already voice-launchable the next time it starts. If you ask for
+something by name while Ash is still running from before the download,
+it also retries with a one-off rescan before giving up and saying it
+doesn't know what you mean — so most of the time you can just ask,
+restart or not. The script is there for forcing a rescan on demand, or
+if you've set `auto_rescan_on_startup: false` to control it manually.
 
 ## Testing
 

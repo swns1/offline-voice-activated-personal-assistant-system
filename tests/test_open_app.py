@@ -41,6 +41,14 @@ def _ambiguous_registry() -> Registry:
     ])
 
 
+def _no_new_entries_on_rescan(monkeypatch, registry: Registry):
+    """A no-match test isn't exercising the rescan-on-miss path -- stub
+    it out to a no-op rescan that finds nothing new, instead of doing a
+    real Start Menu/Steam scan and a real registry.auto.yaml write."""
+    monkeypatch.setattr(open_app, "refresh_registry_auto", lambda: 0)
+    monkeypatch.setattr(open_app, "load_registry", lambda: registry)
+
+
 def test_exact_match_launches_directly(monkeypatch):
     launched = _no_real_launches(monkeypatch)
     tts = FakeTts()
@@ -54,9 +62,11 @@ def test_exact_match_launches_directly(monkeypatch):
 
 def test_no_match_says_so(monkeypatch):
     _no_real_launches(monkeypatch)
+    registry = _registry()
+    _no_new_entries_on_rescan(monkeypatch, registry)
     tts = FakeTts()
 
-    result = open_app.handle_open("something nobody has heard of", _registry(), tts, log, Config())
+    result = open_app.handle_open("something nobody has heard of", registry, tts, log, Config())
 
     assert result == HandlerResult()
     assert any("not sure" in msg for msg in tts.said)
@@ -110,12 +120,63 @@ def test_no_match_with_ollama_enabled_falls_back_to_converse(monkeypatch):
     calls = []
     monkeypatch.setattr(open_app, "handle_converse",
                          lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    registry = _registry()
+    _no_new_entries_on_rescan(monkeypatch, registry)
     config = Config()
     config.ollama.enabled = True
     tts = FakeTts()
 
-    result = open_app.handle_open("what is the capital of france", _registry(), tts, log, config)
+    result = open_app.handle_open("what is the capital of france", registry, tts, log, config)
 
     assert result == HandlerResult()
     assert calls == ["what is the capital of france"]
     assert tts.said == []  # handle_open itself says nothing -- the fallback owns the reply
+
+
+def test_no_match_retries_after_rescan_and_finds_it(monkeypatch):
+    launched = _no_real_launches(monkeypatch)
+    registry = _registry()  # doesn't have "elden ring" yet
+    rescanned = Registry(apps=[
+        *registry.apps,
+        AppEntry(id="steam_123", names=["elden ring"], launch={"type": "exe", "target": "elden.exe"}),
+    ])
+    calls = []
+    monkeypatch.setattr(open_app, "refresh_registry_auto", lambda: calls.append("rescan") or 1)
+    monkeypatch.setattr(open_app, "load_registry", lambda: rescanned)
+    tts = FakeTts()
+
+    result = open_app.handle_open("elden ring", registry, tts, log, Config())
+
+    assert result == HandlerResult()
+    assert calls == ["rescan"]
+    assert launched[0]["target"] == "elden.exe"
+    assert any("Opening steam 123" in msg for msg in tts.said)
+    # the passed-in registry object was updated in place, not just a local copy
+    assert any(entry.id == "steam_123" for entry in registry.apps)
+
+
+def test_no_match_rescan_still_not_found_says_so(monkeypatch):
+    _no_real_launches(monkeypatch)
+    registry = _registry()
+    _no_new_entries_on_rescan(monkeypatch, registry)
+    tts = FakeTts()
+
+    result = open_app.handle_open("something nobody has heard of", registry, tts, log, Config())
+
+    assert result == HandlerResult()
+    assert any("not sure" in msg for msg in tts.said)
+
+
+def test_no_match_rescan_failure_is_swallowed(monkeypatch):
+    _no_real_launches(monkeypatch)
+
+    def _boom():
+        raise RuntimeError("scan failed")
+
+    monkeypatch.setattr(open_app, "refresh_registry_auto", _boom)
+    tts = FakeTts()
+
+    result = open_app.handle_open("something nobody has heard of", _registry(), tts, log, Config())
+
+    assert result == HandlerResult()
+    assert any("not sure" in msg for msg in tts.said)

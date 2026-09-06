@@ -8,6 +8,8 @@ from ash.launchers.exe_launcher import ExeLauncher
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_app
 from ash.nlu.matcher import MatchResult, match_app, match_candidates
+from ash.registry.auto_build import refresh_registry_auto
+from ash.registry.loader import load_registry
 from ash.registry.schema import Registry
 
 _LAUNCHERS = [ExeLauncher(), UriLauncher()]
@@ -21,6 +23,8 @@ _AMBIGUITY_MARGIN = 5.0
 def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
     result = match_app(target, registry)
     if result is None:
+        result = _retry_after_rescan(target, registry, log)
+    if result is None:
         log.info("No match for open target: %r", target)
         if config.ollama.enabled:
             return handle_converse(target, registry, tts, log, config)
@@ -33,6 +37,27 @@ def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Lo
             return _ask_which_app(candidates, tts, log)
 
     return _launch_entry(result, target, tts, log)
+
+
+def _retry_after_rescan(target: str, registry: Registry, log: logging.Logger) -> MatchResult | None:
+    """No match on the first try -- it may be a game/app installed since
+    Ash last started (the Start Menu/Steam scan only runs at startup by
+    default, see RegistryConfig.auto_rescan_on_startup). Rescan once and
+    retry before giving up, so a freshly-downloaded Steam game is
+    voice-launchable without restarting Ash. Updates `registry.apps` in
+    place so the rest of this session benefits too, not just this call.
+    """
+    try:
+        refresh_registry_auto()
+        fresh = load_registry()
+    except Exception:
+        log.exception("Rescan-on-miss failed for open target %r", target)
+        return None
+    registry.apps = fresh.apps
+    result = match_app(target, registry)
+    if result is not None:
+        log.info("Rescan-on-miss found %r for target %r", result.entry.id, target)
+    return result
 
 
 def _launch_entry(result: MatchResult, target: str, tts: TtsWorker, log: logging.Logger) -> HandlerResult:

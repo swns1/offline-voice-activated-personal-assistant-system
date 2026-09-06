@@ -78,6 +78,16 @@ class HotkeyConfig(BaseModel):
     toggle_mute: str | None = "ctrl+alt+m"
 
 
+class RegistryConfig(BaseModel):
+    # Rescans the Start Menu + Steam library and rewrites
+    # registry.auto.yaml on every startup, so a game/app installed since
+    # Ash last started is voice-launchable without a manual
+    # scripts/build_registry_auto.py run. Takes about a second; set to
+    # false to skip it (e.g. if you'd rather control exactly when the
+    # scan runs).
+    auto_rescan_on_startup: bool = True
+
+
 class OllamaConfig(BaseModel):
     enabled: bool = False
     host: str = "http://localhost:11434"
@@ -104,6 +114,7 @@ class Config(BaseModel):
     ollama: OllamaConfig = OllamaConfig()
     tray: TrayConfig = TrayConfig()
     hotkey: HotkeyConfig = HotkeyConfig()
+    registry: RegistryConfig = RegistryConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

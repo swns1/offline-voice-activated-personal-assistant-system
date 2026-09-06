@@ -32,6 +32,17 @@ tray:
   # (it launches via pythonw.exe). Harmless to leave on from a terminal.
   enabled: true
 
+registry:
+  # Rescans the Start Menu + Steam library and rewrites
+  # registry.auto.yaml on every startup (~1 second), so a game/app
+  # installed since Ash last ran is voice-launchable without a manual
+  # scripts/build_registry_auto.py run. (Ash also retries a single
+  # rescan on the spot if a spoken app name doesn't match anything --
+  # see ash/actions/open_app.py -- so this mainly controls the startup
+  # case.) Set to false to only ever rescan when you run that script
+  # yourself.
+  auto_rescan_on_startup: true
+
 # Launch Ash automatically at login. Applied on every startup (edit this
 # and restart Ash -- no separate step needed), via the Windows Registry
 # Run key -- see ash/utils/autostart.py.
