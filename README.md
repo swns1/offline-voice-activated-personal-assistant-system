@@ -3,14 +3,16 @@
 A local, fully-offline, wake-word-activated voice assistant for Windows.
 
 Say the wake word, speak a command, and Ash opens an app/game, answers
-a question, controls Spotify, adjusts the volume, sets timers/reminders,
-locks/sleeps/shuts down the PC, or — for anything else — asks a local AI
-model. Transcription, wake-word detection, and text-to-speech all run
-locally; nothing is sent to a cloud API. The only network calls Ash ever
-makes are to DuckDuckGo's free Instant Answer API (for "what is X"-style
-questions — no account/key, can be turned off), Spotify's API (only if
-you use Spotify commands), and your own local Ollama server (only if you
-enable it) — never anything else, and never your files.
+a question, controls Spotify, checks/adds to your calendar, adjusts the
+volume, sets timers/reminders and routines, locks/sleeps/shuts down the
+PC, or — for anything else — asks a local AI model. Transcription,
+wake-word detection, and text-to-speech all run locally; nothing is
+sent to a cloud API. The only network calls Ash ever makes are to
+DuckDuckGo's free Instant Answer API (for "what is X"-style questions —
+no account/key, can be turned off), Spotify's API (only if you use
+Spotify commands), and your own local Ollama server (only if you enable
+it) — never anything else, and never your files. Calendar access (if
+enabled) talks to your local desktop Outlook install, not the network.
 
 ## Setup
 
@@ -60,6 +62,16 @@ dictionary lookups. If it can't find an answer, it says so and suggests
 the explicit browser-opening phrasing instead: "search in browser for
 X" always opens a real search in your browser (with profile-picking, if
 you have more than one), regardless of whether DuckDuckGo has anything.
+
+## Calendar
+
+Reads and adds to your local desktop Outlook calendar via COM — off by
+default (`calendar.enabled: false`), and only works if Outlook itself is
+installed and configured (no separate account setup needed on Ash's
+side). "what's on my calendar" / "what's my next meeting" speaks what's
+coming up in the next 24 hours; "add to my calendar team meeting at
+3pm" always asks for confirmation with the actual details before
+writing anything ("Add 'team meeting' to your calendar at 3pm?").
 
 ## System control
 
@@ -117,7 +129,7 @@ control requires a Spotify Premium account.
 
 ## Configuration
 
-- `config/config.yaml` — wake word, audio, browser, hotkey, Spotify, search, and Ollama settings.
+- `config/config.yaml` — wake word, audio, browser, hotkey, Spotify, search, calendar, and Ollama settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.

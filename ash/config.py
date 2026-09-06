@@ -48,6 +48,14 @@ class SearchConfig(BaseModel):
     enabled: bool = True
 
 
+class CalendarConfig(BaseModel):
+    # Reads/writes your local desktop Outlook calendar via COM -- no
+    # account setup on Ash's side (unlike Spotify/Ollama), but it only
+    # works if Outlook itself is installed and configured, and it
+    # touches real personal data, so it defaults off like the others.
+    enabled: bool = False
+
+
 class OllamaConfig(BaseModel):
     enabled: bool = False
     host: str = "http://localhost:11434"
@@ -66,6 +74,7 @@ class Config(BaseModel):
     browser: BrowserConfig = BrowserConfig()
     spotify: SpotifyConfig = SpotifyConfig()
     search: SearchConfig = SearchConfig()
+    calendar: CalendarConfig = CalendarConfig()
     ollama: OllamaConfig = OllamaConfig()
 
 

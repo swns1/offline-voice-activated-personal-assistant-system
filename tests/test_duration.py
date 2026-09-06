@@ -105,6 +105,15 @@ def test_absolute_time_explicit_tomorrow_even_if_not_yet_passed():
     assert result.seconds == 25 * 3600  # 8am -> next day 9am, not today's 9am
 
 
+def test_absolute_time_target_time_is_exact():
+    # Regression: callers needing a precise timestamp (calendar events)
+    # must not have to re-derive it via datetime.now() + seconds, which
+    # rounds `seconds` to a whole number and can land ~0.X seconds short
+    # -- e.g. displaying "2:59pm" instead of "3pm".
+    result = parse_absolute_time("3pm", now=_at(9, 0))
+    assert result.target_time == datetime(2026, 6, 15, 15, 0)
+
+
 def test_absolute_time_extracts_message():
     result = parse_absolute_time("check the oven at 3pm", now=_at(9, 0))
     assert result.remainder == "check the oven"

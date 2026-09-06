@@ -27,7 +27,7 @@ _CONFIRM_REQUIRED: dict[str, str] = {
     "shutdown": "Are you sure you want to shut down? Say yes to confirm.",
 }
 
-_AFFIRMATIVE = {"yes", "yeah", "yep", "yes please", "confirm", "do it", "sure"}
+AFFIRMATIVE_ANSWERS = {"yes", "yeah", "yep", "yes please", "confirm", "do it", "sure"}
 
 
 def needs_confirmation(intent: str) -> bool:
@@ -39,7 +39,7 @@ def wrap_with_confirmation(
     registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
 ) -> HandlerResult:
     def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() not in _AFFIRMATIVE:
+        if answer.strip().lower() not in AFFIRMATIVE_ANSWERS:
             log.info("Confirmation declined for intent %r: %r", intent, answer)
             tts.say("Never mind.")
             return HandlerResult()

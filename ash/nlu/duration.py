@@ -31,6 +31,14 @@ _UNIT_SECONDS = {
 class ParsedDuration:
     seconds: int
     remainder: str  # leftover text after removing duration components -- the reminder message, if any
+    # The exact computed datetime, set only by parse_absolute_time (not
+    # parse_duration, which has no fixed target). Callers that need a
+    # precise timestamp (ash/actions/calendar.py) should use this rather
+    # than re-deriving `datetime.now() + timedelta(seconds=seconds)`
+    # themselves -- that re-derivation calls now() a second time and
+    # rounds `seconds` to a whole number, which can land a few hundred
+    # milliseconds short and display e.g. "2:59pm" instead of "3pm".
+    target_time: datetime | None = None
 
 
 def parse_duration(text: str) -> ParsedDuration | None:
@@ -99,7 +107,7 @@ def parse_absolute_time(text: str, now: datetime | None = None) -> ParsedDuratio
     remainder = _AT_RE.sub(" ", remainder)
     remainder = re.sub(r"\s+", " ", remainder).strip()
 
-    return ParsedDuration(seconds=seconds, remainder=remainder)
+    return ParsedDuration(seconds=seconds, remainder=remainder, target_time=target)
 
 
 @dataclass

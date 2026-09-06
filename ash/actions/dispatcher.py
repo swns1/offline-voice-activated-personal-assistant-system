@@ -1,5 +1,6 @@
 import logging
 
+from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.open_app import handle_open
 from ash.actions.search import handle_browser_search, handle_search
 from ash.actions.spotify import (
@@ -64,6 +65,8 @@ _HANDLERS = {
     "close_window": handle_close_window,
     "minimize_window": handle_minimize_window,
     "diagnostics": handle_diagnostics,
+    "calendar_list": handle_calendar_list,
+    "calendar_add": handle_calendar_add,
 }
 
 

@@ -25,6 +25,7 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
     ("timer_set", ["set a timer for", "set timer for", "start a timer for", "timer for",
                    "set an alarm for", "set alarm for", "start an alarm for"]),
     ("volume_set", ["set the volume to", "set volume to", "volume to"]),
+    ("calendar_add", ["add to my calendar", "add to calendar", "schedule an event"]),
     ("close_app", ["close", "quit", "exit"]),
     # "run"/"start" are also bare verbs in "open" below -- these phrases
     # need the extra "my"/"the" qualifier to stay ahead of it in the
@@ -106,6 +107,13 @@ _BARE_PHRASES: dict[str, str] = {
     "run diagnostics": "diagnostics",
     "run a diagnostic": "diagnostics",
     "self test": "diagnostics",
+
+    "what's on my calendar": "calendar_list",
+    "whats on my calendar": "calendar_list",
+    "what's my next meeting": "calendar_list",
+    "whats my next meeting": "calendar_list",
+    "do i have any meetings today": "calendar_list",
+    "check my calendar": "calendar_list",
 }
 
 

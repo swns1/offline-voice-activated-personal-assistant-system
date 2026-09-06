@@ -35,6 +35,13 @@ search:
   # point you at "search in browser for X" instead.
   enabled: true
 
+calendar:
+  # Reads/writes your local desktop Outlook calendar via COM. Requires
+  # Outlook itself to be installed and configured -- no separate account
+  # setup needed on Ash's side. Off by default since it touches real
+  # personal data.
+  enabled: false
+
 ollama:
   enabled: false
   # Ollama itself is a separate local install (https://ollama.com), not

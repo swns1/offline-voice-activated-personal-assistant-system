@@ -206,6 +206,18 @@ def test_bare_run_still_means_open_not_routine():
     assert cmd.target == "notepad"
 
 
+def test_calendar_add_verb_group():
+    cmd = parse("add to my calendar team meeting at 3pm")
+    assert cmd.intent == "calendar_add"
+    assert cmd.target == "team meeting at 3pm"
+
+
+def test_bare_calendar_list_phrases():
+    assert parse("what's on my calendar").intent == "calendar_list"
+    assert parse("what's my next meeting").intent == "calendar_list"
+    assert parse("check my calendar").intent == "calendar_list"
+
+
 def test_reminder_set_recurring_daily_phrasing():
     cmd = parse("remind me every day at 8am to take medicine")
     assert cmd.intent == "reminder_set"
