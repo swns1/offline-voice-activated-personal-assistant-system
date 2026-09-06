@@ -6,13 +6,20 @@ Model files aren't bundled in the pip package -- they're fetched once
 from the openWakeWord GitHub releases via `openwakeword.utils.download_models`
 (see scripts/download_wake_word_models.py). No custom-phrase compiler
 exists like Porcupine's Console: starting on a pretrained word (e.g.
-"hey_jarvis") is the practical v1 choice; a real "Hey Ash" phrase would
-need openWakeWord's local training pipeline.
+"hey_jarvis") is the practical default. A real "Hey Ash" phrase needs a
+model trained via openWakeWord's own training pipeline (see README) --
+`keyword` also accepts a path to that trained .onnx file directly
+(openWakeWord's own Model class already supports a file path here, not
+just a bundled name -- confirmed by reading its source rather than
+assumed), resolved via resolve_wake_word_keyword() the same way
+ash/utils/bootstrap.py's preflight check does.
 
 Windows note: tflite_runtime has no Windows wheels, so this always uses
 the "onnx" inference framework.
 """
 from openwakeword.model import Model
+
+from ash.utils.paths import resolve_wake_word_keyword
 
 FRAME_LENGTH = 1280  # 80ms @ 16kHz -- openWakeWord's recommended chunk size
 SAMPLE_RATE = 16_000
@@ -20,7 +27,8 @@ SAMPLE_RATE = 16_000
 
 class WakeWordDetector:
     def __init__(self, keyword: str = "hey_jarvis", threshold: float = 0.5):
-        self._model = Model(wakeword_models=[keyword], inference_framework="onnx")
+        resolved = resolve_wake_word_keyword(keyword)
+        self._model = Model(wakeword_models=[resolved], inference_framework="onnx")
         self._threshold = threshold
 
     @property

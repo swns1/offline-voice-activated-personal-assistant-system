@@ -64,6 +64,20 @@ class CalendarConfig(BaseModel):
     enabled: bool = False
 
 
+class TrayConfig(BaseModel):
+    # A system tray icon with a Quit option -- lets Ash run with no
+    # visible console window (the point of `autostart` below, which
+    # launches it via pythonw.exe). Harmless to leave on even when
+    # running from a terminal.
+    enabled: bool = True
+
+
+class HotkeyConfig(BaseModel):
+    # A global keyboard shortcut (works even when Ash isn't the focused
+    # window) that toggles mute -- set to null to disable it.
+    toggle_mute: str | None = "ctrl+alt+m"
+
+
 class OllamaConfig(BaseModel):
     enabled: bool = False
     host: str = "http://localhost:11434"
@@ -88,6 +102,13 @@ class Config(BaseModel):
     search: SearchConfig = SearchConfig()
     calendar: CalendarConfig = CalendarConfig()
     ollama: OllamaConfig = OllamaConfig()
+    tray: TrayConfig = TrayConfig()
+    hotkey: HotkeyConfig = HotkeyConfig()
+    # Launch Ash automatically at login (via the Windows Registry Run
+    # key -- see ash/utils/autostart.py). Applied on every startup, so
+    # editing this and restarting Ash is enough; no separate script
+    # needed (though scripts/apply_autostart.py exists for convenience).
+    autostart: bool = False
 
 
 def load_config(path: Path = CONFIG_PATH) -> Config:

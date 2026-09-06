@@ -46,6 +46,24 @@ def _set_mute(muted: bool) -> None:
     _with_volume_interface(lambda interface: interface.SetMute(1 if muted else 0, None))
 
 
+def _get_mute() -> bool:
+    return bool(_with_volume_interface(lambda interface: interface.GetMute()))
+
+
+def toggle_mute(tts: TtsWorker, log: logging.Logger) -> None:
+    """For the global keyboard hotkey (ash/utils/hotkey.py) -- no voice
+    command triggers this, so no target/registry/config plumbing, just
+    enough to give spoken feedback."""
+    try:
+        muted = _get_mute()
+        _set_mute(not muted)
+    except Exception:
+        log.exception("Toggle mute failed")
+        tts.say("I couldn't toggle mute.")
+        return
+    tts.say("Muted." if not muted else "Unmuted.")
+
+
 def handle_volume_up(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
     try:
         new_level = _adjust(_STEP)

@@ -1,8 +1,11 @@
 wake_word:
   engine: openwakeword
   # Bundled pretrained openWakeWord model name, fully offline/free, no
-  # account needed. A real "Hey Ash" phrase would need local training
-  # (openWakeWord's synthetic-data pipeline) -- see README for notes.
+  # account needed. A real "Hey Ash" phrase needs a model trained via
+  # openWakeWord's own training pipeline -- see README. This value also
+  # accepts a path to that trained .onnx file directly, e.g.
+  # "models/hey_ash.onnx" (resolved relative to the project's models/
+  # folder) or an absolute path.
   keyword: hey_jarvis
   threshold: 0.5
 
@@ -19,8 +22,19 @@ browser:
   profile_directory: null   # set in Phase 8 once a profile is pinned
 
 hotkey:
+  # A global keyboard shortcut (works even when Ash isn't the focused
+  # window) that toggles mute. Set to null to disable it.
   toggle_mute: "ctrl+alt+m"
 
+tray:
+  # A system tray icon with a Quit option -- lets Ash run with no
+  # visible console window, which is the point of `autostart` below
+  # (it launches via pythonw.exe). Harmless to leave on from a terminal.
+  enabled: true
+
+# Launch Ash automatically at login. Applied on every startup (edit this
+# and restart Ash -- no separate step needed), via the Windows Registry
+# Run key -- see ash/utils/autostart.py.
 autostart: false
 
 spotify:

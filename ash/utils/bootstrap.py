@@ -1,14 +1,29 @@
 """Preflight checks run before the audio pipeline starts, so a missing
-one-time model download fails with an actionable message instead of a
-raw exception from deep inside openwakeword.
+one-time model download (or a missing custom-trained model file) fails
+with an actionable message instead of a raw exception from deep inside
+openwakeword.
 """
 import os
 import sys
 
 from openwakeword import get_pretrained_model_paths
 
+from ash.utils.paths import resolve_wake_word_keyword
+
 
 def check_wake_word_models(keyword: str, model_paths: list[str] | None = None) -> None:
+    if keyword.endswith(".onnx"):
+        resolved = resolve_wake_word_keyword(keyword)
+        if os.path.exists(resolved):
+            return
+        print(
+            f"Custom wake-word model file not found: {resolved}\n"
+            "Check wake_word.keyword in config/config.yaml, or train one "
+            "via openWakeWord's own pipeline -- see README.\n",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     if model_paths is None:
         model_paths = get_pretrained_model_paths(inference_framework="onnx")
 

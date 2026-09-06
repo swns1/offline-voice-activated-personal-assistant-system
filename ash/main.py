@@ -3,16 +3,26 @@
 Phase 5 milestone: wake-word triggered instead of a keypress. Saying
 the configured keyword starts a VAD-gated recording, which is
 transcribed and dispatched exactly as in Phase 3/4.
+
+_run_assistant() is the actual listening loop, split out from main()
+so it can run on a background thread when the tray icon is enabled --
+pystray's Windows backend needs to own the calling thread's message
+loop (see ash/tray/icon.py).
 """
+import logging
+
 from ash.actions.dispatcher import dispatch
 from ash.actions.timers import rehydrate as rehydrate_timers
 from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
 from ash.audio.tts import TtsWorker
 from ash.audio.wake_word import WakeWordDetector
-from ash.config import load_config
+from ash.config import Config, load_config
 from ash.registry.loader import load_registry
+from ash.tray.icon import run_with_tray
+from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
+from ash.utils.hotkey import register_mute_hotkey
 from ash.utils.logging_setup import setup_logging
 
 
@@ -21,6 +31,18 @@ def main() -> None:
     config = load_config()
     check_wake_word_models(config.wake_word.keyword)
 
+    try:
+        sync_autostart(config.autostart)
+    except Exception:
+        log.exception("Failed to sync autostart registry setting")
+
+    if config.tray.enabled:
+        run_with_tray(lambda: _run_assistant(config, log), log)
+    else:
+        _run_assistant(config, log)
+
+
+def _run_assistant(config: Config, log: logging.Logger) -> None:
     tts = TtsWorker()
     tts.start()
 
@@ -42,6 +64,9 @@ def main() -> None:
         is_speaking=tts.is_speaking if config.audio.barge_in_enabled else None,
         on_barge_in=tts.stop_speaking if config.audio.barge_in_enabled else None,
     )
+
+    if config.hotkey.toggle_mute:
+        register_mute_hotkey(config.hotkey.toggle_mute, tts, log)
 
     rehydrate_timers(tts, log)
     tts.say("Ash is listening.")

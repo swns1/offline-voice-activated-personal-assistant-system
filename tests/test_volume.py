@@ -30,6 +30,9 @@ class FakeInterface:
     def SetMute(self, muted, _guid):
         self.muted = bool(muted)
 
+    def GetMute(self):
+        return int(self.muted)
+
 
 def _patched(monkeypatch, interface):
     monkeypatch.setattr(volume, "_with_volume_interface", lambda fn: fn(interface))
@@ -119,6 +122,39 @@ def test_unmute(monkeypatch):
 
     assert interface.muted is False
     assert tts.said == ["Unmuted."]
+
+
+def test_toggle_mute_mutes_when_unmuted(monkeypatch):
+    interface = FakeInterface(muted=False)
+    _patched(monkeypatch, interface)
+    tts = FakeTts()
+
+    volume.toggle_mute(tts, log)
+
+    assert interface.muted is True
+    assert tts.said == ["Muted."]
+
+
+def test_toggle_mute_unmutes_when_muted(monkeypatch):
+    interface = FakeInterface(muted=True)
+    _patched(monkeypatch, interface)
+    tts = FakeTts()
+
+    volume.toggle_mute(tts, log)
+
+    assert interface.muted is False
+    assert tts.said == ["Unmuted."]
+
+
+def test_toggle_mute_swallows_exceptions(monkeypatch):
+    def boom(fn):
+        raise RuntimeError("no audio device")
+    monkeypatch.setattr(volume, "_with_volume_interface", boom)
+    tts = FakeTts()
+
+    volume.toggle_mute(tts, log)  # must not raise
+
+    assert tts.said == ["I couldn't toggle mute."]
 
 
 def test_volume_up_swallows_exceptions(monkeypatch):

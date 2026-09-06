@@ -32,9 +32,14 @@ startup and will tell you to run this if they're missing.
 .venv\Scripts\python.exe -m ash
 ```
 
+A tray icon appears (right-click for "Open logs folder" / "Quit Ash") —
+this is the normal way to stop Ash instead of Ctrl+C once it's not
+running in a visible console (see "Run at login" below). Set
+`tray.enabled: false` in `config/config.yaml` to turn it off.
+
 Speak the configured wake word (`hey_jarvis` by default — see
 `config/config.yaml`), then a command such as "open notepad" or "what
-is the Eiffel Tower". Ctrl+C to quit.
+is the Eiffel Tower".
 
 If a command is ambiguous (e.g. two similarly-named apps, or more than
 one browser profile with none pinned in config), Ash asks a clarifying
@@ -153,9 +158,43 @@ needs a Spotify Developer Dashboard app:
 The first Spotify command opens a browser to authorize once; playback
 control requires a Spotify Premium account.
 
+## Run at login, mute hotkey, and a custom wake word
+
+**Autostart**: set `autostart: true` in `config/config.yaml` and restart
+Ash once — it adds itself to your per-user Windows Registry Run key,
+launching via `pythonw.exe` (no console window) from then on. Applied
+automatically on every startup (so toggling the config value and
+restarting Ash is enough), or run
+`.venv\Scripts\python.exe scripts\apply_autostart.py` to apply it
+without starting the full assistant. No admin rights needed (it's a
+per-user, not machine-wide, registry key).
+
+**Mute hotkey**: `hotkey.toggle_mute` (default `ctrl+alt+m`) toggles
+mute from anywhere, without needing to be talking to Ash — set it to
+`null` to disable. Heads up: this uses the `keyboard` package's global
+hook, which is known to sometimes need Administrator privileges to
+actually receive keypresses on some Windows setups even though
+registering it never errors either way — if the hotkey doesn't respond,
+try running Ash as Administrator.
+
+**A real "Hey Ash" wake word**: Ash ships with openWakeWord's
+pretrained `hey_jarvis` model as a stand-in — training an actual "Hey
+Ash" model needs openWakeWord's own training pipeline (`torch`,
+`torchaudio`, `speechbrain`, and multi-GB datasets — a genuinely heavy,
+separate undertaking, not something this project installs or runs for
+you). See openWakeWord's own docs/training notebook
+(https://github.com/dscripka/openWakeWord) for how to train one. Once
+you have a trained `.onnx` file, point Ash at it directly:
+
+```yaml
+wake_word:
+  keyword: models/hey_ash.onnx   # relative to the project folder, or an absolute path
+```
+
 ## Configuration
 
-- `config/config.yaml` — wake word, audio, browser, hotkey, Spotify, search, calendar, and Ollama settings.
+- `config/config.yaml` — wake word, audio, browser, hotkey, tray,
+  autostart, Spotify, search, calendar, and Ollama settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.

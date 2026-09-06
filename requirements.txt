@@ -37,8 +37,11 @@ win11toast
 # Screen understanding (screenshot capture for the Ollama vision model)
 Pillow
 
-# Phase 10: tray icon (still unbuilt -- pystray unused)
+# Phase 10: tray icon
 pystray
+
+# Mute keyboard hotkey
+keyboard
 
 # Phase 2 (recording cutoff)
 webrtcvad-wheels

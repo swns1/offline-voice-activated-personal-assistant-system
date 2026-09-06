@@ -19,3 +19,17 @@ TIMERS_STATE_PATH = APP_DATA_DIR / "timers.json"
 def ensure_app_data_dirs() -> None:
     APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def resolve_wake_word_keyword(keyword: str) -> str:
+    """A bundled openWakeWord model name (e.g. "hey_jarvis") is passed
+    straight through -- openWakeWord resolves those itself. A
+    custom-trained model (e.g. from openWakeWord's own training
+    pipeline/notebook -- see README) is referenced by a .onnx file path;
+    if that path is relative, resolve it against MODELS_DIR so it works
+    regardless of the process's current working directory (relevant for
+    autostart, which launches via a Registry Run key with an
+    unpredictable CWD). An already-absolute .onnx path is left alone."""
+    if keyword.endswith(".onnx") and not os.path.isabs(keyword):
+        return str(MODELS_DIR / keyword)
+    return keyword
