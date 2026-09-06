@@ -24,6 +24,7 @@ from ash.actions.timers import (
     handle_timer_list,
     handle_timer_set,
 )
+from ash.actions.vision import handle_screen_describe
 from ash.actions.volume import (
     handle_mute,
     handle_unmute,
@@ -67,6 +68,7 @@ _HANDLERS = {
     "diagnostics": handle_diagnostics,
     "calendar_list": handle_calendar_list,
     "calendar_add": handle_calendar_add,
+    "screen_describe": handle_screen_describe,
 }
 
 

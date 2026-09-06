@@ -26,6 +26,8 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
                    "set an alarm for", "set alarm for", "start an alarm for"]),
     ("volume_set", ["set the volume to", "set volume to", "volume to"]),
     ("calendar_add", ["add to my calendar", "add to calendar", "schedule an event"]),
+    ("screen_describe", ["what does my screen say about", "look at my screen and tell me",
+                          "check my screen and tell me"]),
     ("close_app", ["close", "quit", "exit"]),
     # "run"/"start" are also bare verbs in "open" below -- these phrases
     # need the extra "my"/"the" qualifier to stay ahead of it in the
@@ -114,6 +116,14 @@ _BARE_PHRASES: dict[str, str] = {
     "whats my next meeting": "calendar_list",
     "do i have any meetings today": "calendar_list",
     "check my calendar": "calendar_list",
+
+    "what's on my screen": "screen_describe",
+    "whats on my screen": "screen_describe",
+    "describe my screen": "screen_describe",
+    "describe the screen": "screen_describe",
+    "read my screen": "screen_describe",
+    "what am i looking at": "screen_describe",
+    "look at my screen": "screen_describe",
 }
 
 

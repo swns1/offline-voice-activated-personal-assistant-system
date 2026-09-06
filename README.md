@@ -109,7 +109,25 @@ mean" — no cloud, no account, runs entirely on your PC via
 3. Set `ollama.enabled: true` in `config/config.yaml`.
 
 Replies can take a few seconds on CPU — Ash says "Let me think" while it
-waits. If Ollama isn't running, Ash says so instead of crashing.
+waits. If Ollama isn't running, Ash says so instead of crashing. It
+remembers the last few exchanges, so a follow-up like "what's its
+population" after "what's the capital of France" works; say "stop" to
+end the conversation early.
+
+### Screen understanding
+
+"what's on my screen" / "describe my screen" / "read my screen" takes
+a screenshot and describes it; "look at my screen and tell me what
+this error means" asks something specific instead of a general
+description. Uses a separate model pull from your text model, since
+`llama3.2` itself is text-only:
+
+```
+ollama pull llama3.2-vision
+```
+
+(or set `ollama.vision_model` in `config/config.yaml` to whatever
+vision model you'd rather use, e.g. `moondream` for something lighter).
 
 ## Spotify
 

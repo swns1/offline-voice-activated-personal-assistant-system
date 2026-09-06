@@ -34,9 +34,11 @@ requests
 # Windows toast notifications for timers/reminders
 win11toast
 
-# Phase 10: tray icon
-pystray
+# Screen understanding (screenshot capture for the Ollama vision model)
 Pillow
+
+# Phase 10: tray icon (still unbuilt -- pystray unused)
+pystray
 
 # Phase 2 (recording cutoff)
 webrtcvad-wheels

@@ -60,6 +60,10 @@ class OllamaConfig(BaseModel):
     enabled: bool = False
     host: str = "http://localhost:11434"
     model: str = "llama3.2"
+    # A separate pull from `model` -- vision-capable models (llama3.2
+    # ITSELF is text-only) are a different, usually larger download.
+    # Only used for "what's on my screen"-style requests.
+    vision_model: str = "llama3.2-vision"
     system_prompt: str = (
         "You are Ash, a local voice assistant running entirely offline on "
         "the user's PC. Keep answers brief (1-3 sentences) since they will "

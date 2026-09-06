@@ -206,6 +206,18 @@ def test_bare_run_still_means_open_not_routine():
     assert cmd.target == "notepad"
 
 
+def test_bare_screen_describe_phrases():
+    assert parse("what's on my screen").intent == "screen_describe"
+    assert parse("describe my screen").intent == "screen_describe"
+    assert parse("read my screen").intent == "screen_describe"
+
+
+def test_screen_describe_with_specific_question():
+    cmd = parse("look at my screen and tell me what this error means")
+    assert cmd.intent == "screen_describe"
+    assert cmd.target == "what this error means"
+
+
 def test_calendar_add_verb_group():
     cmd = parse("add to my calendar team meeting at 3pm")
     assert cmd.intent == "calendar_add"
