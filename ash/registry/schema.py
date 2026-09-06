@@ -31,3 +31,8 @@ class IntentConfig(BaseModel):
 class Registry(BaseModel):
     apps: list[AppEntry] = Field(default_factory=list)
     intents: dict[str, IntentConfig] = Field(default_factory=dict)
+    # routine name -> ordered list of {"intent": ..., "target": ...} steps,
+    # run in sequence by ash/actions/routines.py. Loosely typed like
+    # AppEntry.launch, for the same reason -- a step is just whatever its
+    # intent's handler already expects.
+    routines: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)

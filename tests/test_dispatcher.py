@@ -95,6 +95,34 @@ def test_chain_resolution_failure_falls_back_to_normal_single_intent_path(monkey
     assert calls == ["notepad and then close it"]
 
 
+def test_routine_run_executes_configured_steps(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "volume_set",
+                         lambda target, registry, tts, log, config: calls.append(("volume_set", target)) or HandlerResult())
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+                         lambda target, registry, tts, log, config: calls.append(("open", target)) or HandlerResult())
+    registry = Registry(routines={"good morning": [
+        {"intent": "volume_set", "target": "30"},
+        {"intent": "open", "target": "spotify"},
+    ]})
+
+    result = dispatch("run my good morning routine", registry, FakeTts(), log, Config())
+
+    assert result == HandlerResult()
+    assert calls == [("volume_set", "30"), ("open", "spotify")]
+
+
+def test_routine_run_unknown_routine_says_so():
+    tts = FakeTts()
+
+    result = dispatch("run my bedtime routine", Registry(), tts, log, Config())
+
+    assert result == HandlerResult()
+    assert "don't have a routine" in tts.said[-1]
+
+
 def test_shutdown_intent_is_intercepted_for_confirmation_before_the_handler_runs(monkeypatch):
     import ash.actions.dispatcher as dispatcher_module
 

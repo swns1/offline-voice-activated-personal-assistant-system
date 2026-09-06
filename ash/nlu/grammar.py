@@ -23,6 +23,11 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
                    "set an alarm for", "set alarm for", "start an alarm for"]),
     ("volume_set", ["set the volume to", "set volume to", "volume to"]),
     ("close_app", ["close", "quit", "exit"]),
+    # "run"/"start" are also bare verbs in "open" below -- these phrases
+    # need the extra "my"/"the" qualifier to stay ahead of it in the
+    # list, or "run my good morning routine" would be swallowed as
+    # "open" trying to launch an app named "my good morning routine".
+    ("routine_run", ["run my", "run the", "start my", "start the"]),
     ("open", ["open", "launch", "start", "run", "play"]),
 ]
 

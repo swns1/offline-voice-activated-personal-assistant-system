@@ -1,6 +1,13 @@
 from datetime import datetime
 
-from ash.nlu.duration import format_duration, parse_absolute_time, parse_duration
+from ash.nlu.duration import (
+    format_duration,
+    format_time_of_day,
+    next_occurrence,
+    parse_absolute_time,
+    parse_duration,
+    parse_recurrence,
+)
 
 
 def test_simple_minutes():
@@ -109,3 +116,59 @@ def test_absolute_time_no_time_present_returns_none():
 
 def test_absolute_time_bare_number_without_am_pm_or_colon_returns_none():
     assert parse_absolute_time("in 15", now=_at(9, 0)) is None
+
+
+def test_parse_recurrence_every_day():
+    result = parse_recurrence("every day at 8am to take medicine")
+    assert result.schedule == "daily"
+    assert result.hour == 8
+    assert result.minute == 0
+    assert result.remainder == "take medicine"
+
+
+def test_parse_recurrence_every_weekday():
+    result = parse_recurrence("every weekday at 9:30am check email")
+    assert result.schedule == "weekdays"
+    assert result.hour == 9
+    assert result.minute == 30
+
+
+def test_parse_recurrence_every_morning_means_daily():
+    result = parse_recurrence("every morning at 7am")
+    assert result.schedule == "daily"
+    assert result.hour == 7
+
+
+def test_parse_recurrence_no_every_returns_none():
+    assert parse_recurrence("at 8am take medicine") is None
+
+
+def test_parse_recurrence_no_time_returns_none():
+    assert parse_recurrence("every day take medicine") is None
+
+
+def test_next_occurrence_daily_later_today():
+    # Monday 9am, asking for 3pm daily -> today at 3pm
+    result = next_occurrence(15, 0, "daily", now=_at(9, 0))
+    assert result == datetime(2026, 6, 15, 15, 0)
+
+
+def test_next_occurrence_daily_already_passed_rolls_to_tomorrow():
+    result = next_occurrence(9, 0, "daily", now=_at(15, 0))
+    assert result == datetime(2026, 6, 16, 9, 0)
+
+
+def test_next_occurrence_weekdays_skips_weekend():
+    # 2026-06-15 is a Monday; Friday 2026-06-19 at 9am, asking again
+    # after it fires should land on Monday 2026-06-22, not Saturday.
+    friday_after_fire = datetime(2026, 6, 19, 9, 1)
+    result = next_occurrence(9, 0, "weekdays", now=friday_after_fire)
+    assert result == datetime(2026, 6, 22, 9, 0)
+
+
+def test_format_time_of_day():
+    assert format_time_of_day(8, 0) == "8am"
+    assert format_time_of_day(15, 0) == "3pm"
+    assert format_time_of_day(9, 30) == "9:30am"
+    assert format_time_of_day(0, 0) == "12am"
+    assert format_time_of_day(12, 0) == "12pm"

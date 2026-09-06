@@ -29,3 +29,14 @@ intents:
       type: browser_search
       engine_url: "https://www.google.com/search?q={query}"
       browser: default   # becomes "chrome"/"edge" + profile_directory once Phase 8 pins a profile
+
+# Named multi-step macros, triggered by "run my <name> routine" / "start
+# the <name> routine" -- each step is {intent, target}, using the same
+# intents dispatch() already knows about (open, search, volume_set,
+# timer_set, ...). Uncomment and edit to try one:
+#
+# routines:
+#   good morning:
+#     - {intent: volume_set, target: "30"}
+#     - {intent: open, target: "spotify"}
+#     - {intent: timer_list, target: ""}

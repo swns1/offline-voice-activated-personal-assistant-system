@@ -160,3 +160,29 @@ def test_bare_diagnostics():
     assert parse("are you working").intent == "diagnostics"
     assert parse("run diagnostics").intent == "diagnostics"
     assert parse("self test").intent == "diagnostics"
+
+
+def test_routine_run_verb_group():
+    cmd = parse("run my good morning routine")
+    assert cmd.intent == "routine_run"
+    assert cmd.target == "good morning routine"
+
+
+def test_routine_run_start_the_phrasing():
+    cmd = parse("start the good morning routine")
+    assert cmd.intent == "routine_run"
+    assert cmd.target == "good morning routine"
+
+
+def test_bare_run_still_means_open_not_routine():
+    # "run notepad" has no "my"/"the" qualifier -- must stay "open",
+    # not get swallowed by the routine_run verb group.
+    cmd = parse("run notepad")
+    assert cmd.intent == "open"
+    assert cmd.target == "notepad"
+
+
+def test_reminder_set_recurring_daily_phrasing():
+    cmd = parse("remind me every day at 8am to take medicine")
+    assert cmd.intent == "reminder_set"
+    assert cmd.target == "every day at 8am to take medicine"

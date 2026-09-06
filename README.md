@@ -47,10 +47,16 @@ is currently saying.
 - Windows: "close discord" (closes the app), "close this window" /
   "minimize this window" (acts on whatever's currently focused)
 - Timers: "set a timer for 5 minutes", "remind me at 3pm to call mom",
-  "cancel my timer", "list my timers" — timers survive a restart; if one
-  should have fired while Ash was closed, it's announced as soon as Ash
-  starts back up. Alerts also show as a Windows notification, not just
-  spoken.
+  "remind me every day at 8am to take medicine" (recurring — daily or
+  "every weekday"), "cancel my timer", "list my timers" — timers survive
+  a restart; if one should have fired while Ash was closed, it's
+  announced as soon as Ash starts back up (a recurring one reschedules
+  itself for its next occurrence). Alerts also show as a Windows
+  notification, not just spoken.
+- Routines: "run my `<name>` routine" runs a named sequence of steps you
+  define under `routines:` in `config/registry.yaml` (e.g. a "good
+  morning" routine that sets the volume, opens Spotify, and lists your
+  timers — see the commented example in that file).
 - Power: "lock my computer", "go to sleep", "shut down" (asks "are you
   sure?" before actually shutting down)
 - Diagnostics: "are you working" / "run diagnostics" checks the

@@ -14,6 +14,7 @@ from ash.actions.chain import looks_like_chain, resolve_chain, run_chain
 from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
+from ash.actions.routines import find_routine, resolve_routine_name
 from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.timers import (
@@ -73,6 +74,17 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         log.info("Chain-like utterance %r didn't resolve to a usable chain, handling as one command", text)
 
     command = parse(text)
+
+    if command.intent == "routine_run":
+        name = resolve_routine_name(command.target)
+        steps = find_routine(name, registry)
+        if steps is None:
+            log.info("No routine matches %r", name)
+            tts.say(f"I don't have a routine called {name}.")
+            return HandlerResult()
+        log.info("Running routine %r (%d steps)", name, len(steps))
+        return run_chain(steps, _HANDLERS, registry, tts, log, config)
+
     handler = _HANDLERS.get(command.intent)
     if handler is None:
         log.info("Unrecognized command: %r", text)

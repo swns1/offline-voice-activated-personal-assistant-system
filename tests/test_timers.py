@@ -312,6 +312,95 @@ def test_rehydrate_removes_elapsed_entry_from_disk():
     assert saved == []
 
 
+def test_reminder_set_recurring_daily():
+    tts = FakeTts()
+
+    result = timers.handle_reminder_set("every day at 8am to take medicine", Registry(), tts, log, Config())
+
+    assert result == HandlerResult()
+    assert len(FakeTimer.instances) == 1
+    assert "take medicine" in tts.said[-1]
+    assert "every day at 8am" in tts.said[-1]
+
+
+def test_reminder_set_recurring_weekdays():
+    tts = FakeTts()
+
+    timers.handle_reminder_set("every weekday at 9am check email", Registry(), tts, log, Config())
+
+    assert "every weekday at 9am" in tts.said[-1]
+    assert "check email" in tts.said[-1]
+
+
+def test_recurring_reminder_reschedules_itself_after_firing():
+    tts = FakeTts()
+    timers.handle_reminder_set("every day at 8am to take medicine", Registry(), tts, log, Config())
+    assert len(FakeTimer.instances) == 1
+
+    FakeTimer.instances[0].trigger()
+
+    # A second timer should now be scheduled for the next occurrence --
+    # the entry was NOT simply removed like a one-shot timer.
+    assert len(FakeTimer.instances) == 2
+    assert len(timers._active) == 1
+    assert "take medicine" in tts.said
+
+
+def test_recurring_reminder_persists_recurrence_to_disk():
+    tts = FakeTts()
+    timers.handle_reminder_set("every day at 8am to take medicine", Registry(), tts, log, Config())
+
+    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+
+    assert saved[0]["recurrence"] == {"schedule": "daily", "hour": 8, "minute": 0}
+
+
+def test_rehydrate_reschedules_a_recurring_reminder():
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{
+            "label": "take medicine",
+            "fires_at_wall": time.time() + 3600,
+            "recurrence": {"schedule": "daily", "hour": 8, "minute": 0},
+        }]),
+        encoding="utf-8",
+    )
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)
+
+    assert len(FakeTimer.instances) == 1
+    assert timers._active[list(timers._active.keys())[0]].recurrence == ("daily", 8, 0)
+
+
+def test_rehydrate_elapsed_recurring_reminder_reschedules_next_occurrence():
+    timers.TIMERS_STATE_PATH.write_text(
+        json.dumps([{
+            "label": "take medicine",
+            "fires_at_wall": time.time() - 3600,  # missed while Ash was down
+            "recurrence": {"schedule": "daily", "hour": 8, "minute": 0},
+        }]),
+        encoding="utf-8",
+    )
+    tts = FakeTts()
+
+    timers.rehydrate(tts, log)
+
+    assert tts.said == ["take medicine"]  # announced the missed one
+    assert len(FakeTimer.instances) == 1  # and rescheduled for the next occurrence
+    assert len(timers._active) == 1
+
+
+def test_timer_list_describes_recurring_reminder():
+    tts = FakeTts()
+    timers.handle_reminder_set("every day at 8am to take medicine", Registry(), tts, log, Config())
+
+    result = timers.handle_timer_list("", Registry(), tts, log, Config())
+
+    assert result == HandlerResult()
+    assert "take medicine" in tts.said[-1]
+    assert "every day at 8am" in tts.said[-1]
+
+
 def test_rehydrate_announces_elapsed_toast(monkeypatch):
     timers.TIMERS_STATE_PATH.write_text(
         json.dumps([{"label": "check the oven", "fires_at_wall": time.time() - 60}]),
