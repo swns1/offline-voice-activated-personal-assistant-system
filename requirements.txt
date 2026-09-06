@@ -31,6 +31,9 @@ spotipy
 # listed explicitly here since converse.py imports it directly.
 requests
 
+# Windows toast notifications for timers/reminders
+win11toast
+
 # Phase 10: tray icon
 pystray
 Pillow

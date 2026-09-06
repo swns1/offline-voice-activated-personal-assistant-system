@@ -48,6 +48,7 @@ def _reset_timers_state(monkeypatch):
     monkeypatch.setattr(timers, "_ids", itertools.count(1))
     FakeTimer.instances.clear()
     monkeypatch.setattr(timers.threading, "Timer", FakeTimer)
+    monkeypatch.setattr(timers, "show_toast", lambda title, body, log=None: None)
     yield
 
 
@@ -71,6 +72,17 @@ def test_timer_fires_and_speaks_message_then_clears():
 
     assert "check the oven" in tts.said[-1]
     assert len(timers._active) == 0
+
+
+def test_timer_fires_a_toast_notification(monkeypatch):
+    toasts = []
+    monkeypatch.setattr(timers, "show_toast", lambda title, body, log=None: toasts.append((title, body)))
+    tts = FakeTts()
+    timers.handle_timer_set("5 minutes to check the oven", Registry(), tts, log, Config())
+
+    FakeTimer.instances[0].trigger()
+
+    assert toasts == [("Ash", "check the oven")]
 
 
 def test_timer_with_no_message_says_times_up():

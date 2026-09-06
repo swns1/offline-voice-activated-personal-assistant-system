@@ -15,6 +15,7 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import format_duration, parse_duration
 from ash.registry.schema import Registry
+from ash.utils.notifications import show_toast
 
 _MAX_ACTIVE_TIMERS = 20
 
@@ -43,7 +44,9 @@ def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger) -> 
     def fire():
         with _lock:
             _active.pop(timer_id, None)
-        tts.say(label or "Time's up.")
+        message = label or "Time's up."
+        tts.say(message)
+        show_toast("Ash", message, log)
         log.info("Timer %d fired: %r", timer_id, label)
 
     t = threading.Timer(seconds, fire)
