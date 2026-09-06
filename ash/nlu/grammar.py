@@ -86,6 +86,12 @@ _BARE_PHRASES: dict[str, str] = {
     "minimize the window": "minimize_window",
     "minimize this": "minimize_window",
     "minimize": "minimize_window",
+
+    "are you working": "diagnostics",
+    "are you ok": "diagnostics",
+    "run diagnostics": "diagnostics",
+    "run a diagnostic": "diagnostics",
+    "self test": "diagnostics",
 }
 
 

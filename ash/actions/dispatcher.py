@@ -10,6 +10,7 @@ from ash.actions.spotify import (
     handle_spotify_resume,
     handle_spotify_skip,
 )
+from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
 from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
@@ -57,6 +58,7 @@ _HANDLERS = {
     "close_app": handle_close_app,
     "close_window": handle_close_window,
     "minimize_window": handle_minimize_window,
+    "diagnostics": handle_diagnostics,
 }
 
 

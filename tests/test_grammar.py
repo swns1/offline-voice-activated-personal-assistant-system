@@ -154,3 +154,9 @@ def test_bare_close_this_window():
 def test_bare_minimize():
     assert parse("minimize").intent == "minimize_window"
     assert parse("minimize this window").intent == "minimize_window"
+
+
+def test_bare_diagnostics():
+    assert parse("are you working").intent == "diagnostics"
+    assert parse("run diagnostics").intent == "diagnostics"
+    assert parse("self test").intent == "diagnostics"
