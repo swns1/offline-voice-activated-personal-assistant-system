@@ -26,6 +26,7 @@ from ash.actions.volume import (
     handle_volume_set,
     handle_volume_up,
 )
+from ash.actions.window import handle_close_app, handle_close_window, handle_minimize_window
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.grammar import parse
@@ -53,6 +54,9 @@ _HANDLERS = {
     "timer_cancel": handle_timer_cancel,
     "timer_list": handle_timer_list,
     "stop": handle_stop,
+    "close_app": handle_close_app,
+    "close_window": handle_close_window,
+    "minimize_window": handle_minimize_window,
 }
 
 

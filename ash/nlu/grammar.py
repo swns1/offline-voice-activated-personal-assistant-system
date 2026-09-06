@@ -22,6 +22,7 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
     ("timer_set", ["set a timer for", "set timer for", "start a timer for", "timer for",
                    "set an alarm for", "set alarm for", "start an alarm for"]),
     ("volume_set", ["set the volume to", "set volume to", "volume to"]),
+    ("close_app", ["close", "quit", "exit"]),
     ("open", ["open", "launch", "start", "run", "play"]),
 ]
 
@@ -77,6 +78,14 @@ _BARE_PHRASES: dict[str, str] = {
     "stop talking": "stop",
     "be quiet": "stop",
     "quiet": "stop",
+
+    "close this window": "close_window",
+    "close the window": "close_window",
+    "close this": "close_window",
+    "minimize this window": "minimize_window",
+    "minimize the window": "minimize_window",
+    "minimize this": "minimize_window",
+    "minimize": "minimize_window",
 }
 
 

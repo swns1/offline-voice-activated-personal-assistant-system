@@ -133,3 +133,24 @@ def test_cancel_my_timer_does_not_collide_with_bare_cancel():
     # "cancel" alone -> stop, but the longer exact phrase "cancel my
     # timer" is a distinct dict key and must still resolve separately.
     assert parse("cancel my timer").intent == "timer_cancel"
+
+
+def test_close_app_verb_group():
+    cmd = parse("close discord")
+    assert cmd.intent == "close_app"
+    assert cmd.target == "discord"
+
+
+def test_quit_and_exit_also_close_app():
+    assert parse("quit spotify").intent == "close_app"
+    assert parse("exit notepad").intent == "close_app"
+
+
+def test_bare_close_this_window():
+    assert parse("close this window").intent == "close_window"
+    assert parse("close this").intent == "close_window"
+
+
+def test_bare_minimize():
+    assert parse("minimize").intent == "minimize_window"
+    assert parse("minimize this window").intent == "minimize_window"
