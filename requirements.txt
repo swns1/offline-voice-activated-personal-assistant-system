@@ -47,6 +47,10 @@ pytesseract
 # imports it directly
 scipy
 
+# Guided desktop actions (click/type on screen) -- pure pip, no external
+# engine needed (unlike Tesseract/Ollama)
+pyautogui
+
 # Phase 10: tray icon
 pystray
 

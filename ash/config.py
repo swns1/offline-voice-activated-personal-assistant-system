@@ -106,6 +106,17 @@ class SecurityConfig(BaseModel):
     voice_match_threshold: float = 0.85
 
 
+class DesktopControlConfig(BaseModel):
+    # Lets Ash click/type on your screen based on OCR'd text labels
+    # ("click Save") -- the one feature in this codebase that directly
+    # manipulates your desktop. Off by default, on top of every action
+    # still requiring spoken confirmation even when enabled (and,
+    # if security.voice_gate_enabled, a voice-match check on that
+    # confirmation too). See ash/actions/desktop_control.py -- text-label
+    # only, can't target a bare icon; that's an intentional scope limit.
+    enabled: bool = False
+
+
 class RegistryConfig(BaseModel):
     # Rescans the Start Menu + Steam library and rewrites
     # registry.auto.yaml on every startup, so a game/app installed since
@@ -144,6 +155,7 @@ class Config(BaseModel):
     hotkey: HotkeyConfig = HotkeyConfig()
     registry: RegistryConfig = RegistryConfig()
     security: SecurityConfig = SecurityConfig()
+    desktop_control: DesktopControlConfig = DesktopControlConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

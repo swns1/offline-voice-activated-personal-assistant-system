@@ -62,6 +62,16 @@ security:
   # voice, especially on a short answer like a single word "yes").
   voice_match_threshold: 0.85
 
+desktop_control:
+  # Lets Ash click/type on your screen based on OCR'd text labels
+  # ("click Save") -- the one feature here that directly manipulates
+  # your desktop. Off by default; every action still asks "click 'X'?"
+  # first even when enabled. Needs the same Tesseract OCR engine as
+  # "read my screen" above. See README's "Guided desktop actions"
+  # section for the real scope limits (text labels only, no icons) and
+  # the display-scaling caveat.
+  enabled: false
+
 spotify:
   enabled: false
   # From a Spotify Developer Dashboard app you create yourself -- see

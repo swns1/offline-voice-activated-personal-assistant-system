@@ -222,6 +222,32 @@ runs fully offline with no model, so it works even without Ollama set
 up at all. Very long on-screen text is cut short with a spoken note
 rather than read in full.
 
+### Guided desktop actions (optional, off by default)
+
+"click Save" / "click the OK button" / "type my email address" let Ash
+actually operate your desktop, not just read it — Ash's version of the
+"computer use" pattern. It works by locating the exact text via the
+same OCR as above (needs Tesseract installed, see above), fuzzy-matched
+against what's visible, then moving the mouse and clicking, or typing
+wherever focus currently is. Set `desktop_control.enabled: true` in
+`config/config.yaml` to turn it on — off by default, deliberately more
+guarded than every other integration in this project, since it's the
+one feature that directly manipulates your PC:
+
+- Every single click/type still asks "click 'X'?" / "type 'Y'?" before
+  doing anything — naming exactly what it found, not a generic
+  yes/no. With `security.voice_gate_enabled` (see "Voice-verified
+  confirmation" above) also on, that confirmation needs to match your
+  enrolled voice too.
+- Text-label only: it can click a labeled button or menu item, not a
+  bare icon — that's an intentional scope limit, not a bug.
+- If two on-screen elements share the exact same label, only one is
+  targetable right now — there's no disambiguation prompt for this yet.
+- **Known limitation**: this hasn't been verified on a Windows display
+  running at non-100% scaling (125%/150%) — the screenshot's pixel
+  coordinates and the actual click coordinates could disagree there.
+  If clicks land in the wrong place, that's the first thing to check.
+
 ## Spotify
 
 Playback control ("spotify play X", "pause", "skip", "what's playing")
@@ -274,8 +300,8 @@ wake_word:
 ## Configuration
 
 - `config/config.yaml` — wake word, audio, browser, hotkey, tray,
-  autostart, registry auto-rescan, voice-verified confirmation, Spotify,
-  search, calendar, and Ollama settings.
+  autostart, registry auto-rescan, voice-verified confirmation, guided
+  desktop actions, Spotify, search, calendar, and Ollama settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.

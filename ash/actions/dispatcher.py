@@ -1,6 +1,7 @@
 import logging
 
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
+from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
 from ash.actions.open_app import handle_open
 from ash.actions.search import handle_browser_search, handle_search
@@ -73,6 +74,8 @@ _HANDLERS = {
     "calendar_add": handle_calendar_add,
     "screen_describe": handle_screen_describe,
     "screen_read_text": handle_screen_read_text,
+    "screen_click": handle_screen_click,
+    "screen_type": handle_screen_type,
     "memory_remember": handle_memory_remember,
     "memory_forget": handle_memory_forget,
     "memory_recall": handle_memory_recall,

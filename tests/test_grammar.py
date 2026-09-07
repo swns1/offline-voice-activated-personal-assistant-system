@@ -90,6 +90,24 @@ def test_describe_my_screen_is_still_vision_describe():
     assert parse("describe my screen").intent == "screen_describe"
 
 
+def test_click_verb():
+    cmd = parse("click the save button")
+    assert cmd.intent == "screen_click"
+    assert cmd.target == "save button"
+
+
+def test_click_on_verb():
+    cmd = parse("click on cancel")
+    assert cmd.intent == "screen_click"
+    assert cmd.target == "cancel"
+
+
+def test_type_verb():
+    cmd = parse("type hello world")
+    assert cmd.intent == "screen_type"
+    assert cmd.target == "hello world"
+
+
 def test_empty_text_is_unknown():
     cmd = parse("   ")
     assert cmd.intent == "unknown"

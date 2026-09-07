@@ -43,6 +43,7 @@ _CLASSIFIABLE_INTENTS = [
     "close_app", "close_window", "minimize_window",
     "diagnostics", "calendar_list", "calendar_add", "screen_describe", "screen_read_text",
     "memory_remember", "memory_forget", "memory_recall",
+    "screen_click", "screen_type",
 ]
 
 _SYSTEM_PROMPT = (

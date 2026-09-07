@@ -30,6 +30,8 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
     ("calendar_add", ["add to my calendar", "add to calendar", "schedule an event"]),
     ("screen_describe", ["what does my screen say about", "look at my screen and tell me",
                           "check my screen and tell me"]),
+    ("screen_click", ["click on", "click the", "click"]),
+    ("screen_type", ["type"]),
     ("close_app", ["close", "quit", "exit"]),
     # "run"/"start" are also bare verbs in "open" below -- these phrases
     # need the extra "my"/"the" qualifier to stay ahead of it in the
