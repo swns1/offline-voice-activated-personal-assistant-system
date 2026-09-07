@@ -88,6 +88,24 @@ class HotkeyConfig(BaseModel):
     toggle_mute: str | None = "ctrl+alt+m"
 
 
+class SecurityConfig(BaseModel):
+    # Extra voice-match check before *confirming* a destructive action
+    # (currently just shutdown) -- on top of, not instead of, the
+    # existing spoken yes/no. Needs one-time enrollment first
+    # (scripts/enroll_voice.py); silently skipped (falls back to
+    # yes/no-only) if nothing's enrolled. See ash/security/voice_gate.py
+    # for important accuracy caveats -- this is a classical
+    # MFCC-similarity check, not a trained deep speaker-embedding model,
+    # and should be treated as a soft additional check on a
+    # single-user machine, not a strong biometric guarantee.
+    voice_gate_enabled: bool = False
+    # Cosine similarity (0-1) the confirmation audio must reach against
+    # the enrolled voiceprint. Lower = more lenient (more false accepts),
+    # higher = stricter (more false rejects of your own voice, especially
+    # on a short answer like a single word "yes").
+    voice_match_threshold: float = 0.85
+
+
 class RegistryConfig(BaseModel):
     # Rescans the Start Menu + Steam library and rewrites
     # registry.auto.yaml on every startup, so a game/app installed since
@@ -125,6 +143,7 @@ class Config(BaseModel):
     tray: TrayConfig = TrayConfig()
     hotkey: HotkeyConfig = HotkeyConfig()
     registry: RegistryConfig = RegistryConfig()
+    security: SecurityConfig = SecurityConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

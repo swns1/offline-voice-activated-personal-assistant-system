@@ -48,6 +48,20 @@ registry:
 # Run key -- see ash/utils/autostart.py.
 autostart: false
 
+security:
+  # Extra check on top of the plain spoken "yes" when confirming a
+  # destructive action (currently just shutdown): the confirmation
+  # itself has to sound like you, matched against a voiceprint you
+  # enroll once via scripts/enroll_voice.py. This is a classical
+  # MFCC-similarity check, not a trained deep speaker-embedding model --
+  # see README and ash/security/voice_gate.py for the accuracy caveats.
+  # Fails open (falls back to plain yes/no) if nothing's enrolled.
+  voice_gate_enabled: false
+  # Cosine similarity (0-1) the confirmation audio must reach. Lower =
+  # more lenient, higher = stricter (more false rejects of your own
+  # voice, especially on a short answer like a single word "yes").
+  voice_match_threshold: 0.85
+
 spotify:
   enabled: false
   # From a Spotify Developer Dashboard app you create yourself -- see
@@ -69,6 +83,13 @@ calendar:
   # setup needed on Ash's side. Off by default since it touches real
   # personal data.
   enabled: false
+  # Opt-in on top of the above: Ash is otherwise 100% reactive (never
+  # speaks unless spoken to) -- with this on, it checks your calendar in
+  # the background and speaks/toasts a heads-up shortly before a meeting
+  # starts, unprompted. Each meeting is only ever announced once.
+  proactive_reminders: false
+  proactive_lookahead_minutes: 5
+  proactive_poll_seconds: 60
 
 ollama:
   enabled: false

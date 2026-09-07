@@ -10,6 +10,13 @@ being done (e.g. "add 'Team Meeting' to your calendar at 3pm?") don't
 fit a static per-intent string -- those handlers keep building their
 own HandlerResult(done=False, question=..., resume=...) directly, the
 same general mechanism this just wraps for the static case.
+
+With config.security.voice_gate_enabled, the returned HandlerResult
+also sets requires_voice_match=True -- ash/main.py's loop checks the
+raw audio of the answer against ash/security/voice_gate.py's enrolled
+voiceprint before ever calling resume(), so a plain spoken "yes" alone
+isn't enough. resume() itself doesn't need to know about any of this;
+the voice check is a gate in front of it, not inside it.
 """
 import logging
 from typing import Callable
@@ -46,4 +53,7 @@ def wrap_with_confirmation(
         result = handler(target, registry, tts, log, config)
         return result if result is not None else HandlerResult()
 
-    return HandlerResult(done=False, question=_CONFIRM_REQUIRED[intent], resume=resume)
+    return HandlerResult(
+        done=False, question=_CONFIRM_REQUIRED[intent], resume=resume,
+        requires_voice_match=config.security.voice_gate_enabled,
+    )

@@ -120,6 +120,30 @@ turning on deliberately rather than defaulting into it.
   — also available standalone via `scripts\selftest.py`, no need to
   talk to Ash for it.
 
+### Voice-verified confirmation (optional)
+
+By default, confirming a destructive action ("are you sure you want to
+shut down?") just needs a spoken "yes" — anyone in earshot. Set
+`security.voice_gate_enabled: true` for an extra check on top of that:
+the confirmation itself has to sound like you, not just be an
+affirmative word, checked against a voiceprint you enroll once:
+
+```
+.venv\Scripts\python.exe scripts\enroll_voice.py
+```
+
+Speak naturally for the few seconds it records (a sentence or two, not
+just "yes" — a longer sample makes for a better reference). Worth being
+upfront about what this actually is: a classical MFCC-similarity check,
+not a trained deep speaker-embedding model (those need a `torch`-based
+multi-GB install — the same tradeoff that already ruled out training a
+real "Hey Ash" wake word, see below). Treat it as a soft additional
+check appropriate for a single-user machine, not a strong biometric
+guarantee — `security.voice_match_threshold` (default `0.85`) tunes how
+strict it is. If nothing's enrolled, or the check can't run for any
+reason, it fails open — you get the same plain yes/no you had before
+turning this on, never a shutdown you can't confirm at all.
+
 ## Local AI (Ollama)
 
 Anything you say that isn't a known command and doesn't match an app
@@ -250,8 +274,8 @@ wake_word:
 ## Configuration
 
 - `config/config.yaml` — wake word, audio, browser, hotkey, tray,
-  autostart, registry auto-rescan, Spotify, search, calendar, and Ollama
-  settings.
+  autostart, registry auto-rescan, voice-verified confirmation, Spotify,
+  search, calendar, and Ollama settings.
 - `config/registry.yaml` — hand-authored app entries and the search
   intent. Plain installed apps don't need to be hand-added here — see
   "Building the app registry" below.

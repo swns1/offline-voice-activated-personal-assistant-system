@@ -41,6 +41,12 @@ Pillow
 # itself installed separately (not a pip package, like Ollama), see README
 pytesseract
 
+# Optional voice-match gate on destructive-action confirmations (MFCC
+# extraction) -- scipy is already an indirect dependency via
+# faster-whisper, listed explicitly since ash/security/voice_gate.py
+# imports it directly
+scipy
+
 # Phase 10: tray icon
 pystray
 

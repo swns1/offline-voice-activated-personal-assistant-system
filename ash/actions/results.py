@@ -16,3 +16,9 @@ class HandlerResult:
     done: bool = True
     question: str | None = None
     resume: Optional[Callable[[str], "HandlerResult"]] = None
+    # Set only by ash/actions/confirmation.py's wrap_with_confirmation()
+    # when config.security.voice_gate_enabled -- tells ash/main.py's loop
+    # to check the follow-up answer's raw audio against the enrolled
+    # voiceprint (see ash/security/voice_gate.py) before calling resume()
+    # at all, rather than resume() itself needing access to raw audio.
+    requires_voice_match: bool = False

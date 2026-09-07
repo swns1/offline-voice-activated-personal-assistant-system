@@ -13,6 +13,7 @@ import logging
 
 from ash.actions.dispatcher import dispatch
 from ash.actions.proactive import start as start_proactive_nudges
+from ash.actions.results import HandlerResult
 from ash.actions.timers import rehydrate as rehydrate_timers
 from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
@@ -21,6 +22,7 @@ from ash.audio.wake_word import WakeWordDetector
 from ash.config import Config, load_config
 from ash.registry.auto_build import refresh_registry_auto
 from ash.registry.loader import load_registry
+from ash.security import voice_gate
 from ash.tray.icon import run_with_tray
 from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
@@ -104,7 +106,12 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
                 answer = stt.transcribe(followup_audio)
                 print(f"  heard (follow-up): {answer!r}")
                 log.info("Follow-up transcript: %r", answer)
-                result = result.resume(answer)
+                if result.requires_voice_match and not voice_gate.verify(followup_audio, config, log):
+                    log.warning("Voice gate blocked a confirmation answer")
+                    tts.say("That didn't sound like you, so I'm not doing that.")
+                    result = HandlerResult()
+                else:
+                    result = result.resume(answer)
     except KeyboardInterrupt:
         pass
     finally:

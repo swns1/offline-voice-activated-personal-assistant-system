@@ -70,3 +70,20 @@ def test_wrap_handler_returning_none_still_normalizes():
     final = result.resume("yes")
 
     assert final == HandlerResult()
+
+
+def test_requires_voice_match_false_by_default():
+    handler = lambda target, registry, tts, log, config: HandlerResult()
+    result = wrap_with_confirmation("shutdown", handler, "", Registry(), FakeTts(), log, Config())
+
+    assert result.requires_voice_match is False
+
+
+def test_requires_voice_match_true_when_voice_gate_enabled():
+    handler = lambda target, registry, tts, log, config: HandlerResult()
+    config = Config()
+    config.security.voice_gate_enabled = True
+
+    result = wrap_with_confirmation("shutdown", handler, "", Registry(), FakeTts(), log, config)
+
+    assert result.requires_voice_match is True
