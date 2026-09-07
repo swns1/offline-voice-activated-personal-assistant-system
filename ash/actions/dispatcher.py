@@ -16,6 +16,7 @@ from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
 from ash.actions.routines import find_routine, resolve_routine_name
+from ash.actions.semantic_fallback import classify_intent
 from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.timers import (
@@ -81,6 +82,15 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         log.info("Chain-like utterance %r didn't resolve to a usable chain, handling as one command", text)
 
     command = parse(text)
+
+    if not command.explicit and config.ollama.enabled:
+        reclassified = classify_intent(text, config)
+        if reclassified is not None:
+            log.info("Semantic fallback reclassified %r as %s(%r)",
+                     text, reclassified.intent, reclassified.target)
+            command = reclassified
+        else:
+            log.info("Semantic fallback found no confident match for %r, keeping the open guess", text)
 
     if command.intent == "routine_run":
         name = resolve_routine_name(command.target)

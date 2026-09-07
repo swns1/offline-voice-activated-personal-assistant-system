@@ -138,6 +138,83 @@ def test_routine_run_unknown_routine_says_so():
     assert "don't have a routine" in tts.said[-1]
 
 
+def test_semantic_fallback_reclassifies_unmatched_utterance_when_ollama_enabled(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+    from ash.nlu.intents import ParsedCommand
+
+    monkeypatch.setattr(dispatcher_module, "classify_intent",
+                         lambda text, config: ParsedCommand(intent="volume_down", target=""))
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "volume_down",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    result = dispatch("turn it down a bit", Registry(), FakeTts(), log, config)
+
+    assert result == HandlerResult()
+    assert calls == [""]
+
+
+def test_semantic_fallback_not_attempted_when_ollama_disabled(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setattr(dispatcher_module, "classify_intent", lambda text, config: calls.append(text) or None)
+
+    dispatch("turn it down a bit", Registry(), FakeTts(), log, Config())
+
+    assert calls == []  # ollama.enabled defaults to False -- never even attempted
+
+
+def test_semantic_fallback_not_attempted_for_an_explicit_verb_match(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setattr(dispatcher_module, "classify_intent", lambda text, config: calls.append(text) or None)
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open", lambda *a, **k: HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    dispatch("open notepad", Registry(), FakeTts(), log, config)
+
+    assert calls == []  # "open" matched explicitly -- nothing to reconsider
+
+
+def test_semantic_fallback_no_confident_match_keeps_open_guess(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    monkeypatch.setattr(dispatcher_module, "classify_intent", lambda text, config: None)
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+                         lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    dispatch("tell me a joke", Registry(), FakeTts(), log, config)
+
+    assert calls == ["tell me a joke"]  # unchanged: the original "open" guess still ran
+
+
+def test_semantic_fallback_reclassified_shutdown_still_requires_confirmation(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+    from ash.nlu.intents import ParsedCommand
+
+    monkeypatch.setattr(dispatcher_module, "classify_intent",
+                         lambda text, config: ParsedCommand(intent="shutdown", target=""))
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "shutdown",
+                         lambda *a, **k: calls.append(True) or HandlerResult())
+    config = Config()
+    config.ollama.enabled = True
+
+    result = dispatch("shut this thing down", Registry(), FakeTts(), log, config)
+
+    assert result.done is False
+    assert "sure" in result.question.lower()
+    assert calls == []  # confirmation still gates it, same as the literal phrase would
+
+
 def test_shutdown_intent_is_intercepted_for_confirmation_before_the_handler_runs(monkeypatch):
     import ash.actions.dispatcher as dispatcher_module
 

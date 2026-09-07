@@ -145,7 +145,9 @@ def parse(text: str) -> ParsedCommand:
 
     # No verb recognized: default to "open" on the whole utterance, the
     # most permissive interpretation, per the plan's grammar design.
-    return ParsedCommand(intent="open", target=normalized)
+    # explicit=False flags this as a guess rather than something the user
+    # actually said -- see ash/actions/semantic_fallback.py.
+    return ParsedCommand(intent="open", target=normalized, explicit=False)
 
 
 def _normalize(text: str) -> str:

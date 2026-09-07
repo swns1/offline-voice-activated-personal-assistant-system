@@ -127,6 +127,23 @@ remembers the last few exchanges, so a follow-up like "what's its
 population" after "what's the capital of France" works; say "stop" to
 end the conversation early.
 
+### Understanding phrasing that doesn't match a template
+
+Ash's command parsing is a fixed set of phrase templates ("volume up",
+"lock my computer", etc.) — fast and predictable, but it only recognizes
+phrasing close to those templates. With `ollama.enabled: true`, anything
+that doesn't match any template gets one extra check before falling
+back to a conversational reply: the local model is asked whether it
+actually means one of Ash's other commands. So "turn it down a bit" or
+"shut this thing down" can still trigger `volume_down`/`shutdown` even
+though neither is phrased like the literal template — while an actual
+question or conversational remark just falls through to Local AI as
+before. Adds a few seconds of latency (a second local model call) only
+for utterances that didn't match a template in the first place; normal
+commands are completely unaffected. Destructive actions still ask for
+confirmation either way — this only decides *which* command was meant,
+not whether it's safe to run.
+
 ### Screen understanding
 
 "what's on my screen" / "describe my screen" / "read my screen" takes

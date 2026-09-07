@@ -39,6 +39,18 @@ def test_no_verb_defaults_to_open():
     assert cmd.target == "elden ring"
 
 
+def test_no_verb_default_is_flagged_not_explicit():
+    # Distinguishes "nothing matched, we guessed open" from an actual
+    # "open X" command -- see ash/actions/semantic_fallback.py, which
+    # only reconsiders the former.
+    assert parse("elden ring").explicit is False
+
+
+def test_matched_verb_phrase_is_flagged_explicit():
+    assert parse("open notepad").explicit is True
+    assert parse("volume up").explicit is True
+
+
 def test_empty_text_is_unknown():
     cmd = parse("   ")
     assert cmd.intent == "unknown"
