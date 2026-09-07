@@ -41,7 +41,7 @@ _CLASSIFIABLE_INTENTS = [
     "lock", "sleep", "shutdown",
     "timer_set", "reminder_set", "timer_cancel", "timer_list",
     "close_app", "close_window", "minimize_window",
-    "diagnostics", "calendar_list", "calendar_add", "screen_describe",
+    "diagnostics", "calendar_list", "calendar_add", "screen_describe", "screen_read_text",
     "memory_remember", "memory_forget", "memory_recall",
 ]
 

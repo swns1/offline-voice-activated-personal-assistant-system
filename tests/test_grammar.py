@@ -80,6 +80,16 @@ def test_what_do_you_know_about_me():
     assert cmd.intent == "memory_recall"
 
 
+def test_read_my_screen_is_ocr_not_describe():
+    # "read" specifically means exact text -- routed to OCR, distinct
+    # from "describe my screen"'s vision-model prose description.
+    assert parse("read my screen").intent == "screen_read_text"
+
+
+def test_describe_my_screen_is_still_vision_describe():
+    assert parse("describe my screen").intent == "screen_describe"
+
+
 def test_empty_text_is_unknown():
     cmd = parse("   ")
     assert cmd.intent == "unknown"
@@ -250,7 +260,8 @@ def test_bare_run_still_means_open_not_routine():
 def test_bare_screen_describe_phrases():
     assert parse("what's on my screen").intent == "screen_describe"
     assert parse("describe my screen").intent == "screen_describe"
-    assert parse("read my screen").intent == "screen_describe"
+    # "read my screen" is deliberately NOT here -- routed to OCR
+    # (screen_read_text) instead, see test_read_my_screen_is_ocr_not_describe.
 
 
 def test_screen_describe_with_specific_question():

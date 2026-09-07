@@ -128,9 +128,19 @@ _BARE_PHRASES: dict[str, str] = {
     "whats on my screen": "screen_describe",
     "describe my screen": "screen_describe",
     "describe the screen": "screen_describe",
-    "read my screen": "screen_describe",
     "what am i looking at": "screen_describe",
     "look at my screen": "screen_describe",
+
+    # "read" specifically means exact text -- OCR, not a vision model's
+    # paraphrase -- so these are deliberately routed away from
+    # screen_describe above, unlike the "what's on"/"describe" phrasing.
+    "read my screen": "screen_read_text",
+    "read the screen": "screen_read_text",
+    "read this screen": "screen_read_text",
+    "read the text on my screen": "screen_read_text",
+    "read the text on the screen": "screen_read_text",
+    "what does my screen say": "screen_read_text",
+    "whats my screen say": "screen_read_text",
 }
 
 

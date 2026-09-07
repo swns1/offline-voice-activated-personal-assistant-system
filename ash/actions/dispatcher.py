@@ -17,6 +17,7 @@ from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.results import HandlerResult
 from ash.actions.routines import find_routine, resolve_routine_name
+from ash.actions.screen_text import handle_screen_read_text
 from ash.actions.semantic_fallback import classify_intent
 from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
@@ -71,6 +72,7 @@ _HANDLERS = {
     "calendar_list": handle_calendar_list,
     "calendar_add": handle_calendar_add,
     "screen_describe": handle_screen_describe,
+    "screen_read_text": handle_screen_read_text,
     "memory_remember": handle_memory_remember,
     "memory_forget": handle_memory_forget,
     "memory_recall": handle_memory_recall,

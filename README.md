@@ -171,6 +171,22 @@ ollama pull llama3.2-vision
 (or set `ollama.vision_model` in `config/config.yaml` to whatever
 vision model you'd rather use, e.g. `moondream` for something lighter).
 
+### Reading exact on-screen text
+
+"read my screen" / "read the screen" / "what does my screen say" reads
+back the *exact* text on screen via local OCR — error codes, table
+values, anything where an exact string matters more than a general
+description. This is a different, more literal tool than "what's on my
+screen"/"describe my screen" above, which asks the vision model for a
+looser prose description instead; use whichever fits what you're
+after. Needs the free [Tesseract OCR
+engine](https://github.com/UB-Mannheim/tesseract/wiki) installed
+separately (a Windows installer, not a pip package — like Ollama), and
+adds itself to your PATH during setup. No `ollama.enabled` needed — this
+runs fully offline with no model, so it works even without Ollama set
+up at all. Very long on-screen text is cut short with a spoken note
+rather than read in full.
+
 ## Spotify
 
 Playback control ("spotify play X", "pause", "skip", "what's playing")

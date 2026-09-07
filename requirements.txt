@@ -37,6 +37,10 @@ win11toast
 # Screen understanding (screenshot capture for the Ollama vision model)
 Pillow
 
+# Exact on-screen text via local OCR -- also needs the Tesseract engine
+# itself installed separately (not a pip package, like Ollama), see README
+pytesseract
+
 # Phase 10: tray icon
 pystray
 
