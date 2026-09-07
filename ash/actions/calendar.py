@@ -47,7 +47,7 @@ def _default_calendar_items() -> list:
         pythoncom.CoUninitialize()
 
 
-def _list_upcoming(hours_ahead: float, item_source: Callable[[], list] = _default_calendar_items) -> list[dict] | None:
+def list_upcoming(hours_ahead: float, item_source: Callable[[], list] = _default_calendar_items) -> list[dict] | None:
     try:
         raw_items = item_source()
     except Exception:
@@ -74,7 +74,7 @@ def handle_calendar_list(target: str, registry: Registry, tts: TtsWorker, log: l
         tts.say("Calendar isn't set up.")
         return HandlerResult()
 
-    events = _list_upcoming(_LOOKAHEAD_HOURS)
+    events = list_upcoming(_LOOKAHEAD_HOURS)
     if events is None:
         log.warning("Could not reach Outlook calendar")
         tts.say("I can't reach your calendar right now.")

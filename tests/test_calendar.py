@@ -47,7 +47,7 @@ def test_list_upcoming_filters_to_window():
         FakeOutlookItem("Yesterday's thing", now - timedelta(days=1)),
     ]
 
-    events = calendar._list_upcoming(24, item_source=lambda: items)
+    events = calendar.list_upcoming(24, item_source=lambda: items)
 
     assert [e["subject"] for e in events] == ["Team meeting"]
 
@@ -59,7 +59,7 @@ def test_list_upcoming_sorts_by_start_time():
         FakeOutlookItem("Sooner", now + timedelta(hours=1)),
     ]
 
-    events = calendar._list_upcoming(24, item_source=lambda: items)
+    events = calendar.list_upcoming(24, item_source=lambda: items)
 
     assert [e["subject"] for e in events] == ["Sooner", "Later"]
 
@@ -68,7 +68,7 @@ def test_list_upcoming_source_failure_returns_none():
     def boom():
         raise RuntimeError("Outlook not installed")
 
-    assert calendar._list_upcoming(24, item_source=boom) is None
+    assert calendar.list_upcoming(24, item_source=boom) is None
 
 
 def test_list_upcoming_skips_malformed_items():
@@ -76,14 +76,14 @@ def test_list_upcoming_skips_malformed_items():
     good = FakeOutlookItem("Good", now + timedelta(hours=1))
     bad = SimpleNamespace(Subject="Bad", Start="not a real COM datetime")
 
-    events = calendar._list_upcoming(24, item_source=lambda: [bad, good])
+    events = calendar.list_upcoming(24, item_source=lambda: [bad, good])
 
     assert [e["subject"] for e in events] == ["Good"]
 
 
 def test_handle_calendar_list_speaks_events(monkeypatch):
     now = datetime.now()
-    monkeypatch.setattr(calendar, "_list_upcoming",
+    monkeypatch.setattr(calendar, "list_upcoming",
                          lambda hours: [{"subject": "Team meeting", "start": now + timedelta(hours=2)}])
     tts = FakeTts()
 
@@ -94,7 +94,7 @@ def test_handle_calendar_list_speaks_events(monkeypatch):
 
 
 def test_handle_calendar_list_nothing_upcoming(monkeypatch):
-    monkeypatch.setattr(calendar, "_list_upcoming", lambda hours: [])
+    monkeypatch.setattr(calendar, "list_upcoming", lambda hours: [])
     tts = FakeTts()
 
     calendar.handle_calendar_list("", Registry(), tts, log, _enabled_config())
@@ -103,7 +103,7 @@ def test_handle_calendar_list_nothing_upcoming(monkeypatch):
 
 
 def test_handle_calendar_list_outlook_unreachable(monkeypatch):
-    monkeypatch.setattr(calendar, "_list_upcoming", lambda hours: None)
+    monkeypatch.setattr(calendar, "list_upcoming", lambda hours: None)
     tts = FakeTts()
 
     result = calendar.handle_calendar_list("", Registry(), tts, log, _enabled_config())

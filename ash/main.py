@@ -12,6 +12,7 @@ loop (see ash/tray/icon.py).
 import logging
 
 from ash.actions.dispatcher import dispatch
+from ash.actions.proactive import start as start_proactive_nudges
 from ash.actions.timers import rehydrate as rehydrate_timers
 from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
@@ -77,6 +78,7 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
         register_mute_hotkey(config.hotkey.toggle_mute, tts, log)
 
     rehydrate_timers(tts, log)
+    start_proactive_nudges(config, tts, log)
     tts.say("Ash is listening.")
     print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
 

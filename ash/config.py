@@ -62,6 +62,16 @@ class CalendarConfig(BaseModel):
     # works if Outlook itself is installed and configured, and it
     # touches real personal data, so it defaults off like the others.
     enabled: bool = False
+    # Opt-in: Ash is otherwise 100% reactive (never speaks unprompted).
+    # With this on, it polls your calendar in the background and speaks/
+    # toasts a heads-up shortly before a meeting starts -- see
+    # ash/actions/proactive.py. Independent of `enabled` above; needs
+    # both on to do anything.
+    proactive_reminders: bool = False
+    # How far ahead a meeting has to be to trigger a nudge, and how often
+    # the background check runs. Each event is only ever announced once.
+    proactive_lookahead_minutes: int = 5
+    proactive_poll_seconds: int = 60
 
 
 class TrayConfig(BaseModel):

@@ -86,6 +86,17 @@ coming up in the next 24 hours; "add to my calendar team meeting at
 3pm" always asks for confirmation with the actual details before
 writing anything ("Add 'team meeting' to your calendar at 3pm?").
 
+Ash is otherwise 100% reactive — it never speaks unless spoken to.
+Setting `calendar.proactive_reminders: true` (needs `calendar.enabled:
+true` too) is the one deliberate exception: it checks your calendar in
+the background and speaks + shows a toast a few minutes before a
+meeting starts, unprompted. Each meeting is only ever announced once.
+Tune how far ahead and how often it checks with
+`calendar.proactive_lookahead_minutes` (default 5) and
+`calendar.proactive_poll_seconds` (default 60). Off by default — this
+is the one feature where Ash initiates speech on its own, so it's worth
+turning on deliberately rather than defaulting into it.
+
 ## System control
 
 - Volume: "volume up" / "volume down" / "set the volume to 50" / "mute" / "unmute"
