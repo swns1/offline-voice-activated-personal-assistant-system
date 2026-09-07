@@ -51,6 +51,35 @@ def test_matched_verb_phrase_is_flagged_explicit():
     assert parse("volume up").explicit is True
 
 
+def test_remember_verb():
+    cmd = parse("remember that I'm vegetarian")
+    assert cmd.intent == "memory_remember"
+    assert cmd.target == "i'm vegetarian"
+
+
+def test_remember_bare_verb():
+    cmd = parse("remember my dog's name is rex")
+    assert cmd.intent == "memory_remember"
+    assert cmd.target == "my dog's name is rex"
+
+
+def test_forget_verb():
+    cmd = parse("forget that I'm vegetarian")
+    assert cmd.intent == "memory_forget"
+    assert cmd.target == "i'm vegetarian"
+
+
+def test_forget_everything():
+    cmd = parse("forget everything")
+    assert cmd.intent == "memory_forget"
+    assert cmd.target == "everything"
+
+
+def test_what_do_you_know_about_me():
+    cmd = parse("what do you know about me")
+    assert cmd.intent == "memory_recall"
+
+
 def test_empty_text_is_unknown():
     cmd = parse("   ")
     assert cmd.intent == "unknown"

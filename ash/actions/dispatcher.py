@@ -1,6 +1,7 @@
 import logging
 
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
+from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
 from ash.actions.open_app import handle_open
 from ash.actions.search import handle_browser_search, handle_search
 from ash.actions.spotify import (
@@ -70,6 +71,9 @@ _HANDLERS = {
     "calendar_list": handle_calendar_list,
     "calendar_add": handle_calendar_add,
     "screen_describe": handle_screen_describe,
+    "memory_remember": handle_memory_remember,
+    "memory_forget": handle_memory_forget,
+    "memory_recall": handle_memory_recall,
 }
 
 

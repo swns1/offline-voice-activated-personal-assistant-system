@@ -1,5 +1,6 @@
 import logging
 
+import pytest
 import requests
 
 from ash.actions import converse
@@ -8,6 +9,17 @@ from ash.config import Config
 from ash.registry.schema import Registry
 
 log = logging.getLogger("test")
+
+
+@pytest.fixture(autouse=True)
+def _no_persistent_memory(monkeypatch):
+    # Every test in this file exercises the LLM round-trip, not
+    # ash/actions/memory.py's persisted facts -- stub facts_context() to
+    # its real empty-store return value so these tests stay hermetic
+    # (no dependency on the real %LOCALAPPDATA%\Ash\memory.json) and
+    # unaffected by whatever's actually remembered. The memory-injection
+    # behavior itself gets its own dedicated tests below.
+    monkeypatch.setattr(converse, "facts_context", lambda: "")
 
 
 class FakeTts:
@@ -157,3 +169,30 @@ def test_empty_model_response_has_fallback_text(monkeypatch):
     converse.handle_converse("hello", Registry(), tts, log, Config())
 
     assert tts.said[-1] == "I don't have anything to say to that."
+
+
+def test_remembered_facts_are_folded_into_the_system_prompt(monkeypatch):
+    monkeypatch.setattr(converse, "facts_context", lambda: "\n\nFacts: user is vegetarian.")
+    captured = {}
+    monkeypatch.setattr(converse.requests, "post",
+                         lambda url, json, timeout: captured.setdefault("json", json) or FakeResponse("ok"))
+
+    converse.handle_converse("hello", Registry(), FakeTts(), log, Config())
+
+    system_message = captured["json"]["messages"][0]
+    assert system_message["role"] == "system"
+    assert "user is vegetarian" in system_message["content"]
+
+
+def test_no_remembered_facts_leaves_system_prompt_unchanged(monkeypatch):
+    # The autouse fixture already stubs facts_context() to "" -- confirm
+    # that's genuinely a no-op append, not e.g. stray whitespace.
+    captured = {}
+    monkeypatch.setattr(converse.requests, "post",
+                         lambda url, json, timeout: captured.setdefault("json", json) or FakeResponse("ok"))
+    config = Config()
+
+    converse.handle_converse("hello", Registry(), FakeTts(), log, config)
+
+    system_message = captured["json"]["messages"][0]
+    assert system_message["content"] == config.ollama.system_prompt

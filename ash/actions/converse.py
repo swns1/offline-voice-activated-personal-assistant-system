@@ -13,11 +13,17 @@ France" -> "what's its population" resolves "its" correctly. Bounded to
 _MAX_MESSAGES so a long-running chat doesn't grow the prompt forever,
 and ends immediately (without asking the model) if the user says
 "stop"/"cancel" instead of continuing the conversation.
+
+Also folds in ash/actions/memory.py's durable facts ("remember I'm
+vegetarian") via facts_context() -- that's persisted storage separate
+from this module's own in-conversation history, so it survives past
+this one conversation and past restarts.
 """
 import logging
 
 import requests
 
+from ash.actions.memory import facts_context
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -66,7 +72,8 @@ def _ask_and_continue(messages: list[dict], tts: TtsWorker, log: logging.Logger,
 
 
 def _ask(messages: list[dict], config: Config) -> str:
-    payload_messages = [{"role": "system", "content": config.ollama.system_prompt}] + messages
+    system_prompt = config.ollama.system_prompt + facts_context()
+    payload_messages = [{"role": "system", "content": system_prompt}] + messages
     response = requests.post(
         f"{config.ollama.host}/api/chat",
         json={"model": config.ollama.model, "messages": payload_messages, "stream": False},

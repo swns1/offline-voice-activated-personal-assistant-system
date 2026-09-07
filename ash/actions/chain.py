@@ -33,6 +33,7 @@ _CHAINABLE_INTENTS = [
     "volume_up", "volume_down", "volume_set", "mute", "unmute",
     "timer_set", "reminder_set",
     "close_app", "close_window", "minimize_window",
+    "memory_remember", "memory_forget", "memory_recall",
 ]
 
 _SYSTEM_PROMPT = (

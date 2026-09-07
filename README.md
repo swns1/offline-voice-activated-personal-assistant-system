@@ -144,6 +144,18 @@ commands are completely unaffected. Destructive actions still ask for
 confirmation either way — this only decides *which* command was meant,
 not whether it's safe to run.
 
+### Persistent memory
+
+"remember that I'm vegetarian" / "remember my dog's name is Rex" sticks
+around across restarts (`%LOCALAPPDATA%\Ash\memory.json`) — unlike the
+in-conversation history above, which resets every conversation. It's
+automatically folded into every Local AI reply so it's used naturally
+without having to ask; "what do you know about me" speaks everything
+remembered, and "forget that I'm vegetarian" / "forget everything"
+removes it. This is plain local storage, so it works even with
+`ollama.enabled: false` — only the "used naturally in chat" half needs
+Local AI turned on.
+
 ### Screen understanding
 
 "what's on my screen" / "describe my screen" / "read my screen" takes

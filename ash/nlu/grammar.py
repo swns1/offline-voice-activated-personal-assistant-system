@@ -22,6 +22,8 @@ _VERB_GROUPS: list[tuple[str, list[str]]] = [
                 "who is", "who's", "google"]),
     ("spotify_play", ["play something on spotify", "play on spotify", "spotify play"]),
     ("reminder_set", ["remind me to", "remind me in", "remind me"]),
+    ("memory_forget", ["forget that", "forget about", "forget"]),
+    ("memory_remember", ["remember that", "please remember that", "remember"]),
     ("timer_set", ["set a timer for", "set timer for", "start a timer for", "timer for",
                    "set an alarm for", "set alarm for", "start an alarm for"]),
     ("volume_set", ["set the volume to", "set volume to", "volume to"]),
@@ -116,6 +118,11 @@ _BARE_PHRASES: dict[str, str] = {
     "whats my next meeting": "calendar_list",
     "do i have any meetings today": "calendar_list",
     "check my calendar": "calendar_list",
+
+    "what do you know about me": "memory_recall",
+    "what do you remember about me": "memory_recall",
+    "what do you remember": "memory_recall",
+    "what have you remembered": "memory_recall",
 
     "what's on my screen": "screen_describe",
     "whats on my screen": "screen_describe",
