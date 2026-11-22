@@ -43,7 +43,14 @@ def parse(text: str) -> ParsedCommand:
 
 
 def _normalize(text: str) -> str:
+    """Lowercase, drop punctuation, collapse spaces -- but keep what
+    numbers need: speech-to-text writes "9:30am", "1.5 minutes",
+    "15% of 80" and "2+2", and stripping all punctuation turned those
+    into "930am", "15 minutes", "15 of 80" and "22". Command phrases
+    contain none of these characters, so matching is unaffected."""
     text = text.lower().strip()
-    text = re.sub(r"[^\w\s']", "", text)
+    text = re.sub(r"[^\w\s'%+*/^×÷.:\-]", "", text)
+    text = re.sub(r"(?<!\d)[.:]|[.:](?!\d)", "", text)  # "." and ":" only inside numbers
+    text = re.sub(r"-(?!\s*\d)", "", text)              # "-" only as a minus sign
     text = re.sub(r"\s+", " ", text)
-    return text
+    return text.strip()

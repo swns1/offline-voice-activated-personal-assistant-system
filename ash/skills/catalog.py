@@ -11,6 +11,7 @@ wins outright; otherwise the longest `verb` the utterance starts with
 wins, if something follows it. Two skills may not claim the same phrase
 (a test checks).
 """
+from ash.actions.calculator import handle_calculate, handle_how_many
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.clock import handle_date_today, handle_day_of, handle_days_until, handle_time_now
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
@@ -137,6 +138,21 @@ SKILLS: list[Skill] = [
         verbs=("how many days until", "how many days till", "how many days are left until",
                "how long until", "how long till", "how long is it until", "days until"),
         classifiable=True,
+    ),
+
+    Skill(
+        "calculate", handle_calculate, QUICK,
+        "Do maths or convert units, on this PC (\"what's\" questions are tried as maths first).",
+        # "what's 15% of 80" works too, via web search's maths-first check.
+        examples=("calculate 15% of 80", "convert 5 miles to kilometers", "how much is 12 times 7"),
+        verbs=("calculate", "compute", "how much is", "convert"),
+        classifiable=True,
+    ),
+    Skill(
+        "how_many", handle_how_many, QUICK, "Answer \"how many X in a Y\" conversions (or search the web).",
+        examples=("how many feet are in a mile",),
+        verbs=("how many",),
+        online=("web_search",),
     ),
 
     # --- music --------------------------------------------------------------

@@ -51,6 +51,9 @@ scipy
 # engine needed (unlike Tesseract/Ollama)
 pyautogui
 
+# Unit conversions ("convert 5 miles to kilometers"), worked out offline
+pint
+
 # Phase 10: tray icon
 pystray
 

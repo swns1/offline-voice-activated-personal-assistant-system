@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 _COMPONENT_RE = re.compile(
-    r"(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)", re.IGNORECASE
+    r"(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)", re.IGNORECASE
 )
 _FILLER_RE = re.compile(r"\b(in|for|to|and)\b", re.IGNORECASE)
 
@@ -46,8 +46,8 @@ def parse_duration(text: str) -> ParsedDuration | None:
     if not matches:
         return None
 
-    total_seconds = sum(int(amount) * _UNIT_SECONDS[unit.lower()] for amount, unit in
-                         (m.groups() for m in matches))
+    total_seconds = round(sum(float(amount) * _UNIT_SECONDS[unit.lower()] for amount, unit in
+                               (m.groups() for m in matches)))  # "1.5 minutes" -> 90
     if total_seconds <= 0:
         return None
 

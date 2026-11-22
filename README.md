@@ -168,6 +168,17 @@ offline mode and never need permission:
 - Time and date: "what time is it", "what's the date", "what day is
   Christmas", "what day is December 25", "how many days until New
   Year's Eve"
+- Maths: "what's 15% of 80", "what is 12 times 7", "calculate 2 to the
+  power of 10", "what's the square root of 144" — worked out by a small
+  evaluator that only understands numbers and arithmetic (never
+  Python's `eval`), so no spoken input can run code
+- Unit conversions: "convert 5 miles to kilometers", "what's 100
+  degrees Fahrenheit in Celsius", "how many feet are in a mile"
+  (distance, weight, volume, speed, temperature and more, via `pint`;
+  not currencies, which need live exchange rates)
+
+"what is …" questions are tried as maths first, so a calculation never
+goes to web search — and "how many people live in Manila" still does.
 
 ## System control
 

@@ -60,12 +60,13 @@ def test_search_speaks_ddg_answer(monkeypatch):
 
 def test_search_field_priority_order(monkeypatch):
     monkeypatch.setattr(requests, "get",
-                         lambda url, params, timeout: FakeResponse({"Answer": "4", "AbstractText": "should not use this", "Definition": ""}))
+                         lambda url, params, timeout: FakeResponse({"Answer": "Paris", "AbstractText": "should not use this", "Definition": ""}))
     tts = FakeTts()
 
-    search.handle_search("2+2", Registry(), tts, log, Config())
+    # (Not "2+2": maths is now answered on the PC, before any search.)
+    search.handle_search("capital of france", Registry(), tts, log, Config())
 
-    assert tts.said == ["4"]
+    assert tts.said == ["Paris"]
 
 
 def test_search_falls_back_to_related_topics(monkeypatch):

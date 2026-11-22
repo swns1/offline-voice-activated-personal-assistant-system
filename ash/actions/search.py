@@ -18,6 +18,7 @@ import logging
 from urllib.parse import quote_plus
 
 
+from ash.actions import calculator
 from ash.actions.results import HandlerResult
 from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
@@ -35,6 +36,13 @@ _ANSWER_FIELDS = ("Answer", "AbstractText", "Definition")
 
 
 def handle_search(query: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    # "what's 15% of 80" / "what's 5 miles in km": worked out on this PC,
+    # never sent to a search engine.
+    local = calculator.answer(query)
+    if local is not None:
+        tts.say(local)
+        return HandlerResult()
+
     if not config.search.enabled:
         tts.say(f"Web search is turned off. Try 'search in browser for {query}'.")
         return HandlerResult()
