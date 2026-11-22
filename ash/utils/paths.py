@@ -8,7 +8,6 @@ MODELS_DIR = PROJECT_ROOT / "models"
 
 APP_DATA_DIR = Path(os.environ["LOCALAPPDATA"]) / "Ash"
 LOG_DIR = APP_DATA_DIR / "logs"
-SECRETS_DIR = APP_DATA_DIR
 
 CONFIG_PATH = CONFIG_DIR / "config.yaml"
 REGISTRY_MANUAL_PATH = CONFIG_DIR / "registry.yaml"
@@ -18,6 +17,7 @@ MEMORY_PATH = APP_DATA_DIR / "memory.json"
 VOICEPRINT_PATH = APP_DATA_DIR / "voiceprint.json"
 PRIVACY_STATE_PATH = APP_DATA_DIR / "privacy_state.json"
 NETWORK_LOG_PATH = APP_DATA_DIR / "network_log.json"
+SPOTIFY_TOKEN_PATH = APP_DATA_DIR / ".spotify_cache"
 
 
 def ensure_app_data_dirs() -> None:

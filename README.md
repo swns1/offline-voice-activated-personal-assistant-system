@@ -53,6 +53,21 @@ Philippine Data Privacy Act of 2012 (RA 10173):
   days. "what have you sent online" gives you the summary. In the code,
   every web request goes through one module (`ash/privacy/egress.py`),
   and a test fails if anything else tries to make one.
+- **Your data rights, by voice:**
+  - "what data do you have" lists what Ash keeps about you right now
+    (e.g. "2 remembered facts, 1 timer or reminder, your voiceprint, and
+    a log of 4 times I went online"), and whether it's encrypted.
+  - "export my data" saves a readable copy to your Documents folder —
+    after warning you that the copy isn't encrypted. Your voiceprint and
+    Spotify login are listed but never copied out.
+  - "delete my voiceprint" / "delete all my data" erase it, after
+    saying exactly what will be lost. Deleting everything also stops
+    pending reminders and resets online-feature permissions.
+  - "forget that …" corrects a remembered fact (see "Persistent memory").
+
+  All of these work from one list of everything Ash stores
+  (`ash/privacy/inventory.py`, with each item's purpose and how long
+  it's kept); a test fails if Ash ever stores a file that isn't on it.
 
 ## Setup
 

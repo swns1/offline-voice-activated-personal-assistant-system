@@ -219,18 +219,26 @@ def _start_recurring_reminder(recurrence, tts: TtsWorker, log: logging.Logger) -
     return HandlerResult()
 
 
-def handle_timer_cancel(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+def cancel_all(*, persist: bool = True) -> int:
+    """Stop every pending timer/reminder; returns how many there were.
+    persist=False leaves the saved file alone -- for "delete all my
+    data", which deletes it outright instead of rewriting it empty."""
     with _lock:
         cancelled = list(_active.values())
         _active.clear()
-    _persist()
+    if persist:
+        _persist()
     for active in cancelled:
         active.timer.cancel()
+    return len(cancelled)
 
+
+def handle_timer_cancel(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    cancelled = cancel_all()
     if not cancelled:
         tts.say("You don't have any timers running.")
     else:
-        tts.say("Cancelled." if len(cancelled) == 1 else f"Cancelled {len(cancelled)} timers.")
+        tts.say("Cancelled." if cancelled == 1 else f"Cancelled {cancelled} timers.")
     return HandlerResult()
 
 

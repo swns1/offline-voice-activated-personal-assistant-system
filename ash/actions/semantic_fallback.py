@@ -45,6 +45,7 @@ _CLASSIFIABLE_INTENTS = [
     "memory_remember", "memory_forget", "memory_recall",
     "screen_click", "screen_type",
     "privacy_offline_on", "privacy_offline_off", "network_activity",
+    "privacy_data_inventory", "privacy_export",
 ]
 
 _SYSTEM_PROMPT = (

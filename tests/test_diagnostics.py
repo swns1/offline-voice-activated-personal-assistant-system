@@ -114,7 +114,7 @@ def test_spotify_check_disabled_reports_ok():
 
 
 def test_spotify_check_no_cache_file(monkeypatch, tmp_path):
-    monkeypatch.setattr(diagnostics, "SECRETS_DIR", tmp_path)
+    monkeypatch.setattr(diagnostics, "SPOTIFY_TOKEN_PATH", tmp_path / ".spotify_cache")
     config = Config()
     config.spotify.enabled = True
 
@@ -125,7 +125,7 @@ def test_spotify_check_no_cache_file(monkeypatch, tmp_path):
 
 
 def test_spotify_check_valid_cache_file(monkeypatch, tmp_path):
-    monkeypatch.setattr(diagnostics, "SECRETS_DIR", tmp_path)
+    monkeypatch.setattr(diagnostics, "SPOTIFY_TOKEN_PATH", tmp_path / ".spotify_cache")
     (tmp_path / ".spotify_cache").write_text(json.dumps({"access_token": "abc"}), encoding="utf-8")
     config = Config()
     config.spotify.enabled = True
@@ -137,7 +137,7 @@ def test_spotify_check_valid_cache_file(monkeypatch, tmp_path):
 
 
 def test_spotify_check_malformed_cache_file(monkeypatch, tmp_path):
-    monkeypatch.setattr(diagnostics, "SECRETS_DIR", tmp_path)
+    monkeypatch.setattr(diagnostics, "SPOTIFY_TOKEN_PATH", tmp_path / ".spotify_cache")
     (tmp_path / ".spotify_cache").write_text("not valid json {{{", encoding="utf-8")
     config = Config()
     config.spotify.enabled = True

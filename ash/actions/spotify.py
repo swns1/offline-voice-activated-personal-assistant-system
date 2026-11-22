@@ -28,10 +28,10 @@ from ash.privacy.redact import said
 from ash.privacy import egress, secure_store
 from ash.privacy.permission import ask_permission_if_needed
 from ash.registry.schema import Registry
-from ash.utils.paths import SECRETS_DIR, ensure_app_data_dirs
+from ash.utils.paths import SPOTIFY_TOKEN_PATH, ensure_app_data_dirs
 
 _SCOPE = "user-modify-playback-state user-read-playback-state user-read-currently-playing"
-_CACHE_PATH = SECRETS_DIR / ".spotify_cache"
+_CACHE_PATH = SPOTIFY_TOKEN_PATH
 
 _uri_launcher = UriLauncher()
 _client: spotipy.Spotify | None = None

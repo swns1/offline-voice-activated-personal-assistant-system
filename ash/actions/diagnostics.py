@@ -18,7 +18,7 @@ from ash.privacy import egress
 from ash.privacy import secure_store
 from ash.registry.schema import Registry
 from ash.utils import ollama
-from ash.utils.paths import SECRETS_DIR
+from ash.utils.paths import SPOTIFY_TOKEN_PATH
 
 _TIMEOUT_SECONDS = 3.0
 
@@ -68,7 +68,7 @@ def _check_spotify(config: Config) -> tuple[str, bool, str]:
     if not config.spotify.enabled:
         return ("Spotify", True, "disabled")
 
-    cache_path = SECRETS_DIR / ".spotify_cache"
+    cache_path = SPOTIFY_TOKEN_PATH
     if not cache_path.exists():
         return ("Spotify", False, "not yet authorized")
     try:

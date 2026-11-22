@@ -34,6 +34,12 @@ _INTENT_FIELD = {
 }
 
 
+def clear() -> None:
+    """Forget the last app/search/track (used by "delete all my data")."""
+    global _context
+    _context = _RecentContext()
+
+
 def remember_app(name: str) -> None:
     _context.last_app = name
 

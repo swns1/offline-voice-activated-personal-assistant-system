@@ -70,3 +70,13 @@ def apply_log_retention(retention_days: int, logger: logging.Logger | None = Non
         except OSError:
             pass  # open (already being written to) or already gone -- next startup
     return deleted
+
+
+def close_log_files(logger: logging.Logger | None = None) -> None:
+    """Close Ash's open log file so it can be deleted ("delete all my
+    data" -- Windows won't delete a file that's open). The handler reopens
+    a fresh file by itself on the next log line."""
+    logger = logger or logging.getLogger("ash")
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            handler.close()

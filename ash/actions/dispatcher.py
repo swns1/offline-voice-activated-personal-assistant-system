@@ -4,6 +4,12 @@ from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
 from ash.actions.open_app import handle_open, handle_open_guess
+from ash.actions.privacy_rights import (
+    handle_data_inventory,
+    handle_delete_all,
+    handle_delete_voiceprint,
+    handle_export,
+)
 from ash.actions.privacy_controls import (
     handle_allow,
     handle_disallow,
@@ -96,6 +102,10 @@ _HANDLERS = {
     "consent_grant": handle_allow,
     "consent_revoke": handle_disallow,
     "network_activity": handle_network_activity,
+    "privacy_data_inventory": handle_data_inventory,
+    "privacy_export": handle_export,
+    "privacy_delete_voiceprint": handle_delete_voiceprint,
+    "privacy_delete_all": handle_delete_all,
 }
 
 
