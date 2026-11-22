@@ -32,6 +32,7 @@ import requests
 
 from ash.config import Config
 from ash.privacy import consent, network_log
+from ash.utils import preferences
 
 # Re-exported so callers never need to import requests themselves.
 NetworkUnreachable = requests.exceptions.ConnectionError
@@ -82,6 +83,14 @@ SPOTIFY = register(OnlineFeature(
     purpose="control Spotify playback on your account",
     domains=("api.spotify.com", "accounts.spotify.com"),
     in_use=lambda config: config.spotify.enabled and bool(config.spotify.client_id),
+))
+WEATHER = register(OnlineFeature(
+    key="weather", name="weather", service="Open-Meteo",
+    sends="the name of your city once, then its map coordinates -- never your exact location",
+    purpose="tell you the weather",
+    domains=("geocoding-api.open-meteo.com", "api.open-meteo.com"),
+    # Asked about at startup once you've told Ash your city.
+    in_use=lambda config: preferences.get("city") is not None,
 ))
 LOCAL_AI = register(OnlineFeature(
     key="local_ai", name="the AI server", service="your Ollama server",

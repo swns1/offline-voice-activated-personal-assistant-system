@@ -52,6 +52,11 @@ def _notes() -> list[Path]:
     return [notes.NOTES_PATH]
 
 
+def _preferences() -> list[Path]:
+    from ash.utils import preferences
+    return [preferences.PREFERENCES_PATH]
+
+
 def _timers() -> list[Path]:
     from ash.actions import timers
     return [timers.TIMERS_STATE_PATH]
@@ -97,6 +102,11 @@ INVENTORY: list[StoredData] = [
         key="notes", name="notes and lists",
         purpose="notes you dictate, and lists like your shopping list",
         kept="until you delete them", sensitive=False, encrypted=True, paths=_notes,
+    ),
+    StoredData(
+        key="preferences", name="your city",
+        purpose="the weather where you live (you tell Ash; it never works out your location)",
+        kept="until you change or delete it", sensitive=False, encrypted=True, paths=_preferences,
     ),
     StoredData(
         key="timers", name="timers and reminders",

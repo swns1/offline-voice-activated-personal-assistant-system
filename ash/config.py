@@ -147,6 +147,12 @@ class OllamaConfig(BaseModel):
     )
 
 
+class WeatherConfig(BaseModel):
+    # Your city is set by voice ("my city is Manila") and stored encrypted
+    # -- see ash/actions/weather.py -- not here.
+    units: Literal["celsius", "fahrenheit"] = "celsius"
+
+
 class PrivacyConfig(BaseModel):
     # Include what you say (transcripts, search queries, reminder text,
     # ...) in the log files. Off by default: logs then show which command
@@ -171,6 +177,7 @@ class Config(BaseModel):
     security: SecurityConfig = SecurityConfig()
     desktop_control: DesktopControlConfig = DesktopControlConfig()
     privacy: PrivacyConfig = PrivacyConfig()
+    weather: WeatherConfig = WeatherConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

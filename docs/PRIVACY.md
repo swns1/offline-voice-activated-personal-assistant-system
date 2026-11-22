@@ -35,6 +35,7 @@ list, or if the inventory lists something this table doesn't.
 |---|---|---|---|---|---|---|
 | remembered facts | `memory.json` | facts you asked Ash to remember, used to personalize answers | until you ask Ash to forget them | yes | yes | yes |
 | notes and lists | `notes.json` | notes you dictate, and lists like your shopping list | until you delete them | yes | yes | yes |
+| your city | `preferences.json` | the weather where you live (you tell Ash; it never works out your location) | until you change or delete it ("forget my city") | yes | yes | yes |
 | timers and reminders | `timers.json` | so pending timers and reminders survive a restart | until they go off or you cancel them | yes | yes | yes |
 | your voiceprint | `voiceprint.json` | checking it's really you before risky actions (only if voice-verified confirmation is on) | until you delete it | yes | listed only (biometric) | yes |
 | your Spotify login | `.spotify_cache` | controlling Spotify without signing in every time | until you delete it | yes | listed only (a secret) | yes |
@@ -85,6 +86,7 @@ module imports the HTTP library. The gate works like this:
 |---|---|---|---|---|
 | web search | the words you search for | DuckDuckGo (`api.duckduckgo.com`) | "what is …" / "search for …" | asked at first start; "allow / stop allowing web search"; offline mode |
 | Spotify | the songs you ask for and your playback commands | Spotify (`api.spotify.com`, `accounts.spotify.com`) | Spotify commands, if you've set Spotify up | asked at the first start after you set it up; "allow / stop allowing Spotify"; offline mode |
+| weather | the name of your city once, then its map coordinates — never your exact location | Open-Meteo (`geocoding-api.open-meteo.com`, `api.open-meteo.com`) | weather questions, and "my city is …" | asked at the first start after you set your city; "allow / stop allowing weather"; offline mode |
 | the AI server | what you say to the AI, and screenshots when you ask about your screen | your Ollama server, **only if you configure one on another machine** | AI replies | your Ollama settings; offline mode |
 | model downloads | a request for the speech-recognition model (nothing about you) | Hugging Face (`huggingface.co`) | **once**, the first time Ash starts | offline mode |
 

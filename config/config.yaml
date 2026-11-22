@@ -63,6 +63,11 @@ security:
   # voice, especially on a short answer like a single word "yes").
   voice_match_threshold: 0.85
 
+weather:
+  # celsius or fahrenheit. Your city isn't set here: tell Ash ("my city
+  # is Manila") and it's stored encrypted, with your other personal data.
+  units: celsius
+
 privacy:
   # Include what you say (transcripts, search queries, reminder text)
   # in the log files under %LOCALAPPDATA%\Ash\logs. Off: logs show which

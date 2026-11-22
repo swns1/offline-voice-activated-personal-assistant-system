@@ -177,6 +177,16 @@ offline mode and never need permission:
   (distance, weight, volume, speed, temperature and more, via `pint`;
   not currencies, which need live exchange rates)
 
+- Weather (online, via the free Open-Meteo service): first tell Ash
+  your city — "my city is Manila" — then "what's the weather", "what's
+  the weather tomorrow", "will it rain on Friday", "do I need an
+  umbrella", or anywhere: "what's the weather in Tokyo". Ash never
+  works out your location; after looking your city's name up once it
+  sends only its map coordinates. Your city is stored encrypted ("what's
+  my city", "forget my city"), and weather is asked about once, like
+  every online feature. `weather.units` in `config/config.yaml` switches
+  to Fahrenheit.
+
 "what is …" questions are tried as maths first, so a calculation never
 goes to web search — and "how many people live in Manila" still does.
 

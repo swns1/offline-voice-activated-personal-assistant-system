@@ -65,6 +65,13 @@ from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.timers import handle_reminder_set, handle_timer_cancel, handle_timer_list, handle_timer_set
 from ash.actions.vision import handle_screen_describe
 from ash.actions.volume import handle_mute, handle_unmute, handle_volume_down, handle_volume_set, handle_volume_up
+from ash.actions.weather import (
+    handle_forget_city,
+    handle_rain,
+    handle_set_city,
+    handle_weather,
+    handle_whats_my_city,
+)
 from ash.actions.window import handle_close_app, handle_close_window, handle_minimize_window
 from ash.skills.skill import Gate, Skill
 
@@ -171,6 +178,44 @@ SKILLS: list[Skill] = [
         examples=("how many feet are in a mile",),
         verbs=("how many",),
         online=("web_search",),
+    ),
+
+    Skill(
+        "weather", handle_weather, QUICK, "The weather for today or the next few days, where you live or anywhere.",
+        examples=("what's the weather", "what's the weather tomorrow", "weather in Cebu"),
+        phrases=("what's the weather", "whats the weather", "what is the weather", "how's the weather",
+                 "hows the weather", "weather", "what's the weather like", "whats the weather like",
+                 "what's the weather today", "what's the weather like today", "weather today",
+                 "what's it like outside", "whats it like outside", "what's the forecast", "whats the forecast",
+                 "forecast", "what's the temperature", "whats the temperature", "what is the temperature"),
+        verbs=("what's the weather", "whats the weather", "what is the weather", "how's the weather",
+               "hows the weather", "weather", "what's the forecast", "whats the forecast", "forecast",
+               "what's the temperature", "whats the temperature", "what is the temperature"),
+        classifiable=True, online=("weather",),
+    ),
+    Skill(
+        "rain", handle_rain, QUICK, "Whether it's likely to rain today or on another day.",
+        examples=("will it rain tomorrow", "do I need an umbrella"),
+        phrases=("will it rain", "will it rain today", "is it going to rain", "is it going to rain today",
+                 "do i need an umbrella", "do i need an umbrella today"),
+        verbs=("will it rain", "is it going to rain", "do i need an umbrella"),
+        classifiable=True, online=("weather",),
+    ),
+    Skill(
+        "set_city", handle_set_city, QUICK, "Tell Ash your city, for the weather.",
+        examples=("my city is Manila",),
+        verbs=("my city is", "set my city to", "change my city to", "i live in", "my location is"),
+        online=("weather",),
+    ),
+    Skill(
+        "whats_my_city", handle_whats_my_city, QUICK, "Say which city Ash uses for the weather.",
+        examples=("what's my city",),
+        phrases=("what's my city", "whats my city", "where do i live"),
+    ),
+    Skill(
+        "forget_city", handle_forget_city, QUICK, "Forget your city.",
+        examples=("forget my city",),
+        phrases=("forget my city", "delete my city", "forget my location"),
     ),
 
     # --- music --------------------------------------------------------------
