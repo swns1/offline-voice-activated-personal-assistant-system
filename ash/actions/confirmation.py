@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
@@ -86,7 +87,7 @@ def ask_to_confirm(
     treated as no, since these are the actions that can't be undone."""
     def resume(answer: str) -> HandlerResult:
         if not is_affirmative(answer):
-            log.info("Confirmation declined for %s: %r", action, answer)
+            log.info("Confirmation declined for %s: %s", action, said(answer))
             tts.say(declined_reply)
             return HandlerResult()
         result = on_yes()

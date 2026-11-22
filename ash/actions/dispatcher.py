@@ -41,6 +41,7 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.context import resolve_target
 from ash.nlu.grammar import parse
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.utils.ollama import ai_enabled
 
@@ -90,26 +91,26 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
     if looks_like_chain(text) and ai_enabled(config):
         steps = resolve_chain(text, config)
         if steps is not None:
-            log.info("Resolved %r into a %d-step chain", text, len(steps))
+            log.info("Resolved %s into a %d-step chain", said(text), len(steps))
             return run_chain(steps, _HANDLERS, registry, tts, log, config)
-        log.info("Chain-like utterance %r didn't resolve to a usable chain, handling as one command", text)
+        log.info("Chain-like utterance %s didn't resolve to a usable chain, handling as one command", said(text))
 
     command = parse(text)
 
     if not command.explicit and ai_enabled(config):
         reclassified = classify_intent(text, config)
         if reclassified is not None:
-            log.info("Semantic fallback reclassified %r as %s(%r)",
-                     text, reclassified.intent, reclassified.target)
+            log.info("Semantic fallback reclassified %s as %s(%s)",
+                     said(text), reclassified.intent, said(reclassified.target))
             command = reclassified
         else:
-            log.info("Semantic fallback found no confident match for %r, keeping the open guess", text)
+            log.info("Semantic fallback found no confident match for %s, keeping the open guess", said(text))
 
     if command.intent == "routine_run":
         name = resolve_routine_name(command.target)
         steps = find_routine(name, registry)
         if steps is None:
-            log.info("No routine matches %r", name)
+            log.info("No routine matches %s", said(name))
             tts.say(f"I don't have a routine called {name}.")
             return HandlerResult()
         log.info("Running routine %r (%d steps)", name, len(steps))
@@ -120,7 +121,7 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         intent = "open_guess"  # you never said "open" -- only open on a close name match
     handler = _HANDLERS.get(intent)
     if handler is None:
-        log.info("Unrecognized command: %r", text)
+        log.info("Unrecognized command: %s", said(text))
         tts.say("I didn't catch that.")
         return HandlerResult()
     target = resolve_target(command.intent, command.target)

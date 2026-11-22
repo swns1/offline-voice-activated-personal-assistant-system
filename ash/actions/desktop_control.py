@@ -43,6 +43,7 @@ from rapidfuzz import fuzz, process
 
 from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
@@ -119,7 +120,7 @@ def handle_screen_click(target: str, registry: Registry, tts: TtsWorker, log: lo
         tts.say("Reading the screen needs the Tesseract OCR engine installed -- see the README.")
         return HandlerResult()
     except Exception:
-        log.exception("Screen OCR failed while looking for %r", label)
+        log.exception("Screen OCR failed while looking for %s", said(label))
         tts.say("I couldn't read the screen.")
         return HandlerResult()
 
@@ -136,7 +137,7 @@ def handle_screen_click(target: str, registry: Registry, tts: TtsWorker, log: lo
             log.exception("pyautogui click failed at (%d, %d)", x, y)
             tts.say("I couldn't click that.")
             return HandlerResult()
-        log.info("Clicked %r at (%d, %d)", matched_text, x, y)
+        log.info("Clicked %s at (%d, %d)", said(matched_text), x, y)
         tts.say(f"Clicked {matched_text}.")
         return HandlerResult()
 
@@ -165,7 +166,7 @@ def handle_screen_type(target: str, registry: Registry, tts: TtsWorker, log: log
             log.exception("pyautogui write failed")
             tts.say("I couldn't type that.")
             return HandlerResult()
-        log.info("Typed %r", text)
+        log.info("Typed %d characters", len(text))
         tts.say("Done.")
         return HandlerResult()
 

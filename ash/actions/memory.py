@@ -18,6 +18,7 @@ import logging
 from rapidfuzz import fuzz, process
 
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.privacy import secure_store
@@ -67,7 +68,7 @@ def handle_memory_remember(target: str, registry: Registry, tts: TtsWorker, log:
     if fact not in facts:
         facts.append(fact)
         _save_facts(facts)
-    log.info("Remembered fact: %r", fact)
+    log.info("Remembered a new fact")
     tts.say(f"I'll remember that {fact}.")
     return HandlerResult()
 
@@ -95,7 +96,7 @@ def handle_memory_forget(target: str, registry: Registry, tts: TtsWorker, log: l
     matched_fact = match[0]
     facts.remove(matched_fact)
     _save_facts(facts)
-    log.info("Forgot fact: %r", matched_fact)
+    log.info("Forgot a fact")
     tts.say(f"I've forgotten that {matched_fact}.")
     return HandlerResult()
 

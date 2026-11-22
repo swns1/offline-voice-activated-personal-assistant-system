@@ -13,6 +13,7 @@ import time
 from datetime import datetime
 
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import (
@@ -97,14 +98,14 @@ def rehydrate(tts: TtsWorker, log: logging.Logger) -> None:
             message = label or "Time's up."
             tts.say(message)
             show_toast("Ash", message, log)
-            log.info("Rehydrated timer had already elapsed while Ash was down: %r", label)
+            log.info("Rehydrated timer had already elapsed while Ash was down: %s", said(label))
             if recurrence is not None:
                 schedule, hour, minute = recurrence
                 next_seconds = round((next_occurrence(hour, minute, schedule) - datetime.now()).total_seconds())
                 _schedule(next_seconds, label, tts, log, recurrence=recurrence)
         else:
             _schedule(round(remaining), label, tts, log, recurrence=recurrence)
-            log.info("Rehydrated timer, %d seconds remaining: %r", round(remaining), label)
+            log.info("Rehydrated timer, %d seconds remaining: %s", round(remaining), said(label))
 
     # Elapsed one-shot entries were never re-added to _active -- persist
     # now so they're dropped from disk too, instead of being
@@ -125,7 +126,7 @@ def _schedule(seconds: int, label: str, tts: TtsWorker, log: logging.Logger,
         message = label or "Time's up."
         tts.say(message)
         show_toast("Ash", message, log)
-        log.info("Timer %d fired: %r", timer_id, label)
+        log.info("Timer %d fired: %s", timer_id, said(label))
         if recurrence is not None:
             schedule, hour, minute = recurrence
             next_seconds = round((next_occurrence(hour, minute, schedule) - datetime.now()).total_seconds())

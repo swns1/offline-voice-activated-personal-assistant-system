@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ash.utils.paths import CONFIG_PATH
 
@@ -90,8 +90,8 @@ class HotkeyConfig(BaseModel):
 
 
 class SecurityConfig(BaseModel):
-    # Extra voice-match check before *confirming* a destructive action
-    # (currently just shutdown) -- on top of, not instead of, the
+    # Extra voice-match check before *confirming* a risky action
+    # (shutdown, force-closing an app, click/type) -- on top of, not instead of, the
     # existing spoken yes/no. Needs one-time enrollment first
     # (scripts/enroll_voice.py); silently skipped (falls back to
     # yes/no-only) if nothing's enrolled. See ash/security/voice_gate.py
@@ -147,6 +147,16 @@ class OllamaConfig(BaseModel):
     )
 
 
+class PrivacyConfig(BaseModel):
+    # Include what you say (transcripts, search queries, reminder text,
+    # ...) in the log files. Off by default: logs then show which command
+    # ran, not its content (see ash/privacy/redact.py). Typed text and
+    # remembered facts are never logged either way.
+    log_transcripts: bool = False
+    # Log files older than this many days are deleted automatically.
+    log_retention_days: int = Field(default=7, ge=1)
+
+
 class Config(BaseModel):
     wake_word: WakeWordConfig = WakeWordConfig()
     audio: AudioConfig = AudioConfig()
@@ -160,6 +170,7 @@ class Config(BaseModel):
     registry: RegistryConfig = RegistryConfig()
     security: SecurityConfig = SecurityConfig()
     desktop_control: DesktopControlConfig = DesktopControlConfig()
+    privacy: PrivacyConfig = PrivacyConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

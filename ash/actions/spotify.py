@@ -23,6 +23,7 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_spotify_track
+from ash.privacy.redact import said
 from ash.privacy import secure_store
 from ash.registry.schema import Registry
 from ash.utils.paths import SECRETS_DIR, ensure_app_data_dirs
@@ -93,7 +94,7 @@ def _play(client: spotipy.Spotify, target: str, tts: TtsWorker, log: logging.Log
     results = client.search(q=target, type="track", limit=1)
     tracks = results.get("tracks", {}).get("items", [])
     if not tracks:
-        log.info("No Spotify track found for %r", target)
+        log.info("No Spotify track found for %s", said(target))
         tts.say(f"I couldn't find {target} on Spotify.")
         return
     track = tracks[0]
@@ -109,7 +110,7 @@ def _play(client: spotipy.Spotify, target: str, tts: TtsWorker, log: logging.Log
             return
 
     client.start_playback(uris=[track["uri"]])
-    log.info("Playing on Spotify: %s - %s", track["name"], target)
+    log.info("Playing on Spotify: %s", said(track["name"]))
     remember_spotify_track(track["name"])
     tts.say(f"Playing {track['name']}.")
 

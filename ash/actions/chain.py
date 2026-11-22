@@ -25,6 +25,7 @@ import requests
 
 from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
@@ -109,7 +110,7 @@ def run_chain(
         handler = handlers.get(step["intent"])
         if handler is None:
             continue
-        log.info("Chain step: %s(%r)", step["intent"], step["target"])
+        log.info("Chain step: %s(%s)", step["intent"], said(step["target"]))
         if needs_confirmation(step["intent"]):
             # Same gate as a spoken command -- a routine step must never
             # skip it. Asking ends the chain here, like any follow-up.

@@ -18,6 +18,7 @@ import win32gui
 
 from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.matcher import match_app
@@ -33,7 +34,7 @@ def handle_close_app(target: str, registry: Registry, tts: TtsWorker, log: loggi
     process_name = _resolve_process_name(target, registry)
     matches = _find_processes(process_name or target)
     if not matches:
-        log.info("No running process matches %r", target)
+        log.info("No running process matches %s", said(target))
         tts.say(f"I don't see {target} running.")
         return HandlerResult()
 
@@ -51,7 +52,7 @@ def handle_close_app(target: str, registry: Registry, tts: TtsWorker, log: loggi
                 proc.terminate()
             except psutil.Error:
                 log.exception("Failed to terminate process %s", proc)
-        log.info("Closed %d process(es) matching %r: %s", len(matches), target, programs)
+        log.info("Closed %d process(es) matching %s: %s", len(matches), said(target), programs)
         tts.say(f"Closed {target}.")
         return HandlerResult()
 

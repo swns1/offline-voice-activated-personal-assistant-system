@@ -25,13 +25,18 @@ from ash.tray.icon import run_with_tray
 from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.hotkey import register_mute_hotkey
-from ash.utils.logging_setup import setup_logging
+from ash.privacy.redact import said, set_log_content
+from ash.utils.logging_setup import apply_log_retention, setup_logging
 from ash.utils.ollama import MODEL_MISSING, READY, server_status
 
 
 def main() -> None:
     log = setup_logging()
     config = load_config()
+    set_log_content(config.privacy.log_transcripts)
+    deleted = apply_log_retention(config.privacy.log_retention_days, log)
+    if deleted:
+        log.info("Deleted %d log file(s) older than %d days", len(deleted), config.privacy.log_retention_days)
     check_wake_word_models(config.wake_word.keyword)
 
     try:
@@ -91,7 +96,7 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
         for utterance in listener.listen(on_state_change=on_state_change):
             text = stt.transcribe(utterance)
             print(f"  heard: {text!r}")
-            log.info("Transcript: %r", text)
+            log.info("Transcript: %s", said(text))
             result = dispatch(text, registry, tts, log, config)
 
             while not result.done:
@@ -105,7 +110,7 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
                     break
                 answer = stt.transcribe(followup_audio)
                 print(f"  heard (follow-up): {answer!r}")
-                log.info("Follow-up transcript: %r", answer)
+                log.info("Follow-up transcript: %s", said(answer))
                 if result.requires_voice_match and not voice_gate.verify(followup_audio, config, log):
                     log.warning("Voice gate blocked a confirmation answer")
                     tts.say("That didn't sound like you, so I'm not doing that.")

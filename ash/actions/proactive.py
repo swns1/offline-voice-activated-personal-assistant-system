@@ -18,6 +18,7 @@ from ash.actions.calendar import list_upcoming
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import format_time_of_day
+from ash.privacy.redact import said
 from ash.utils.notifications import show_toast
 
 _announced: set[str] = set()
@@ -38,7 +39,7 @@ def _poll_once(config: Config, tts: TtsWorker, log: logging.Logger) -> None:
         _announced.add(key)
         when = format_time_of_day(event["start"].hour, event["start"].minute)
         message = f"Heads up, {event['subject']} starts at {when}."
-        log.info("Proactive calendar nudge: %r", event["subject"])
+        log.info("Proactive calendar nudge: %s", said(event["subject"]))
         tts.say(message)
         show_toast("Ash", message, log)
 

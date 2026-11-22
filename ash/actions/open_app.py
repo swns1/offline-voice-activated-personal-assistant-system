@@ -14,6 +14,7 @@ import logging
 
 from ash.actions.converse import handle_converse
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.exe_launcher import ExeLauncher
@@ -47,7 +48,7 @@ def _open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, 
     if result is None and not guessed:
         result = _retry_after_rescan(target, registry, log)
     if result is None:
-        log.info("No match for %s target: %r", "guessed open" if guessed else "open", target)
+        log.info("No match for %s target: %s", "guessed open" if guessed else "open", said(target))
         if ai_enabled(config):
             return handle_converse(target, registry, tts, log, config)
         tts.say(f"I'm not sure what you mean by {target}.")
@@ -73,12 +74,12 @@ def _retry_after_rescan(target: str, registry: Registry, log: logging.Logger) ->
         refresh_registry_auto()
         fresh = load_registry()
     except Exception:
-        log.exception("Rescan-on-miss failed for open target %r", target)
+        log.exception("Rescan-on-miss failed for open target %s", said(target))
         return None
     registry.apps = fresh.apps
     result = match_app(target, registry)
     if result is not None:
-        log.info("Rescan-on-miss found %r for target %r", result.entry.id, target)
+        log.info("Rescan-on-miss found %r for target %s", result.entry.id, said(target))
     return result
 
 
@@ -91,7 +92,7 @@ def _launch_entry(result: MatchResult, target: str, tts: TtsWorker, log: logging
         return HandlerResult()
 
     launcher.launch(entry.launch)
-    log.info("Launched %s (matched %r, score %.0f)", entry.id, target, result.score)
+    log.info("Launched %s (matched %s, score %.0f)", entry.id, said(target), result.score)
     remember_app(entry.id.replace("_", " "))
     tts.say(f"Opening {entry.id.replace('_', ' ')}.")
     return HandlerResult()
@@ -106,7 +107,7 @@ def _ask_which_app(candidates: list[MatchResult], tts: TtsWorker, log: logging.L
     def resume(answer: str) -> HandlerResult:
         chosen = match_app(answer, narrowed)
         if chosen is None:
-            log.info("Follow-up %r didn't resolve to either candidate", answer)
+            log.info("Follow-up %s didn't resolve to either candidate", said(answer))
             tts.say("Never mind.")
             return HandlerResult()
         return _launch_entry(chosen, answer, tts, log)

@@ -20,6 +20,7 @@ from urllib.parse import quote_plus
 import requests
 
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.browser_launcher import BrowserLauncher
@@ -39,12 +40,12 @@ def handle_search(query: str, registry: Registry, tts: TtsWorker, log: logging.L
 
     answer = _query_duckduckgo(query)
     if answer is None:
-        log.info("No DuckDuckGo answer for %r", query)
+        log.info("No DuckDuckGo answer for %s", said(query))
         tts.say(f"I couldn't find an answer for {query}. Try 'search in browser for {query}'.")
         return HandlerResult()
 
     remember_search(query)
-    log.info("Answered %r via DuckDuckGo", query)
+    log.info("Answered %s via DuckDuckGo", said(query))
     tts.say(answer)
     return HandlerResult()
 
@@ -110,7 +111,7 @@ def _run_browser_search(query: str, url: str, browser: str, profile_directory: s
         "profile_directory": profile_directory,
     }
     _browser_launcher.launch(launch)
-    log.info("Searched in browser: %r", query)
+    log.info("Searched in browser: %s", said(query))
     remember_search(query)
     tts.say(f"Searching for {query}.")
     return HandlerResult()
@@ -124,7 +125,7 @@ def _ask_which_profile(query: str, url: str, browser: str, profiles: dict[str, s
     def resume(answer: str) -> HandlerResult:
         directory_key = profiles.get(answer.strip().lower())
         if directory_key is None:
-            log.info("Follow-up %r didn't match a browser profile", answer)
+            log.info("Follow-up %s didn't match a browser profile", said(answer))
             tts.say("Never mind.")
             return HandlerResult()
         return _run_browser_search(query, url, browser, directory_key, tts, log)

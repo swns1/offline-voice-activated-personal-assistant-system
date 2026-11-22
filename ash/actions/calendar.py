@@ -23,6 +23,7 @@ import win32com.client
 
 from ash.actions.confirmation import is_affirmative
 from ash.actions.results import HandlerResult
+from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import format_time_of_day, parse_absolute_time
@@ -126,14 +127,14 @@ def handle_calendar_add(target: str, registry: Registry, tts: TtsWorker, log: lo
 
     def resume(answer: str) -> HandlerResult:
         if not is_affirmative(answer):
-            log.info("Calendar add declined: %r", answer)
+            log.info("Calendar add declined: %s", said(answer))
             tts.say("Never mind.")
             return HandlerResult()
         if not _create_event(subject, start):
-            log.warning("Failed to add calendar event %r", subject)
+            log.warning("Failed to add calendar event %s", said(subject))
             tts.say("I couldn't add that to your calendar.")
             return HandlerResult()
-        log.info("Added calendar event %r at %s", subject, start)
+        log.info("Added calendar event %s at %s", said(subject), start)
         tts.say(f"Added {subject} at {when}.")
         return HandlerResult()
 

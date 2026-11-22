@@ -27,6 +27,15 @@ Philippine Data Privacy Act of 2012 (RA 10173):
   the files off it). Files from older versions of Ash are converted
   automatically the first time Ash reads them. Audio is never saved to
   disk.
+- **Logs don't record what you say.** The log files (for
+  troubleshooting) show which command ran, not its content: what you
+  said, searched for, or asked to be reminded about appears as e.g.
+  `<4 words hidden>`. Text Ash types for you and facts you ask it to
+  remember are never logged at all. Set `privacy.log_transcripts: true`
+  in `config/config.yaml` to include the content while troubleshooting.
+- **Logs are kept for 7 days.** A new log file starts each day, and files
+  older than `privacy.log_retention_days` (default 7) are deleted
+  automatically.
 
 ## Setup
 
