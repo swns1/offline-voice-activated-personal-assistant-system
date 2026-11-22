@@ -12,6 +12,7 @@ first-ever call requires an interactive OAuth consent screen, which is
 inherent to the Authorization Code flow (Client Credentials can't
 control playback, it has no user token).
 """
+import functools
 import logging
 import time
 
@@ -24,7 +25,8 @@ from ash.config import Config
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_spotify_track
 from ash.privacy.redact import said
-from ash.privacy import secure_store
+from ash.privacy import egress, secure_store
+from ash.privacy.permission import ask_permission_if_needed
 from ash.registry.schema import Registry
 from ash.utils.paths import SECRETS_DIR, ensure_app_data_dirs
 
@@ -33,6 +35,26 @@ _CACHE_PATH = SECRETS_DIR / ".spotify_cache"
 
 _uri_launcher = UriLauncher()
 _client: spotipy.Spotify | None = None
+
+
+def _online(handler):
+    """Spotify commands reach Spotify through spotipy's own HTTP calls,
+    which can't pass through ash/privacy/egress.py -- so each command
+    checks permission (asking the first time) and is written to the
+    network log here instead. Not set up at all: no network, no need to
+    ask -- the handler just says so."""
+    @functools.wraps(handler)
+    def wrapper(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config):
+        if not config.spotify.enabled or not config.spotify.client_id:
+            return handler(target, registry, tts, log, config)
+        blocked = ask_permission_if_needed(
+            egress.SPOTIFY.key, lambda: wrapper(target, registry, tts, log, config), tts=tts, log=log,
+        )
+        if blocked is not None:
+            return blocked
+        egress.record_use(egress.SPOTIFY.key)
+        return handler(target, registry, tts, log, config)
+    return wrapper
 
 
 class _EncryptedTokenCache(CacheHandler):
@@ -79,6 +101,7 @@ def _get_client(config: Config, tts: TtsWorker) -> spotipy.Spotify | None:
     return _client
 
 
+@_online
 def handle_spotify_play(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     client = _get_client(config, tts)
     if client is None:
@@ -132,22 +155,27 @@ def _run_simple(action, spoken: str, config: Config, tts: TtsWorker, log: loggin
     _execute(client, action, spoken, tts, log)
 
 
+@_online
 def handle_spotify_pause(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     _run_simple(lambda c: c.pause_playback(), "Paused.", config, tts, log)
 
 
+@_online
 def handle_spotify_resume(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     _run_simple(lambda c: c.start_playback(), "Resuming.", config, tts, log)
 
 
+@_online
 def handle_spotify_skip(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     _run_simple(lambda c: c.next_track(), "Skipping.", config, tts, log)
 
 
+@_online
 def handle_spotify_previous(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     _run_simple(lambda c: c.previous_track(), "Playing the previous track.", config, tts, log)
 
 
+@_online
 def handle_spotify_now_playing(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> None:
     client = _get_client(config, tts)
     if client is None:

@@ -17,12 +17,13 @@
 import logging
 from urllib.parse import quote_plus
 
-import requests
 
 from ash.actions.results import HandlerResult
 from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import egress
+from ash.privacy.permission import ask_permission_if_needed
 from ash.launchers.browser_launcher import BrowserLauncher
 from ash.launchers.browser_profiles import list_profiles, resolve_profile
 from ash.nlu.context import remember_search
@@ -38,6 +39,12 @@ def handle_search(query: str, registry: Registry, tts: TtsWorker, log: logging.L
         tts.say(f"Web search is turned off. Try 'search in browser for {query}'.")
         return HandlerResult()
 
+    blocked = ask_permission_if_needed(
+        egress.WEB_SEARCH.key, lambda: handle_search(query, registry, tts, log, config), tts=tts, log=log,
+    )
+    if blocked is not None:
+        return blocked
+
     answer = _query_duckduckgo(query)
     if answer is None:
         log.info("No DuckDuckGo answer for %s", said(query))
@@ -52,8 +59,8 @@ def handle_search(query: str, registry: Registry, tts: TtsWorker, log: logging.L
 
 def _query_duckduckgo(query: str) -> str | None:
     try:
-        response = requests.get(
-            "https://api.duckduckgo.com/",
+        response = egress.get(
+            "https://api.duckduckgo.com/", feature=egress.WEB_SEARCH.key,
             params={"q": query, "format": "json", "no_html": "1", "skip_disambig": "1"},
             timeout=_DDG_TIMEOUT_SECONDS,
         )

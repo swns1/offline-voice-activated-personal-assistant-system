@@ -48,7 +48,7 @@ def _registry(profile_directory=None) -> Registry:
 # --- handle_search (DuckDuckGo answer path) ---
 
 def test_search_speaks_ddg_answer(monkeypatch):
-    monkeypatch.setattr(search.requests, "get",
+    monkeypatch.setattr(requests, "get",
                          lambda url, params, timeout: FakeResponse({"Answer": "", "AbstractText": "Paris is the capital of France.", "Definition": ""}))
     tts = FakeTts()
 
@@ -59,7 +59,7 @@ def test_search_speaks_ddg_answer(monkeypatch):
 
 
 def test_search_field_priority_order(monkeypatch):
-    monkeypatch.setattr(search.requests, "get",
+    monkeypatch.setattr(requests, "get",
                          lambda url, params, timeout: FakeResponse({"Answer": "4", "AbstractText": "should not use this", "Definition": ""}))
     tts = FakeTts()
 
@@ -69,7 +69,7 @@ def test_search_field_priority_order(monkeypatch):
 
 
 def test_search_falls_back_to_related_topics(monkeypatch):
-    monkeypatch.setattr(search.requests, "get",
+    monkeypatch.setattr(requests, "get",
                          lambda url, params, timeout: FakeResponse({
                              "Answer": "", "AbstractText": "", "Definition": "",
                              "RelatedTopics": [{"Text": "Something related"}],
@@ -82,7 +82,7 @@ def test_search_falls_back_to_related_topics(monkeypatch):
 
 
 def test_search_no_answer_suggests_browser_search(monkeypatch):
-    monkeypatch.setattr(search.requests, "get",
+    monkeypatch.setattr(requests, "get",
                          lambda url, params, timeout: FakeResponse({"Answer": "", "AbstractText": "", "Definition": ""}))
     tts = FakeTts()
 
@@ -96,7 +96,7 @@ def test_search_no_answer_suggests_browser_search(monkeypatch):
 def test_search_connection_failure_returns_none_gracefully(monkeypatch):
     def boom(url, params, timeout):
         raise requests.exceptions.ConnectionError()
-    monkeypatch.setattr(search.requests, "get", boom)
+    monkeypatch.setattr(requests, "get", boom)
     tts = FakeTts()
 
     result = search.handle_search("anything", Registry(), tts, log, Config())
@@ -107,7 +107,7 @@ def test_search_connection_failure_returns_none_gracefully(monkeypatch):
 
 def test_search_disabled_by_config_skips_network_call(monkeypatch):
     calls = []
-    monkeypatch.setattr(search.requests, "get", lambda *a, **k: calls.append(1))
+    monkeypatch.setattr(requests, "get", lambda *a, **k: calls.append(1))
     config = Config()
     config.search.enabled = False
     tts = FakeTts()
@@ -120,7 +120,7 @@ def test_search_disabled_by_config_skips_network_call(monkeypatch):
 
 
 def test_search_remembers_the_query_on_success(monkeypatch):
-    monkeypatch.setattr(search.requests, "get",
+    monkeypatch.setattr(requests, "get",
                          lambda url, params, timeout: FakeResponse({"Answer": "", "AbstractText": "France is a country.", "Definition": ""}))
 
     search.handle_search("france", Registry(), FakeTts(), log, Config())

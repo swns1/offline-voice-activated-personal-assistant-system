@@ -67,7 +67,7 @@ def test_describes_screen_with_default_question(monkeypatch):
         captured["json"] = json
         return FakeResponse("A code editor with a Python file open.")
 
-    monkeypatch.setattr(vision.requests, "post", fake_post)
+    monkeypatch.setattr(requests, "post", fake_post)
     tts = FakeTts()
 
     result = vision.handle_screen_describe("", Registry(), tts, log, _enabled_config())
@@ -87,7 +87,7 @@ def test_uses_specific_question_when_given(monkeypatch):
         captured["json"] = json
         return FakeResponse("It's a file not found error.")
 
-    monkeypatch.setattr(vision.requests, "post", fake_post)
+    monkeypatch.setattr(requests, "post", fake_post)
 
     vision.handle_screen_describe("what this error means", Registry(), FakeTts(), log, _enabled_config())
 
@@ -102,7 +102,7 @@ def test_uses_configured_vision_model(monkeypatch):
         captured["json"] = json
         return FakeResponse("ok")
 
-    monkeypatch.setattr(vision.requests, "post", fake_post)
+    monkeypatch.setattr(requests, "post", fake_post)
     config = _enabled_config()
     config.ollama.vision_model = "custom-vision-model"
 
@@ -116,7 +116,7 @@ def test_connection_error_says_cant_reach(monkeypatch):
 
     def boom(url, json, timeout):
         raise requests.exceptions.ConnectionError()
-    monkeypatch.setattr(vision.requests, "post", boom)
+    monkeypatch.setattr(requests, "post", boom)
     tts = FakeTts()
 
     result = vision.handle_screen_describe("", Registry(), tts, log, _enabled_config())
@@ -130,7 +130,7 @@ def test_other_exception_says_generic_error(monkeypatch):
 
     def boom(url, json, timeout):
         raise ValueError("unexpected")
-    monkeypatch.setattr(vision.requests, "post", boom)
+    monkeypatch.setattr(requests, "post", boom)
     tts = FakeTts()
 
     result = vision.handle_screen_describe("", Registry(), tts, log, _enabled_config())
@@ -141,7 +141,7 @@ def test_other_exception_says_generic_error(monkeypatch):
 
 def test_empty_model_response_has_fallback_text(monkeypatch):
     monkeypatch.setattr(vision, "_capture_screenshot_base64", lambda: "fakebase64")
-    monkeypatch.setattr(vision.requests, "post", lambda url, json, timeout: FakeResponse(""))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(""))
     tts = FakeTts()
 
     vision.handle_screen_describe("", Registry(), tts, log, _enabled_config())

@@ -15,12 +15,12 @@ import base64
 import io
 import logging
 
-import requests
 from PIL import ImageGrab
 
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import egress
 from ash.registry.schema import Registry
 from ash.utils.ollama import ai_enabled
 
@@ -56,7 +56,7 @@ def handle_screen_describe(target: str, registry: Registry, tts: TtsWorker, log:
     question = target.strip() or _DEFAULT_QUESTION
     try:
         answer = _ask_vision(question, image_b64, config)
-    except requests.exceptions.ConnectionError:
+    except egress.NetworkUnreachable:
         log.warning("Ollama not reachable at %s", config.ollama.host)
         tts.say("I can't reach the local AI model right now.")
         return HandlerResult()
@@ -70,8 +70,8 @@ def handle_screen_describe(target: str, registry: Registry, tts: TtsWorker, log:
 
 
 def _ask_vision(question: str, image_b64: str, config: Config) -> str:
-    response = requests.post(
-        f"{config.ollama.host}/api/chat",
+    response = egress.post(
+        f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key,
         json={
             "model": config.ollama.vision_model,
             "messages": [{"role": "user", "content": question, "images": [image_b64]}],

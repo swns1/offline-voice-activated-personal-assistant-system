@@ -21,12 +21,12 @@ this one conversation and past restarts.
 """
 import logging
 
-import requests
 
 from ash.actions.memory import facts_context
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import egress
 from ash.nlu.grammar import parse
 from ash.registry.schema import Registry
 
@@ -42,7 +42,7 @@ def _ask_and_continue(messages: list[dict], tts: TtsWorker, log: logging.Logger,
     tts.say("Let me think.")  # CPU inference can take several seconds
     try:
         reply = _ask(messages, config)
-    except requests.exceptions.ConnectionError:
+    except egress.NetworkUnreachable:
         log.warning("Ollama not reachable at %s", config.ollama.host)
         tts.say("I can't reach the local AI model right now.")
         return HandlerResult()
@@ -74,8 +74,8 @@ def _ask_and_continue(messages: list[dict], tts: TtsWorker, log: logging.Logger,
 def _ask(messages: list[dict], config: Config) -> str:
     system_prompt = config.ollama.system_prompt + facts_context()
     payload_messages = [{"role": "system", "content": system_prompt}] + messages
-    response = requests.post(
-        f"{config.ollama.host}/api/chat",
+    response = egress.post(
+        f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key,
         json={"model": config.ollama.model, "messages": payload_messages, "stream": False},
         timeout=_TIMEOUT_SECONDS,
     )

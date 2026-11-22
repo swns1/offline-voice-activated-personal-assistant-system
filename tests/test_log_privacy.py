@@ -117,7 +117,7 @@ def test_retention_deletes_only_logs_older_than_the_limit(monkeypatch, tmp_path)
     deleted = logging_setup.apply_log_retention(7, logging.getLogger("ash.retention-test"), now=now)
 
     assert sorted(deleted) == ["ash.log.1", "ash.log.2026-10-01"]
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["ash.log", "ash.log.2026-11-20", "unrelated.txt"]
+    assert sorted(p.name for p in tmp_path.iterdir() if p.is_file()) == ["ash.log", "ash.log.2026-11-20", "unrelated.txt"]
 
 
 def test_retention_deletes_a_stale_current_log_too(monkeypatch, tmp_path):

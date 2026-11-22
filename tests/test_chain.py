@@ -1,3 +1,4 @@
+import requests
 import json
 import logging
 
@@ -50,7 +51,7 @@ def test_resolve_chain_parses_valid_steps(monkeypatch):
         {"intent": "open", "target": "spotify"},
         {"intent": "spotify_play", "target": "jazz"},
     ])
-    monkeypatch.setattr(chain.requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
 
     steps = chain.resolve_chain("open spotify and then play jazz", Config())
 
@@ -62,25 +63,25 @@ def test_resolve_chain_parses_valid_steps(monkeypatch):
 
 def test_resolve_chain_rejects_unknown_intent(monkeypatch):
     steps_json = json.dumps([{"intent": "shutdown", "target": ""}])
-    monkeypatch.setattr(chain.requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
 
     assert chain.resolve_chain("shut down then open notepad", Config()) is None
 
 
 def test_resolve_chain_rejects_malformed_json(monkeypatch):
-    monkeypatch.setattr(chain.requests, "post", lambda url, json, timeout: FakeResponse("not json {{{"))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse("not json {{{"))
 
     assert chain.resolve_chain("whatever", Config()) is None
 
 
 def test_resolve_chain_rejects_empty_list(monkeypatch):
-    monkeypatch.setattr(chain.requests, "post", lambda url, json, timeout: FakeResponse("[]"))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse("[]"))
 
     assert chain.resolve_chain("whatever", Config()) is None
 
 
 def test_resolve_chain_rejects_non_list(monkeypatch):
-    monkeypatch.setattr(chain.requests, "post", lambda url, json, timeout: FakeResponse('{"intent": "open"}'))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse('{"intent": "open"}'))
 
     assert chain.resolve_chain("whatever", Config()) is None
 
@@ -88,7 +89,7 @@ def test_resolve_chain_rejects_non_list(monkeypatch):
 def test_resolve_chain_connection_failure_returns_none(monkeypatch):
     def boom(url, json, timeout):
         raise RuntimeError("connection refused")
-    monkeypatch.setattr(chain.requests, "post", boom)
+    monkeypatch.setattr(requests, "post", boom)
 
     assert chain.resolve_chain("whatever", Config()) is None
 

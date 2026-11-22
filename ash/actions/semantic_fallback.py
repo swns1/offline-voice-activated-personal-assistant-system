@@ -22,9 +22,9 @@ had said the literal template phrase.
 import json
 import logging
 
-import requests
 
 from ash.config import Config
+from ash.privacy import egress
 from ash.nlu.intents import ParsedCommand
 
 # Short relative to converse.py's 30s -- this sits in front of every
@@ -44,6 +44,7 @@ _CLASSIFIABLE_INTENTS = [
     "diagnostics", "calendar_list", "calendar_add", "screen_describe", "screen_read_text",
     "memory_remember", "memory_forget", "memory_recall",
     "screen_click", "screen_type",
+    "privacy_offline_on", "privacy_offline_off", "network_activity",
 ]
 
 _SYSTEM_PROMPT = (
@@ -65,8 +66,8 @@ def classify_intent(text: str, config: Config) -> ParsedCommand | None:
     (or wouldn't) name a confident match -- callers keep treating the
     utterance as the grammar's original "open" guess in that case."""
     try:
-        response = requests.post(
-            f"{config.ollama.host}/api/chat",
+        response = egress.post(
+            f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key,
             json={
                 "model": config.ollama.model,
                 "messages": [

@@ -64,7 +64,7 @@ def test_garbage_plaintext_raises_value_error(tmp_path):
 
 def test_write_leaves_no_temp_file_behind(tmp_path):
     secure_store.write_json(tmp_path / "data.json", [1, 2, 3])
-    assert [p.name for p in tmp_path.iterdir()] == ["data.json"]
+    assert [p.name for p in tmp_path.iterdir() if p.is_file()] == ["data.json"]
 
 
 def test_write_creates_missing_parent_folder(tmp_path):

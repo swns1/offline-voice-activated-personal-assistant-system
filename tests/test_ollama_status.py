@@ -104,7 +104,7 @@ class _FakeTagsResponse:
 
 
 def test_real_probe_reads_installed_models(monkeypatch):
-    monkeypatch.setattr(ollama.requests, "get", lambda url, timeout: _FakeTagsResponse(["llama3.2:latest"]))
+    monkeypatch.setattr(requests, "get", lambda url, timeout: _FakeTagsResponse(["llama3.2:latest"]))
     assert _REAL_PROBE("http://localhost:11434", "llama3.2") == ollama.READY
     assert _REAL_PROBE("http://localhost:11434", "mistral") == ollama.MODEL_MISSING
 
@@ -113,5 +113,5 @@ def test_real_probe_connection_refused_is_not_running(monkeypatch):
     def _refused(url, timeout):
         raise requests.exceptions.ConnectionError("refused")
 
-    monkeypatch.setattr(ollama.requests, "get", _refused)
+    monkeypatch.setattr(requests, "get", _refused)
     assert _REAL_PROBE("http://localhost:11434", "llama3.2") == ollama.NOT_RUNNING

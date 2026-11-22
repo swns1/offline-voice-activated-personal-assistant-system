@@ -21,13 +21,13 @@ remaining steps; the user answers that one question normally.
 import json
 import logging
 
-import requests
 
 from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.results import HandlerResult
 from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import egress
 from ash.registry.schema import Registry
 
 _TIMEOUT_SECONDS = 30.0
@@ -65,8 +65,8 @@ def resolve_chain(text: str, config: Config) -> list[dict] | None:
     couldn't produce a usable chain -- callers fall back to treating the
     whole utterance as a single ordinary command in that case."""
     try:
-        response = requests.post(
-            f"{config.ollama.host}/api/chat",
+        response = egress.post(
+            f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key,
             json={
                 "model": config.ollama.model,
                 "messages": [

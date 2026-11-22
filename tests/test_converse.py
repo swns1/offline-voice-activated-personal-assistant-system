@@ -44,7 +44,7 @@ class FakeResponse:
 
 
 def test_successful_reply_is_spoken_and_offers_a_followup(monkeypatch):
-    monkeypatch.setattr(converse.requests, "post",
+    monkeypatch.setattr(requests, "post",
                          lambda url, json, timeout: FakeResponse("Paris is the capital of France."))
     tts = FakeTts()
 
@@ -64,7 +64,7 @@ def test_sends_full_message_history_including_system_prompt(monkeypatch):
         captured["json"] = json
         return FakeResponse("Paris.")
 
-    monkeypatch.setattr(converse.requests, "post", fake_post)
+    monkeypatch.setattr(requests, "post", fake_post)
     config = Config()
     config.ollama.host = "http://localhost:11434"
     config.ollama.model = "llama3.2"
@@ -85,7 +85,7 @@ def test_followup_carries_prior_history(monkeypatch):
         captured_messages.append(json["messages"])
         return FakeResponse("some reply")
 
-    monkeypatch.setattr(converse.requests, "post", fake_post)
+    monkeypatch.setattr(requests, "post", fake_post)
     tts = FakeTts()
     result = converse.handle_converse("what is the capital of france", Registry(), tts, log, Config())
 
@@ -100,7 +100,7 @@ def test_followup_carries_prior_history(monkeypatch):
 
 def test_saying_stop_ends_the_conversation_without_asking_the_model(monkeypatch):
     calls = []
-    monkeypatch.setattr(converse.requests, "post", lambda url, json, timeout: calls.append(1) or FakeResponse("hi"))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: calls.append(1) or FakeResponse("hi"))
     tts = FakeTts()
     result = converse.handle_converse("hello", Registry(), tts, log, Config())
     calls.clear()
@@ -113,7 +113,7 @@ def test_saying_stop_ends_the_conversation_without_asking_the_model(monkeypatch)
 
 
 def test_conversation_ends_after_max_messages(monkeypatch):
-    monkeypatch.setattr(converse.requests, "post", lambda url, json, timeout: FakeResponse("reply"))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse("reply"))
     tts = FakeTts()
     result = converse.handle_converse("start", Registry(), tts, log, Config())
 
@@ -130,7 +130,7 @@ def test_conversation_ends_after_max_messages(monkeypatch):
 def test_connection_error_says_cant_reach(monkeypatch):
     def boom(url, json, timeout):
         raise requests.exceptions.ConnectionError()
-    monkeypatch.setattr(converse.requests, "post", boom)
+    monkeypatch.setattr(requests, "post", boom)
     tts = FakeTts()
 
     result = converse.handle_converse("hello", Registry(), tts, log, Config())
@@ -142,7 +142,7 @@ def test_connection_error_says_cant_reach(monkeypatch):
 def test_other_exception_says_generic_error(monkeypatch):
     def boom(url, json, timeout):
         raise ValueError("unexpected")
-    monkeypatch.setattr(converse.requests, "post", boom)
+    monkeypatch.setattr(requests, "post", boom)
     tts = FakeTts()
 
     result = converse.handle_converse("hello", Registry(), tts, log, Config())
@@ -152,7 +152,7 @@ def test_other_exception_says_generic_error(monkeypatch):
 
 
 def test_http_error_status_says_generic_error(monkeypatch):
-    monkeypatch.setattr(converse.requests, "post",
+    monkeypatch.setattr(requests, "post",
                          lambda url, json, timeout: FakeResponse("", status_ok=False))
     tts = FakeTts()
 
@@ -163,7 +163,7 @@ def test_http_error_status_says_generic_error(monkeypatch):
 
 
 def test_empty_model_response_has_fallback_text(monkeypatch):
-    monkeypatch.setattr(converse.requests, "post", lambda url, json, timeout: FakeResponse(""))
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(""))
     tts = FakeTts()
 
     converse.handle_converse("hello", Registry(), tts, log, Config())
@@ -174,7 +174,7 @@ def test_empty_model_response_has_fallback_text(monkeypatch):
 def test_remembered_facts_are_folded_into_the_system_prompt(monkeypatch):
     monkeypatch.setattr(converse, "facts_context", lambda: "\n\nFacts: user is vegetarian.")
     captured = {}
-    monkeypatch.setattr(converse.requests, "post",
+    monkeypatch.setattr(requests, "post",
                          lambda url, json, timeout: captured.setdefault("json", json) or FakeResponse("ok"))
 
     converse.handle_converse("hello", Registry(), FakeTts(), log, Config())
@@ -188,7 +188,7 @@ def test_no_remembered_facts_leaves_system_prompt_unchanged(monkeypatch):
     # The autouse fixture already stubs facts_context() to "" -- confirm
     # that's genuinely a no-op append, not e.g. stray whitespace.
     captured = {}
-    monkeypatch.setattr(converse.requests, "post",
+    monkeypatch.setattr(requests, "post",
                          lambda url, json, timeout: captured.setdefault("json", json) or FakeResponse("ok"))
     config = Config()
 

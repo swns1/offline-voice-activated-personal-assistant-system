@@ -19,9 +19,8 @@ place that decision lives.
 """
 import time
 
-import requests
-
 from ash.config import Config
+from ash.privacy import consent, egress
 
 READY = "ready"
 NOT_RUNNING = "not_running"
@@ -38,6 +37,8 @@ _cache: dict[tuple[str, str], tuple[float, str]] = {}
 
 
 def ai_enabled(config: Config) -> bool:
+    if not egress.is_local_url(config.ollama.host) and consent.offline_mode():
+        return False  # an Ollama server on another machine is off this PC
     setting = config.ollama.enabled
     if setting == "auto":
         return server_status(config) == READY
@@ -67,7 +68,7 @@ def has_model(installed_names: set[str], model: str) -> bool:
 
 def _probe(host: str, model: str) -> str:
     try:
-        response = requests.get(f"{host}/api/tags", timeout=_TIMEOUT_SECONDS)
+        response = egress.get(f"{host}/api/tags", feature=egress.LOCAL_AI.key, timeout=_TIMEOUT_SECONDS)
         response.raise_for_status()
         names = {m.get("name", "") for m in response.json().get("models", [])}
     except Exception:

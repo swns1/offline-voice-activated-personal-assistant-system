@@ -9,12 +9,12 @@ looks at whether a cached token file exists and looks well-formed.
 """
 import logging
 
-import requests
 import sounddevice as sd
 
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import egress
 from ash.privacy import secure_store
 from ash.registry.schema import Registry
 from ash.utils import ollama
@@ -55,9 +55,9 @@ def _check_ollama(config: Config) -> tuple[str, bool, str]:
         # Optional in auto mode -- not running isn't a failure.
         return ("Ollama", True, "not running, AI features off")
     try:
-        response = requests.get(f"{config.ollama.host}/api/tags", timeout=_TIMEOUT_SECONDS)
+        response = egress.get(f"{config.ollama.host}/api/tags", feature=egress.LOCAL_AI.key, timeout=_TIMEOUT_SECONDS)
         response.raise_for_status()
-    except requests.exceptions.ConnectionError:
+    except egress.NetworkUnreachable:
         return ("Ollama", False, "not reachable")
     except Exception:
         return ("Ollama", False, "error checking")

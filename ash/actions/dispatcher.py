@@ -4,6 +4,13 @@ from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
 from ash.actions.open_app import handle_open, handle_open_guess
+from ash.actions.privacy_controls import (
+    handle_allow,
+    handle_disallow,
+    handle_network_activity,
+    handle_offline_off,
+    handle_offline_on,
+)
 from ash.actions.search import handle_browser_search, handle_search
 from ash.actions.spotify import (
     handle_spotify_now_playing,
@@ -84,6 +91,11 @@ _HANDLERS = {
     "memory_remember": handle_memory_remember,
     "memory_forget": handle_memory_forget,
     "memory_recall": handle_memory_recall,
+    "privacy_offline_on": handle_offline_on,
+    "privacy_offline_off": handle_offline_off,
+    "consent_grant": handle_allow,
+    "consent_revoke": handle_disallow,
+    "network_activity": handle_network_activity,
 }
 
 

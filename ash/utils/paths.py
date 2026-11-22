@@ -16,6 +16,8 @@ REGISTRY_AUTO_PATH = CONFIG_DIR / "registry.auto.yaml"
 TIMERS_STATE_PATH = APP_DATA_DIR / "timers.json"
 MEMORY_PATH = APP_DATA_DIR / "memory.json"
 VOICEPRINT_PATH = APP_DATA_DIR / "voiceprint.json"
+PRIVACY_STATE_PATH = APP_DATA_DIR / "privacy_state.json"
+NETWORK_LOG_PATH = APP_DATA_DIR / "network_log.json"
 
 
 def ensure_app_data_dirs() -> None:

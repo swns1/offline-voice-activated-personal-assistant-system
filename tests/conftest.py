@@ -2,20 +2,50 @@ import os
 import subprocess
 
 import pytest
+import requests
 
 import ash.actions.open_app as open_app_module
 import ash.nlu.context as context_module
+import ash.privacy.consent as consent_module
+import ash.privacy.network_log as network_log_module
 import ash.utils.ollama as ollama_module
 
 
+def _build_all_allowed_state() -> bytes:
+    """An encrypted privacy_state.json with every online feature allowed,
+    built once per test run and copied into each test (encrypting it
+    fresh for every test roughly doubled the suite's run time)."""
+    import tempfile
+    from pathlib import Path
+
+    from ash.privacy import secure_store
+    from ash.privacy.egress import FEATURES
+
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "privacy_state.json"
+        secure_store.write_json(path, {
+            "offline_mode": False,
+            "consents": {key: {"granted": True, "at": "2026-01-01T00:00:00"} for key in FEATURES},
+        })
+        return path.read_bytes()
+
+
+_all_allowed_state_bytes = _build_all_allowed_state()
+
+
 @pytest.fixture(autouse=True)
-def _no_real_side_effects(monkeypatch):
+def _no_real_side_effects(monkeypatch, tmp_path):
     """Safety net: no test may launch a real program, rescan this PC's
-    real Start Menu/Steam library, or probe a real Ollama server (the
-    default ollama.enabled is "auto", which would otherwise make tests
-    depend on whether Ollama happens to be running). A test that needs
-    any of these stubs it itself (its own monkeypatch runs after this
-    one and wins).
+    real Start Menu/Steam library, make a real network request, probe a
+    real Ollama server (the default ollama.enabled is "auto", which would
+    otherwise make tests depend on whether Ollama happens to be running),
+    or read/write your real privacy settings and network log. A test
+    that needs any of these stubs it itself (its own monkeypatch runs
+    after this one and wins).
+
+    Privacy settings start as "every online feature allowed, online" so
+    tests of what a feature *does* aren't interrupted by a consent
+    question; tests of the consent flow itself reset that explicitly.
 
     Without this, a test that falls through to handle_open's
     rescan-on-miss path does a real scan, overwrites the real
@@ -32,6 +62,19 @@ def _no_real_side_effects(monkeypatch):
     monkeypatch.setattr(open_app_module, "refresh_registry_auto", _blocked_rescan)
     monkeypatch.setattr(ollama_module, "_probe", lambda host, model: ollama_module.NOT_RUNNING)
     monkeypatch.setattr(ollama_module, "_cache", {})
+
+    def _blocked_network(self, method, url, *args, **kwargs):
+        raise RuntimeError(f"Tests must not make real network requests: {method} {url}")
+
+    monkeypatch.setattr(requests.Session, "request", _blocked_network)
+
+    # In a subfolder, so tests that list their own tmp_path don't see it.
+    state_dir = tmp_path / "_ash_privacy"
+    state_dir.mkdir()
+    state_path = state_dir / "privacy_state.json"
+    state_path.write_bytes(_all_allowed_state_bytes)
+    monkeypatch.setattr(consent_module, "PRIVACY_STATE_PATH", state_path)
+    monkeypatch.setattr(network_log_module, "NETWORK_LOG_PATH", state_dir / "network_log.json")
 
 
 @pytest.fixture(autouse=True)

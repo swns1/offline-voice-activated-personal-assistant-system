@@ -36,6 +36,23 @@ Philippine Data Privacy Act of 2012 (RA 10173):
 - **Logs are kept for 7 days.** A new log file starts each day, and files
   older than `privacy.log_retention_days` (default 7) are deleted
   automatically.
+- **Nothing goes online without asking.** The first time a feature
+  needs the internet, Ash says exactly what it would send and to whom —
+  e.g. "To answer 'what is' and 'search for' questions, I'd send the
+  words you search for to DuckDuckGo, over the internet. Is that okay?"
+  — and remembers your answer. A "no" is respected, not asked again.
+  Change your mind any time: "allow web search" / "stop allowing
+  Spotify".
+- **Offline mode.** "go offline" blocks everything that would leave
+  this PC, whatever you've allowed; "go online" turns it back off.
+  Talking to Ollama on this PC is unaffected (it never leaves the
+  machine).
+- **You can check what went online.** Every request that leaves this PC
+  is recorded in an encrypted network log — when, which feature, which
+  website, and what *kind* of data, never the data itself — kept for 30
+  days. "what have you sent online" gives you the summary. In the code,
+  every web request goes through one module (`ash/privacy/egress.py`),
+  and a test fails if anything else tries to make one.
 
 ## Setup
 

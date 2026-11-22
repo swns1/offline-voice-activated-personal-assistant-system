@@ -83,7 +83,7 @@ def test_ollama_check_auto_model_missing_is_a_failure(monkeypatch):
 
 
 def test_ollama_check_reachable(monkeypatch):
-    monkeypatch.setattr(diagnostics.requests, "get", lambda url, timeout: FakeResponse())
+    monkeypatch.setattr(requests, "get", lambda url, timeout: FakeResponse())
     config = Config()
     config.ollama.enabled = True
 
@@ -96,7 +96,7 @@ def test_ollama_check_reachable(monkeypatch):
 def test_ollama_check_connection_error(monkeypatch):
     def boom(url, timeout):
         raise requests.exceptions.ConnectionError()
-    monkeypatch.setattr(diagnostics.requests, "get", boom)
+    monkeypatch.setattr(requests, "get", boom)
     config = Config()
     config.ollama.enabled = True
 
