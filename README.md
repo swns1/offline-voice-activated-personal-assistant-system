@@ -180,6 +180,20 @@ offline mode and never need permission:
 "what is …" questions are tried as maths first, so a calculation never
 goes to web search — and "how many people live in Manila" still does.
 
+## Notes and lists
+
+- Notes: "take a note: buy flowers for mom", "note that the wifi
+  password is on the fridge", "read my notes" (the latest five, newest
+  first), "delete my notes" (asks first)
+- Lists: "add milk, eggs and bread to my shopping list", "what's on my
+  shopping list", "cross milk off my shopping list", "clear my shopping
+  list" (asks first), "what lists do I have" — any list name works
+  ("to-do", "packing", ...)
+
+Stored encrypted on this PC (`%LOCALAPPDATA%\Ash\notes.json`), and
+included in "what data do you have", "export my data" and "delete all
+my data".
+
 ## System control
 
 - Volume: "volume up" / "volume down" / "set the volume to 50" / "mute" / "unmute"

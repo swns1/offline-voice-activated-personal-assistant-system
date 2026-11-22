@@ -19,7 +19,13 @@ from ash.nlu.intents import ParsedCommand
 
 
 def parse(text: str) -> ParsedCommand:
-    normalized = _normalize(text)
+    # Commands are matched without commas ("Remind me, at 3pm..." still
+    # starts with "remind me"), but the target keeps them, so a list like
+    # "bread, butter and milk" reaches the handler as three things.
+    with_commas = _normalize(text)
+    words = [w for w in with_commas.split() if w.strip(",")]
+    plain_words = [w.replace(",", "") for w in words]
+    normalized = " ".join(plain_words)
     if not normalized:
         return ParsedCommand(intent="unknown", target="")
 
@@ -31,7 +37,7 @@ def parse(text: str) -> ParsedCommand:
 
     for phrase, intent in registry.verb_phrases():
         if normalized.startswith(phrase + " "):
-            target = normalized[len(phrase):].strip()
+            target = " ".join(words[len(phrase.split()):]).strip(" ,")
             if target:
                 return ParsedCommand(intent=intent, target=target)
 
@@ -46,10 +52,11 @@ def _normalize(text: str) -> str:
     """Lowercase, drop punctuation, collapse spaces -- but keep what
     numbers need: speech-to-text writes "9:30am", "1.5 minutes",
     "15% of 80" and "2+2", and stripping all punctuation turned those
-    into "930am", "15 minutes", "15 of 80" and "22". Command phrases
-    contain none of these characters, so matching is unaffected."""
+    into "930am", "15 minutes", "15 of 80" and "22". Commas are kept too
+    (parse() matches without them, but hands them on in the target).
+    Command phrases contain none of these characters."""
     text = text.lower().strip()
-    text = re.sub(r"[^\w\s'%+*/^×÷.:\-]", "", text)
+    text = re.sub(r"[^\w\s'%+*/^×÷.:,\-]", "", text)
     text = re.sub(r"(?<!\d)[.:]|[.:](?!\d)", "", text)  # "." and ":" only inside numbers
     text = re.sub(r"-(?!\s*\d)", "", text)              # "-" only as a minus sign
     text = re.sub(r"\s+", " ", text)

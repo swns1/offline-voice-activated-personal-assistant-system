@@ -34,6 +34,7 @@ list, or if the inventory lists something this table doesn't.
 | Data | Where (`%LOCALAPPDATA%\Ash\…`) | Why | Kept | Encrypted | In export | Erased by "delete all" |
 |---|---|---|---|---|---|---|
 | remembered facts | `memory.json` | facts you asked Ash to remember, used to personalize answers | until you ask Ash to forget them | yes | yes | yes |
+| notes and lists | `notes.json` | notes you dictate, and lists like your shopping list | until you delete them | yes | yes | yes |
 | timers and reminders | `timers.json` | so pending timers and reminders survive a restart | until they go off or you cancel them | yes | yes | yes |
 | your voiceprint | `voiceprint.json` | checking it's really you before risky actions (only if voice-verified confirmation is on) | until you delete it | yes | listed only (biometric) | yes |
 | your Spotify login | `.spotify_cache` | controlling Spotify without signing in every time | until you delete it | yes | listed only (a secret) | yes |

@@ -52,6 +52,14 @@ def _describe(item: inventory.StoredData) -> str:
     if item.key == "memory" and isinstance(contents, dict):
         n = len(contents.get("facts") or [])
         return f"{n} remembered fact{'' if n == 1 else 's'}"
+    if item.key == "notes" and isinstance(contents, dict):
+        n_notes, n_lists = len(contents.get("notes") or []), len(contents.get("lists") or {})
+        parts = []
+        if n_notes:
+            parts.append(f"{n_notes} note{'' if n_notes == 1 else 's'}")
+        if n_lists:
+            parts.append(f"{n_lists} list{'' if n_lists == 1 else 's'}")
+        return " and ".join(parts) if parts else item.name
     if item.key == "timers" and isinstance(contents, list):
         n = len(contents)
         return f"{n} timer{'' if n == 1 else 's'} or reminder{'' if n == 1 else 's'}"

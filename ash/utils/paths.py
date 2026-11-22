@@ -18,6 +18,7 @@ VOICEPRINT_PATH = APP_DATA_DIR / "voiceprint.json"
 PRIVACY_STATE_PATH = APP_DATA_DIR / "privacy_state.json"
 NETWORK_LOG_PATH = APP_DATA_DIR / "network_log.json"
 SPOTIFY_TOKEN_PATH = APP_DATA_DIR / ".spotify_cache"
+NOTES_PATH = APP_DATA_DIR / "notes.json"
 
 
 def ensure_app_data_dirs() -> None:

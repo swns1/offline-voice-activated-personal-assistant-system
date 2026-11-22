@@ -47,6 +47,11 @@ def _memory() -> list[Path]:
     return [memory.MEMORY_PATH]
 
 
+def _notes() -> list[Path]:
+    from ash.actions import notes
+    return [notes.NOTES_PATH]
+
+
 def _timers() -> list[Path]:
     from ash.actions import timers
     return [timers.TIMERS_STATE_PATH]
@@ -87,6 +92,11 @@ INVENTORY: list[StoredData] = [
         key="memory", name="remembered facts",
         purpose="facts you asked me to remember, used to personalize answers",
         kept="until you ask me to forget them", sensitive=False, encrypted=True, paths=_memory,
+    ),
+    StoredData(
+        key="notes", name="notes and lists",
+        purpose="notes you dictate, and lists like your shopping list",
+        kept="until you delete them", sensitive=False, encrypted=True, paths=_notes,
     ),
     StoredData(
         key="timers", name="timers and reminders",

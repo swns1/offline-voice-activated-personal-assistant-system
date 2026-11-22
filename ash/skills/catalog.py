@@ -25,6 +25,16 @@ from ash.actions.media import (
     handle_media_resume,
 )
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
+from ash.actions.notes import (
+    handle_list_add,
+    handle_list_clear,
+    handle_list_read,
+    handle_list_remove,
+    handle_lists_list,
+    handle_note_add,
+    handle_note_clear,
+    handle_note_read,
+)
 from ash.actions.open_app import handle_open, handle_open_guess
 from ash.actions.privacy_controls import (
     handle_allow,
@@ -67,6 +77,7 @@ TIMERS = "Timers, reminders and routines"
 CALENDAR = "Calendar"
 SCREEN = "Your screen"
 MEMORY = "Memory"
+NOTES = "Notes and lists"
 PRIVACY = "Privacy"
 ASSISTANT = "Ash itself"
 
@@ -393,6 +404,55 @@ SKILLS: list[Skill] = [
         phrases=("what do you know about me", "what do you remember about me", "what do you remember",
                  "what have you remembered"),
         chainable=True, classifiable=True,
+    ),
+
+    # --- notes and lists --------------------------------------------------------------------
+    Skill(
+        "note_add", handle_note_add, NOTES, "Take a note.",
+        examples=("take a note buy flowers for mom",),
+        verbs=("take a note", "make a note", "add a note", "take note", "note that", "write down", "jot down"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "note_read", handle_note_read, NOTES, "Read your latest notes.",
+        examples=("read my notes",),
+        phrases=("read my notes", "read me my notes", "what are my notes", "show my notes", "what did i note"),
+        classifiable=True,
+    ),
+    Skill(
+        "note_clear", handle_note_clear, NOTES, "Delete all your notes (asks first).",
+        examples=("delete my notes",),
+        phrases=("delete my notes", "delete all my notes", "clear my notes", "erase my notes"),
+    ),
+    Skill(
+        "list_add", handle_list_add, NOTES, "Add things to a list, like your shopping list.",
+        examples=("add milk and eggs to my shopping list",),
+        verbs=("add", "put"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "list_read", handle_list_read, NOTES, "Read a list.",
+        examples=("what's on my shopping list",),
+        verbs=("what's on my", "whats on my", "what is on my", "read my", "read me my", "show me my"),
+        classifiable=True,
+    ),
+    Skill(
+        "list_remove", handle_list_remove, NOTES, "Take things off a list.",
+        examples=("remove milk from my shopping list",),
+        # Not "take": "take me to YouTube", "take a picture" aren't list commands.
+        verbs=("remove", "cross", "delete"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "list_clear", handle_list_clear, NOTES, "Delete a whole list (asks first).",
+        examples=("clear my shopping list",),
+        verbs=("clear my", "clear the", "empty my", "delete my"),
+    ),
+    Skill(
+        "lists_list", handle_lists_list, NOTES, "Say which lists you have.",
+        examples=("what lists do I have",),
+        phrases=("what lists do i have", "read my lists", "show my lists"),
+        classifiable=True,
     ),
 
     # --- privacy -------------------------------------------------------------------------
