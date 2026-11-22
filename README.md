@@ -349,10 +349,22 @@ one feature that directly manipulates your PC:
   coordinates and the actual click coordinates could disagree there.
   If clicks land in the wrong place, that's the first thing to check.
 
+## Music and video (any app)
+
+"pause", "resume", "next song", "previous song" and "what song is
+this" work with whatever is playing on this PC — the Spotify app, a
+YouTube tab, VLC, Windows Media Player — through Windows' own media
+controls. No account, nothing sent anywhere, works offline.
+
 ## Spotify
 
-Playback control ("spotify play X", "pause", "skip", "what's playing")
-needs a Spotify Developer Dashboard app:
+The commands above already control the Spotify *app*. The Spotify
+integration below is for searching and playing by name ("Spotify play
+some jazz") and controlling playback through your Spotify account
+("pause Spotify", "what's playing on Spotify").
+
+
+These need a Spotify Developer Dashboard app:
 
 1. Create an app at https://developer.spotify.com/dashboard, add a
    redirect URI (matching `spotify.redirect_uri` in `config/config.yaml`,

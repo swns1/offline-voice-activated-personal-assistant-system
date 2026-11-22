@@ -137,30 +137,38 @@ def test_spotify_play_on_spotify_phrasing():
     assert cmd.target == "bohemian rhapsody"
 
 
-def test_bare_pause_is_spotify_pause():
+# Everyday playback phrases control whatever's playing, in any app
+# (ash/actions/media.py); only phrases naming Spotify use Spotify's API.
+
+def test_bare_pause_controls_any_player():
     cmd = parse("pause")
-    assert cmd.intent == "spotify_pause"
+    assert cmd.intent == "media_pause"
     assert cmd.target == ""
 
 
-def test_bare_skip_is_spotify_skip():
-    cmd = parse("skip")
-    assert cmd.intent == "spotify_skip"
+def test_bare_skip_controls_any_player():
+    assert parse("skip").intent == "media_next"
 
 
-def test_whats_playing_is_spotify_now_playing():
-    cmd = parse("what's playing")
-    assert cmd.intent == "spotify_now_playing"
+def test_whats_playing_reads_any_player():
+    assert parse("what's playing").intent == "media_now_playing"
 
 
 def test_pause_it_and_pause_that():
-    assert parse("pause it").intent == "spotify_pause"
-    assert parse("pause that").intent == "spotify_pause"
+    assert parse("pause it").intent == "media_pause"
+    assert parse("pause that").intent == "media_pause"
 
 
 def test_skip_it_and_resume_it():
-    assert parse("skip it").intent == "spotify_skip"
-    assert parse("resume it").intent == "spotify_resume"
+    assert parse("skip it").intent == "media_next"
+    assert parse("resume it").intent == "media_resume"
+
+
+def test_phrases_naming_spotify_use_spotify():
+    assert parse("pause spotify").intent == "spotify_pause"
+    assert parse("resume spotify").intent == "spotify_resume"
+    assert parse("next song on spotify").intent == "spotify_skip"
+    assert parse("what's playing on spotify").intent == "spotify_now_playing"
 
 
 def test_bare_mute_and_unmute():

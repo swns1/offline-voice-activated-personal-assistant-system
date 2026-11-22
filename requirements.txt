@@ -54,6 +54,15 @@ pyautogui
 # Unit conversions ("convert 5 miles to kilometers"), worked out offline
 pint
 
+# Play/pause/skip/"what's playing" for any app, via Windows' media session
+# API. Pinned to 3.2.1: win11toast's own winrt packages require
+# winrt-runtime 3.2.x, and mixing in 4.x breaks notifications.
+winrt-runtime==3.2.1
+winrt-Windows.Foundation==3.2.1
+winrt-Windows.Foundation.Collections==3.2.1
+winrt-Windows.Storage.Streams==3.2.1
+winrt-Windows.Media.Control==3.2.1
+
 # Phase 10: tray icon
 pystray
 

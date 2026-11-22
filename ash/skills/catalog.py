@@ -17,6 +17,13 @@ from ash.actions.clock import handle_date_today, handle_day_of, handle_days_unti
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.help import handle_help
+from ash.actions.media import (
+    handle_media_next,
+    handle_media_now_playing,
+    handle_media_pause,
+    handle_media_previous,
+    handle_media_resume,
+)
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
 from ash.actions.open_app import handle_open, handle_open_guess
 from ash.actions.privacy_controls import (
@@ -156,6 +163,41 @@ SKILLS: list[Skill] = [
     ),
 
     # --- music --------------------------------------------------------------
+    # Any player on this PC (Spotify app, YouTube tab, VLC...), through
+    # Windows' media controls: offline, no account.
+    Skill(
+        "media_pause", handle_media_pause, MUSIC, "Pause whatever is playing, in any app.",
+        examples=("pause the music",),
+        phrases=("pause", "pause it", "pause that", "pause the music", "pause music", "pause the video",
+                 "stop the music", "stop music"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "media_resume", handle_media_resume, MUSIC, "Resume what was playing, in any app.",
+        examples=("resume",),
+        phrases=("resume", "resume it", "resume that", "unpause", "resume the music", "resume music",
+                 "play music", "play the music", "continue playing", "keep playing"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "media_next", handle_media_next, MUSIC, "Skip to the next song or video, in any app.",
+        examples=("next song",),
+        phrases=("skip", "skip it", "skip that", "skip song", "skip this song", "next song", "next track", "next"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "media_previous", handle_media_previous, MUSIC, "Go back to the previous song, in any app.",
+        examples=("previous song",),
+        phrases=("previous song", "previous track", "last song", "go back a song"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "media_now_playing", handle_media_now_playing, MUSIC, "Say what's playing, in any app.",
+        examples=("what song is this",),
+        phrases=("what's playing", "whats playing", "what song is this", "what's this song", "whats this song",
+                 "what song is playing", "who sings this"),
+        classifiable=True,
+    ),
     Skill(
         "spotify_play", handle_spotify_play, MUSIC, "Play a song, artist or playlist on Spotify.",
         examples=("Spotify play some jazz",),
@@ -163,33 +205,33 @@ SKILLS: list[Skill] = [
         chainable=True, classifiable=True, online=("spotify",),
     ),
     Skill(
-        "spotify_pause", handle_spotify_pause, MUSIC, "Pause Spotify.",
-        examples=("pause",),
-        phrases=("pause", "pause it", "pause that", "pause spotify"),
+        "spotify_pause", handle_spotify_pause, MUSIC, "Pause Spotify through your Spotify account.",
+        examples=("pause Spotify",),
+        phrases=("pause spotify",),
         chainable=True, classifiable=True, online=("spotify",),
     ),
     Skill(
-        "spotify_resume", handle_spotify_resume, MUSIC, "Resume Spotify.",
-        examples=("resume",),
-        phrases=("resume", "resume it", "resume that", "resume spotify", "unpause"),
+        "spotify_resume", handle_spotify_resume, MUSIC, "Resume Spotify through your Spotify account.",
+        examples=("resume Spotify",),
+        phrases=("resume spotify",),
         chainable=True, classifiable=True, online=("spotify",),
     ),
     Skill(
-        "spotify_skip", handle_spotify_skip, MUSIC, "Skip to the next song on Spotify.",
-        examples=("skip", "next song"),
-        phrases=("skip", "skip it", "skip that", "skip song", "next song", "next track"),
+        "spotify_skip", handle_spotify_skip, MUSIC, "Skip to the next song on Spotify, through your account.",
+        examples=("next song on Spotify",),
+        phrases=("next song on spotify", "skip on spotify", "skip spotify"),
         chainable=True, classifiable=True, online=("spotify",),
     ),
     Skill(
-        "spotify_previous", handle_spotify_previous, MUSIC, "Go back to the previous song on Spotify.",
-        examples=("previous song",),
-        phrases=("previous song", "previous track"),
+        "spotify_previous", handle_spotify_previous, MUSIC, "Go back a song on Spotify, through your account.",
+        examples=("previous song on Spotify",),
+        phrases=("previous song on spotify",),
         chainable=True, classifiable=True, online=("spotify",),
     ),
     Skill(
-        "spotify_now_playing", handle_spotify_now_playing, MUSIC, "Say what's playing on Spotify.",
-        examples=("what's playing",),
-        phrases=("what's playing", "whats playing"),
+        "spotify_now_playing", handle_spotify_now_playing, MUSIC, "Say what's playing on your Spotify account.",
+        examples=("what's playing on Spotify",),
+        phrases=("what's playing on spotify", "whats playing on spotify"),
         classifiable=True, online=("spotify",),
     ),
 

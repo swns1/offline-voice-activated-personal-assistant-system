@@ -146,7 +146,7 @@ def test_normalization_keeps_numbers_intact(said, target):
     assert parse(said).target == target
 
 
-@pytest.mark.parametrize("said, intent", [("Pause.", "spotify_pause"), ("Stop!", "stop"), ("What time is it?", "time_now")])
+@pytest.mark.parametrize("said, intent", [("Pause.", "media_pause"), ("Stop!", "stop"), ("What time is it?", "time_now")])
 def test_normalization_still_matches_phrases(said, intent):
     assert parse(said).intent == intent
 
