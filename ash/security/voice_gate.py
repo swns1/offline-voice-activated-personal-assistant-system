@@ -24,7 +24,6 @@ back to the plain yes/no confirmation the user already had before
 turning this on. A flaky add-on check should never be able to make a
 core action like shutdown permanently unconfirmable.
 """
-import json
 import logging
 
 import numpy as np
@@ -32,7 +31,8 @@ from scipy.fftpack import dct
 
 from ash.audio.stt import SAMPLE_RATE
 from ash.config import Config
-from ash.utils.paths import VOICEPRINT_PATH, ensure_app_data_dirs
+from ash.privacy import secure_store
+from ash.utils.paths import VOICEPRINT_PATH
 
 _FRAME_MS = 25
 _HOP_MS = 10
@@ -100,9 +100,9 @@ def enroll(audio: np.ndarray) -> bool:
     features = _extract_features(audio)
     if features is None:
         return False
-    ensure_app_data_dirs()
-    with open(VOICEPRINT_PATH, "w", encoding="utf-8") as f:
-        json.dump({"mfcc_mean": features.tolist()}, f)
+    # Biometric data -- the most sensitive thing Ash stores, so it's
+    # encrypted at rest like everything else (ash/privacy/secure_store.py).
+    secure_store.write_json(VOICEPRINT_PATH, {"mfcc_mean": features.tolist()})
     return True
 
 
@@ -119,9 +119,8 @@ def verify(audio: np.ndarray, config: Config, log: logging.Logger) -> bool:
         log.warning("Voice gate enabled but no voice enrolled (run scripts/enroll_voice.py) -- allowing")
         return True
     try:
-        with open(VOICEPRINT_PATH, "r", encoding="utf-8") as f:
-            stored = np.array(json.load(f)["mfcc_mean"])
-    except (OSError, ValueError, KeyError):
+        stored = np.array(secure_store.read_json(VOICEPRINT_PATH)["mfcc_mean"])
+    except (OSError, ValueError, KeyError, TypeError):
         log.warning("Could not read stored voiceprint -- allowing")
         return True
 

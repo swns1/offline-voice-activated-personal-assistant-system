@@ -15,6 +15,19 @@ if it's installed — see "Local AI" below) — never anything else, and
 never your files. Calendar access (if
 enabled) talks to your local desktop Outlook install, not the network.
 
+## Privacy
+
+Ash's privacy features are designed in line with the principles of the
+Philippine Data Privacy Act of 2012 (RA 10173):
+
+- **Encrypted at rest.** Everything personal Ash stores — remembered
+  facts, timers and reminders, your voiceprint, and your Spotify login
+  token — is encrypted with Windows DPAPI, so only your Windows account
+  can read it (not other accounts on this PC, and not anyone who copies
+  the files off it). Files from older versions of Ash are converted
+  automatically the first time Ash reads them. Audio is never saved to
+  disk.
+
 ## Setup
 
 ```

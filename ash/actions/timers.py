@@ -7,7 +7,6 @@ with ContinuousListener's queue, so this is safe no matter what the
 main thread is blocked on.
 """
 import itertools
-import json
 import logging
 import threading
 import time
@@ -26,7 +25,8 @@ from ash.nlu.duration import (
 )
 from ash.registry.schema import Registry
 from ash.utils.notifications import show_toast
-from ash.utils.paths import TIMERS_STATE_PATH, ensure_app_data_dirs
+from ash.privacy import secure_store
+from ash.utils.paths import TIMERS_STATE_PATH
 
 _MAX_ACTIVE_TIMERS = 20
 
@@ -67,9 +67,7 @@ def _persist() -> None:
                 entry["recurrence"] = {"schedule": schedule, "hour": hour, "minute": minute}
             snapshot.append(entry)
     try:
-        ensure_app_data_dirs()
-        with open(TIMERS_STATE_PATH, "w", encoding="utf-8") as f:
-            json.dump(snapshot, f)
+        secure_store.write_json(TIMERS_STATE_PATH, snapshot)
     except OSError:
         pass  # best-effort -- losing persistence shouldn't break the timer itself
 
@@ -80,11 +78,8 @@ def rehydrate(tts: TtsWorker, log: logging.Logger) -> None:
     is announced immediately instead of silently dropped -- a recurring
     reminder is rescheduled for its next occurrence after being
     announced, rather than losing its recurrence."""
-    if not TIMERS_STATE_PATH.exists():
-        return
     try:
-        with open(TIMERS_STATE_PATH, "r", encoding="utf-8") as f:
-            saved = json.load(f)
+        saved = secure_store.read_json(TIMERS_STATE_PATH, default=[])
     except (OSError, ValueError):
         return
 

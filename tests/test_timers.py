@@ -5,6 +5,7 @@ import time
 
 import pytest
 
+from ash.privacy import secure_store
 from ash.actions import timers
 from ash.actions.results import HandlerResult
 from ash.config import Config
@@ -52,7 +53,6 @@ def _reset_timers_state(monkeypatch, tmp_path):
     monkeypatch.setattr(timers.threading, "Timer", FakeTimer)
     monkeypatch.setattr(timers, "show_toast", lambda title, body, log=None: None)
     monkeypatch.setattr(timers, "TIMERS_STATE_PATH", tmp_path / "timers.json")
-    monkeypatch.setattr(timers, "ensure_app_data_dirs", lambda: None)
     yield
 
 
@@ -223,7 +223,7 @@ def test_persist_writes_active_timers_to_disk():
     tts = FakeTts()
     timers.handle_timer_set("5 minutes to check the oven", Registry(), tts, log, Config())
 
-    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(timers.TIMERS_STATE_PATH)
 
     assert len(saved) == 1
     assert saved[0]["label"] == "check the oven"
@@ -236,7 +236,7 @@ def test_persist_removes_entry_on_fire():
 
     FakeTimer.instances[0].trigger()
 
-    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(timers.TIMERS_STATE_PATH)
     assert saved == []
 
 
@@ -246,7 +246,7 @@ def test_persist_clears_on_cancel():
 
     timers.handle_timer_cancel("", Registry(), tts, log, Config())
 
-    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(timers.TIMERS_STATE_PATH)
     assert saved == []
 
 
@@ -308,7 +308,7 @@ def test_rehydrate_removes_elapsed_entry_from_disk():
 
     timers.rehydrate(FakeTts(), log)
 
-    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(timers.TIMERS_STATE_PATH)
     assert saved == []
 
 
@@ -350,7 +350,7 @@ def test_recurring_reminder_persists_recurrence_to_disk():
     tts = FakeTts()
     timers.handle_reminder_set("every day at 8am to take medicine", Registry(), tts, log, Config())
 
-    saved = json.loads(timers.TIMERS_STATE_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(timers.TIMERS_STATE_PATH)
 
     assert saved[0]["recurrence"] == {"schedule": "daily", "hour": 8, "minute": 0}
 

@@ -13,7 +13,6 @@ log = logging.getLogger("test")
 @pytest.fixture(autouse=True)
 def _isolated_voiceprint_store(monkeypatch, tmp_path):
     monkeypatch.setattr(voice_gate, "VOICEPRINT_PATH", tmp_path / "voiceprint.json")
-    monkeypatch.setattr(voice_gate, "ensure_app_data_dirs", lambda: None)
 
 
 def _tone(freq_hz: float, seconds: float = 2.0) -> np.ndarray:

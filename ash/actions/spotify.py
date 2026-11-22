@@ -16,12 +16,14 @@ import logging
 import time
 
 import spotipy
+from spotipy.cache_handler import CacheHandler
 from spotipy.oauth2 import SpotifyOAuth
 
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_spotify_track
+from ash.privacy import secure_store
 from ash.registry.schema import Registry
 from ash.utils.paths import SECRETS_DIR, ensure_app_data_dirs
 
@@ -30,6 +32,28 @@ _CACHE_PATH = SECRETS_DIR / ".spotify_cache"
 
 _uri_launcher = UriLauncher()
 _client: spotipy.Spotify | None = None
+
+
+class _EncryptedTokenCache(CacheHandler):
+    """spotipy's default cache writes your Spotify OAuth token (which
+    grants control of your account's playback) as plain JSON. This keeps
+    it in the same encrypted store as Ash's other personal data; an
+    existing plain-text cache is migrated on first read."""
+
+    def __init__(self, path):
+        self._path = path
+
+    def get_cached_token(self):
+        try:
+            return secure_store.read_json(self._path)
+        except (OSError, ValueError):
+            return None  # spotipy treats this as "not authorized yet"
+
+    def save_token_to_cache(self, token_info):
+        try:
+            secure_store.write_json(self._path, token_info)
+        except OSError:
+            pass  # best-effort, like spotipy's own cache: you'd just re-authorize
 
 
 def _get_client(config: Config, tts: TtsWorker) -> spotipy.Spotify | None:
@@ -48,7 +72,7 @@ def _get_client(config: Config, tts: TtsWorker) -> spotipy.Spotify | None:
         client_id=config.spotify.client_id,
         redirect_uri=config.spotify.redirect_uri,
         scope=_SCOPE,
-        cache_path=str(_CACHE_PATH),
+        cache_handler=_EncryptedTokenCache(_CACHE_PATH),
     )
     _client = spotipy.Spotify(auth_manager=auth_manager)
     return _client

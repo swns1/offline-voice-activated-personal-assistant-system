@@ -3,6 +3,7 @@ import logging
 
 import pytest
 
+from ash.privacy import secure_store
 from ash.actions import memory
 from ash.actions.results import HandlerResult
 from ash.config import Config
@@ -22,7 +23,6 @@ class FakeTts:
 @pytest.fixture(autouse=True)
 def _isolated_memory_store(monkeypatch, tmp_path):
     monkeypatch.setattr(memory, "MEMORY_PATH", tmp_path / "memory.json")
-    monkeypatch.setattr(memory, "ensure_app_data_dirs", lambda: None)
 
 
 def test_remember_persists_a_fact():
@@ -32,7 +32,7 @@ def test_remember_persists_a_fact():
 
     assert result == HandlerResult()
     assert "I'll remember that I'm vegetarian" in tts.said[0]
-    saved = json.loads(memory.MEMORY_PATH.read_text(encoding="utf-8"))
+    saved = secure_store.read_json(memory.MEMORY_PATH)
     assert saved == {"facts": ["I'm vegetarian"]}
 
 

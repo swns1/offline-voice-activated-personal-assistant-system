@@ -7,7 +7,6 @@ The Spotify check deliberately doesn't construct a real spotipy client
 (that could trigger an OAuth browser popup on first use) -- it just
 looks at whether a cached token file exists and looks well-formed.
 """
-import json
 import logging
 
 import requests
@@ -16,6 +15,7 @@ import sounddevice as sd
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import secure_store
 from ash.registry.schema import Registry
 from ash.utils import ollama
 from ash.utils.paths import SECRETS_DIR
@@ -72,11 +72,10 @@ def _check_spotify(config: Config) -> tuple[str, bool, str]:
     if not cache_path.exists():
         return ("Spotify", False, "not yet authorized")
     try:
-        with open(cache_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = secure_store.read_json(cache_path)
     except (OSError, ValueError):
         return ("Spotify", False, "cached token unreadable")
-    if "access_token" not in data:
+    if not isinstance(data, dict) or "access_token" not in data:
         return ("Spotify", False, "cached token looks invalid")
     return ("Spotify", True, "connected")
 

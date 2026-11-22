@@ -1,7 +1,8 @@
 """Durable local facts ("remember I'm vegetarian"), separate from
 ash/actions/converse.py's rolling chat history -- that history resets
 every conversation and restart; this persists across both, in a flat
-%LOCALAPPDATA%\\Ash\\memory.json list (no vector store/embeddings --
+%LOCALAPPDATA%\\Ash\\memory.json list, encrypted at rest (see
+ash/privacy/secure_store.py) (no vector store/embeddings --
 overkill for a personal-scale fact list; rapidfuzz already does
 per-fact matching for "forget" the same way ash/nlu/matcher.py does for
 app names).
@@ -12,7 +13,6 @@ chat automatically, not just on explicit "what do you know about me".
 Pure local storage -- works with ollama disabled too, since remembering/
 recalling/forgetting a fact needs no model call at all.
 """
-import json
 import logging
 
 from rapidfuzz import fuzz, process
@@ -20,19 +20,17 @@ from rapidfuzz import fuzz, process
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy import secure_store
 from ash.registry.schema import Registry
-from ash.utils.paths import MEMORY_PATH, ensure_app_data_dirs
+from ash.utils.paths import MEMORY_PATH
 
 _FORGET_ALL_PHRASES = {"everything", "it all", "all of it", "all"}
 _FUZZY_SCORE_CUTOFF = 60.0
 
 
 def _load_facts() -> list[str]:
-    if not MEMORY_PATH.exists():
-        return []
     try:
-        with open(MEMORY_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        data = secure_store.read_json(MEMORY_PATH, default={})
     except (OSError, ValueError):
         return []
     facts = data.get("facts") if isinstance(data, dict) else None
@@ -41,9 +39,7 @@ def _load_facts() -> list[str]:
 
 def _save_facts(facts: list[str]) -> None:
     try:
-        ensure_app_data_dirs()
-        with open(MEMORY_PATH, "w", encoding="utf-8") as f:
-            json.dump({"facts": facts}, f)
+        secure_store.write_json(MEMORY_PATH, {"facts": facts})
     except OSError:
         pass  # best-effort -- losing persistence shouldn't break the command itself
 
