@@ -292,3 +292,43 @@ def test_listen_yields_one_utterance_per_wake_cycle(monkeypatch):
     gen.close()
 
     assert len(utterance) == 2 * _VAD_FRAME_SAMPLES
+
+
+def test_followup_answer_window_starts_when_ash_stops_talking():
+    # Ash talks for 0.3s; the answer window is 0.2s. Counting from when Ash
+    # *started* asking, it would have closed before you could answer.
+    talking_until = time.monotonic() + 0.3
+    listener = ContinuousListener(_FakeWake(), silence_ms=30, is_talking=lambda: time.monotonic() < talking_until)
+    listener._vad.is_speech = _content_based_is_speech
+
+    def answer_after_ash_finishes():
+        time.sleep(0.4)  # 0.1s after Ash stops: inside the window
+        listener._queue.put(_speech_frame())
+        listener._queue.put(_silence_frame())
+
+    import threading
+    threading.Thread(target=answer_after_ash_finishes, daemon=True).start()
+
+    assert listener.listen_for_followup(timeout_seconds=0.2) is not None
+
+
+def test_followup_still_times_out_after_ash_stops_talking():
+    started = time.monotonic()
+    talking_until = started + 0.1
+    listener = ContinuousListener(_FakeWake(), is_talking=lambda: time.monotonic() < talking_until)
+
+    assert listener.listen_for_followup(timeout_seconds=0.2) is None
+    # 0.1s of talking + the full 0.2s window, less at most one poll interval
+    # (the window can start up to one poll before Ash actually stops).
+    assert time.monotonic() - started >= 0.3 - recorder_module._TALKING_POLL_SECONDS
+
+
+def test_open_stream_drops_unconsumed_audio_when_it_closes(monkeypatch):
+    monkeypatch.setattr(recorder_module.sd, "InputStream", lambda **kwargs: _NullStream())
+    listener = _make_listener()
+
+    with listener.open_stream():
+        listener._queue.put(_speech_frame())  # e.g. you kept talking after the last startup answer
+
+    assert listener._queue.empty()
+    assert len(listener._pending) == 0

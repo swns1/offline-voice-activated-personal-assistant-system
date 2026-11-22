@@ -82,8 +82,8 @@ module imports the HTTP library. The gate works like this:
 
 | Online feature | Sends | To | When | Your control |
 |---|---|---|---|---|
-| web search | the words you search for | DuckDuckGo (`api.duckduckgo.com`) | "what is …" / "search for …" | asked on first use; "allow / stop allowing web search"; offline mode |
-| Spotify | the songs you ask for and your playback commands | Spotify (`api.spotify.com`, `accounts.spotify.com`) | Spotify commands, if you've set Spotify up | asked on first use; "allow / stop allowing Spotify"; offline mode |
+| web search | the words you search for | DuckDuckGo (`api.duckduckgo.com`) | "what is …" / "search for …" | asked at first start; "allow / stop allowing web search"; offline mode |
+| Spotify | the songs you ask for and your playback commands | Spotify (`api.spotify.com`, `accounts.spotify.com`) | Spotify commands, if you've set Spotify up | asked at the first start after you set it up; "allow / stop allowing Spotify"; offline mode |
 | the AI server | what you say to the AI, and screenshots when you ask about your screen | your Ollama server, **only if you configure one on another machine** | AI replies | your Ollama settings; offline mode |
 | model downloads | a request for the speech-recognition model (nothing about you) | Hugging Face (`huggingface.co`) | **once**, the first time Ash starts | offline mode |
 
@@ -120,7 +120,7 @@ and it's logged and blocked by offline mode.
 | Sec. 11: general principles | **Transparency**, **legitimate purpose**, **proportionality** | This document. Ash prints whether local AI is on at startup. Each consent question says what would be sent, to whom, and why. The network log and "what have you sent online" show what actually happened. Each stored item and online feature declares its purpose in code (`inventory.py`, `egress.py`). |
 | Sec. 11 (proportionality) | Collect only what the purpose needs | Logs hide what you say by default (`<4 words hidden>`). Typed text and remembered facts are never logged. Web search sends only your search words. Audio is never stored. |
 | Sec. 11(e) | Keep data only as long as necessary | Logs: 7 days by default. Network log: 30 days. Timers: until they go off. Everything else: until you delete it. |
-| Sec. 3(b), Sec. 12(a) | Consent: freely given, specific, informed | Asked per feature on first use, saying what is sent and to whom. Remembered with a timestamp. A "no" is respected and not asked again. You can withdraw any time. |
+| Sec. 3(b), Sec. 12(a) | Consent: freely given, specific, informed | Asked per feature once, when Ash first starts (or the first start after you set a feature up), saying what is sent, to whom, and why. If you don't answer, nothing is sent and Ash asks again later. Remembered with a timestamp. A "no" is respected and not asked again. You can withdraw any time. |
 | Sec. 16(a), (b) | Right to be informed, including purposes, recipients and how long data is kept | "what data do you have". The inventory's purpose and retention for each item. This document. |
 | Sec. 16(c) | Right to reasonable access | "what data do you have"; "export my data". |
 | Sec. 16(d) | Right to correct errors | "forget that …", then remember the corrected fact. |

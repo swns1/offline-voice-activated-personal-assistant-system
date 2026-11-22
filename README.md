@@ -39,13 +39,17 @@ the threat model, and how to verify it yourself — is in
 - **Logs are kept for 7 days.** A new log file starts each day, and files
   older than `privacy.log_retention_days` (default 7) are deleted
   automatically.
-- **Nothing goes online without asking.** The first time a feature
-  needs the internet, Ash says exactly what it would send and to whom —
-  e.g. "To answer 'what is' and 'search for' questions, I'd send the
-  words you search for to DuckDuckGo, over the internet. Is that okay?"
-  — and remembers your answer. A "no" is respected, not asked again.
-  Change your mind any time: "allow web search" / "stop allowing
-  Spotify".
+- **Nothing goes online without asking — asked once, at setup.** The
+  first time Ash starts, before it says "Ash is listening", it asks
+  about each feature that needs the internet, saying exactly what it
+  would send and to whom — e.g. "To answer 'what is' and 'search for'
+  questions, I'd send the words you search for to DuckDuckGo, over the
+  internet. Is that okay?" — and remembers your answers, so you're never
+  interrupted mid-command. A feature you set up later (e.g. Spotify) is
+  asked about the next time Ash starts. If you don't answer, nothing is
+  sent: Ash asks again next start, or when you first use that feature.
+  A "no" is respected, not asked again. Change your mind any time:
+  "allow web search" / "stop allowing Spotify".
 - **Offline mode.** "go offline" blocks everything that would leave
   this PC, whatever you've allowed; "go online" turns it back off.
   Talking to Ollama on this PC is unaffected (it never leaves the

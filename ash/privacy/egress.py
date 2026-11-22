@@ -25,10 +25,12 @@ record_use() per command instead.
 """
 import ipaddress
 from dataclasses import dataclass
+from typing import Callable
 from urllib.parse import urlparse
 
 import requests
 
+from ash.config import Config
 from ash.privacy import consent, network_log
 
 # Re-exported so callers never need to import requests themselves.
@@ -53,6 +55,10 @@ class OnlineFeature:
     # by offline mode. `fixed_reason` says why, when you try to toggle it.
     consent_by_config: bool = False
     fixed_reason: str = ""
+    # Whether the feature is set up and switched on -- only those are
+    # asked about at startup (no point asking about Spotify if you've
+    # never connected it; it's asked the next time Ash starts after you do).
+    in_use: Callable[[Config], bool] = lambda config: True
 
 
 FEATURES: dict[str, OnlineFeature] = {}
@@ -68,12 +74,14 @@ WEB_SEARCH = register(OnlineFeature(
     sends="the words you search for",
     purpose="answer \"what is\" and \"search for\" questions",
     domains=("api.duckduckgo.com",),
+    in_use=lambda config: config.search.enabled,
 ))
 SPOTIFY = register(OnlineFeature(
     key="spotify", name="Spotify", service="Spotify",
     sends="the songs you ask for and your playback commands",
     purpose="control Spotify playback on your account",
     domains=("api.spotify.com", "accounts.spotify.com"),
+    in_use=lambda config: config.spotify.enabled and bool(config.spotify.client_id),
 ))
 LOCAL_AI = register(OnlineFeature(
     key="local_ai", name="the AI server", service="your Ollama server",

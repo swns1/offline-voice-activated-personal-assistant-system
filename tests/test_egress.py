@@ -326,3 +326,79 @@ def test_network_activity_command_speaks_the_summary():
     tts = FakeTts()
     privacy_controls.handle_network_activity("", Registry(), tts, log, Config())
     assert "1 time to DuckDuckGo for web search" in tts.said[-1]
+
+
+# --- privacy questions at startup ---------------------------------------------------------
+
+from ash.privacy.permission import startup_questions  # noqa: E402
+
+
+def _spotify_set_up() -> Config:
+    config = Config()
+    config.spotify.enabled = True
+    config.spotify.client_id = "abc"
+    return config
+
+
+def test_first_run_asks_about_web_search_once(unasked):
+    tts = FakeTts()
+    result = startup_questions(Config(), tts, log)
+
+    assert tts.said[0].startswith("Before we start, a quick privacy check.")
+    assert result.done is False
+    assert "DuckDuckGo" in result.question and "Is that okay?" in result.question
+
+    final = result.resume("Yes.")
+
+    assert final.done is True
+    assert consent.status("web_search") == consent.GRANTED
+    assert "change these any time" in tts.said[-1]
+    assert startup_questions(Config(), FakeTts(), log).done is True  # never asked twice
+
+
+def test_each_feature_in_use_is_asked_in_turn(unasked):
+    tts = FakeTts()
+    first = startup_questions(_spotify_set_up(), tts, log)
+    assert "DuckDuckGo" in first.question
+
+    second = first.resume("yes")
+    assert "Spotify" in second.question
+
+    second.resume("no")
+    assert consent.status("web_search") == consent.GRANTED
+    assert consent.status("spotify") == consent.DENIED
+
+
+def test_features_not_set_up_are_not_asked_about(unasked):
+    result = startup_questions(Config(), FakeTts(), log)  # Spotify not set up
+    assert "Spotify" not in result.question
+    assert result.resume("yes").done is True  # web search was the only question
+
+
+def test_a_feature_set_up_later_is_asked_about_at_the_next_start(unasked):
+    consent.grant("web_search")  # answered on an earlier run
+    tts = FakeTts()
+
+    result = startup_questions(_spotify_set_up(), tts, log)
+
+    assert tts.said == ["One quick privacy question about a feature that needs the internet."]
+    assert "Spotify" in result.question
+
+
+def test_no_questions_in_offline_mode(unasked):
+    consent.set_offline_mode(True)
+    tts = FakeTts()
+    assert startup_questions(Config(), tts, log).done is True
+    assert tts.said == []
+
+
+def test_no_answer_at_startup_means_nothing_is_sent_and_it_asks_again(unasked):
+    result = startup_questions(Config(), FakeTts(), log)
+    assert "Nothing is sent until you say yes" in result.timeout_reply
+    # (no resume: you didn't answer)
+    assert consent.status("web_search") == consent.UNASKED
+    assert startup_questions(Config(), FakeTts(), log).done is False  # asked again next start
+
+
+def test_ordinary_follow_ups_still_say_never_mind_on_silence():
+    assert HandlerResult(done=False, question="Which one?").timeout_reply == "Never mind."

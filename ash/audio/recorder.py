@@ -20,6 +20,7 @@ happens on your setup.
 """
 import queue
 import time
+from contextlib import contextmanager
 from typing import Callable
 
 import numpy as np
@@ -43,6 +44,8 @@ _BARGE_IN_SUBFRAME_SAMPLES = SAMPLE_RATE * 20 // 1000  # 320 samples at 16kHz
 # treating it as real barge-in rather than a one-off noise blip --
 # 2 frames = 160ms of continuous detected speech.
 _BARGE_IN_FRAMES_NEEDED = 2
+# How often a quiet follow-up wait re-checks whether Ash is still talking.
+_TALKING_POLL_SECONDS = 0.05
 
 
 def record_fixed(seconds: float = 4.0) -> np.ndarray:
@@ -69,7 +72,8 @@ class ContinuousListener:
                  silence_ms: int = 900, max_record_seconds: float = 8.0,
                  vad_aggressiveness: int = 2,
                  is_speaking: Callable[[], bool] | None = None,
-                 on_barge_in: Callable[[], None] | None = None):
+                 on_barge_in: Callable[[], None] | None = None,
+                 is_talking: Callable[[], bool] | None = None):
         self._wake = wake_detector
         self._input_device = input_device
         self._silence_frames_needed = max(1, silence_ms // _VAD_FRAME_MS)
@@ -85,17 +89,37 @@ class ContinuousListener:
         # unchanged for callers (and tests) that don't wire them up.
         self._is_speaking = is_speaking or (lambda: False)
         self._on_barge_in = on_barge_in or (lambda: None)
+        # Whether Ash is talking right now, for timing only -- unlike
+        # is_speaking above, which is None when barge-in is switched off.
+        # A follow-up answer's time limit only starts once Ash has
+        # finished asking (see _wait_for_speech).
+        self._is_talking = is_talking or (lambda: False)
 
     def _callback(self, indata, frames, time_info, status):
         self._queue.put(indata[:, 0].copy())
 
+    @contextmanager
+    def open_stream(self):
+        """Keep the microphone open for the duration of the block. listen()
+        does this itself; use it directly to take follow-up answers
+        outside listen() (e.g. ash/main.py's startup privacy questions).
+        Any audio left unconsumed when the block ends is dropped, so it
+        can't leak into the next stream (e.g. be mistaken for the wake
+        word right after the startup questions)."""
+        try:
+            with sd.InputStream(
+                samplerate=SAMPLE_RATE, channels=1, dtype="int16",
+                blocksize=self._wake.frame_length, device=self._input_device, callback=self._callback,
+            ):
+                yield
+        finally:
+            self._queue = queue.Queue()
+            self._pending = np.zeros(0, dtype="int16")
+
     def listen(self, on_state_change=None):
         wake_frame_len = self._wake.frame_length
 
-        with sd.InputStream(
-            samplerate=SAMPLE_RATE, channels=1, dtype="int16",
-            blocksize=wake_frame_len, device=self._input_device, callback=self._callback,
-        ):
+        with self.open_stream():
             while True:
                 self._wait_for_wake(wake_frame_len)
                 if on_state_change:
@@ -152,13 +176,19 @@ class ContinuousListener:
         deadline = time.monotonic() + timeout_seconds
         while True:
             while len(self._pending) < _VAD_FRAME_SAMPLES:
+                if self._is_talking():
+                    # Still asking the question: the answer window starts
+                    # when Ash stops talking, not when it starts. (A 9-second
+                    # question would otherwise use up a 6-second window
+                    # before you could politely answer.)
+                    deadline = time.monotonic() + timeout_seconds
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     return False
                 try:
-                    chunk = self._queue.get(timeout=remaining)
+                    chunk = self._queue.get(timeout=min(remaining, _TALKING_POLL_SECONDS))
                 except queue.Empty:
-                    return False
+                    continue  # re-check the deadline and whether Ash is still talking
                 self._pending = np.concatenate([self._pending, chunk])
 
             frame = self._pending[:_VAD_FRAME_SAMPLES]

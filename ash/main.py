@@ -26,6 +26,7 @@ from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.hotkey import register_mute_hotkey
 from ash.privacy.egress import OfflineModeError
+from ash.privacy.permission import startup_questions
 from ash.privacy.redact import said, set_log_content
 from ash.utils.logging_setup import apply_log_retention, setup_logging
 from ash.utils.ollama import MODEL_MISSING, READY, server_status
@@ -89,6 +90,7 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
         max_record_seconds=config.audio.max_record_seconds,
         is_speaking=tts.is_speaking if config.audio.barge_in_enabled else None,
         on_barge_in=tts.stop_speaking if config.audio.barge_in_enabled else None,
+        is_talking=tts.is_speaking,
     )
 
     if config.hotkey.toggle_mute:
@@ -96,37 +98,47 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
 
     rehydrate_timers(tts, log)
     start_proactive_nudges(config, tts, log)
-    tts.say("Ash is listening.")
-    print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
 
     def on_state_change(state: str) -> None:
         print(f"  [{state}]")
 
+    def follow_up(result: HandlerResult) -> None:
+        """Ask/answer until the result is done: clarifying questions,
+        confirmations, privacy questions, conversation turns."""
+        while not result.done:
+            if result.question:  # None for a conversational continuation --
+                tts.say(result.question)  # the reply just spoken is prompt enough
+            followup_audio = listener.listen_for_followup(
+                timeout_seconds=6.0, on_state_change=on_state_change
+            )
+            if followup_audio is None:
+                tts.say(result.timeout_reply)
+                return
+            answer = stt.transcribe(followup_audio)
+            print(f"  heard (follow-up): {answer!r}")
+            log.info("Follow-up transcript: %s", said(answer))
+            if result.requires_voice_match and not voice_gate.verify(followup_audio, config, log):
+                log.warning("Voice gate blocked a confirmation answer")
+                tts.say("That didn't sound like you, so I'm not doing that.")
+                return
+            result = result.resume(answer)
+
     try:
+        # Privacy questions for online features you haven't answered yet
+        # (all of them on first run) -- asked here, once, rather than in
+        # the middle of the first command that needs one.
+        setup = startup_questions(config, tts, log)
+        if not setup.done:  # only open the mic if there's something to ask
+            with listener.open_stream():
+                follow_up(setup)
+
+        tts.say("Ash is listening.")
+        print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
         for utterance in listener.listen(on_state_change=on_state_change):
             text = stt.transcribe(utterance)
             print(f"  heard: {text!r}")
             log.info("Transcript: %s", said(text))
-            result = dispatch(text, registry, tts, log, config)
-
-            while not result.done:
-                if result.question:  # None for a conversational continuation --
-                    tts.say(result.question)  # the reply just spoken is prompt enough
-                followup_audio = listener.listen_for_followup(
-                    timeout_seconds=6.0, on_state_change=on_state_change
-                )
-                if followup_audio is None:
-                    tts.say("Never mind.")
-                    break
-                answer = stt.transcribe(followup_audio)
-                print(f"  heard (follow-up): {answer!r}")
-                log.info("Follow-up transcript: %s", said(answer))
-                if result.requires_voice_match and not voice_gate.verify(followup_audio, config, log):
-                    log.warning("Voice gate blocked a confirmation answer")
-                    tts.say("That didn't sound like you, so I'm not doing that.")
-                    result = HandlerResult()
-                else:
-                    result = result.resume(answer)
+            follow_up(dispatch(text, registry, tts, log, config))
     except KeyboardInterrupt:
         pass
     finally:

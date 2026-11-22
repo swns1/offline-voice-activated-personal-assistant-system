@@ -22,3 +22,7 @@ class HandlerResult:
     # voiceprint (see ash/security/voice_gate.py) before calling resume()
     # at all, rather than resume() itself needing access to raw audio.
     requires_voice_match: bool = False
+    # What ash/main.py's loop says if no answer comes in time. "Never
+    # mind." suits a dropped command; a setup question says something
+    # that tells you it'll come back ("I'll ask again next time.").
+    timeout_reply: str = "Never mind."
