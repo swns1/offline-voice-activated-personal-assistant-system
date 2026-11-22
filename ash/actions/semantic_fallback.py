@@ -26,6 +26,7 @@ import logging
 from ash.config import Config
 from ash.privacy import egress
 from ash.nlu.intents import ParsedCommand
+from ash.skills import registry as skills
 
 # Short relative to converse.py's 30s -- this sits in front of every
 # unmatched command (when enabled), not just ones already headed for a
@@ -33,25 +34,11 @@ from ash.nlu.intents import ParsedCommand
 # existing "open" guess quickly rather than add a long stall in front of it.
 _TIMEOUT_SECONDS = 10.0
 
-_CLASSIFIABLE_INTENTS = [
-    "search", "browser_search",
-    "spotify_play", "spotify_pause", "spotify_resume", "spotify_skip",
-    "spotify_previous", "spotify_now_playing",
-    "volume_up", "volume_down", "volume_set", "mute", "unmute",
-    "lock", "sleep", "shutdown",
-    "timer_set", "reminder_set", "timer_cancel", "timer_list",
-    "close_app", "close_window", "minimize_window",
-    "diagnostics", "calendar_list", "calendar_add", "screen_describe", "screen_read_text",
-    "memory_remember", "memory_forget", "memory_recall",
-    "screen_click", "screen_type",
-    "privacy_offline_on", "privacy_offline_off", "network_activity",
-    "privacy_data_inventory", "privacy_export",
-]
-
-_SYSTEM_PROMPT = (
+def _system_prompt() -> str:
+    return (
     "A voice assistant's rule-based command parser found no match for "
     "this utterance. Decide whether it actually means one of these "
-    "known actions: " + ", ".join(_CLASSIFIABLE_INTENTS) + ". "
+    "known actions: " + ", ".join(skills.classifiable_intents()) + ". "
     'Respond with ONLY JSON shaped {"intent": "...", "target": "..."} '
     'if you are confident it matches one of those actions -- "target" is '
     "whatever that action needs (a search query, volume number, timer "
@@ -59,7 +46,7 @@ _SYSTEM_PROMPT = (
     "nothing. If it is a question, a request to open/launch/play "
     "something, a general conversational remark, or does not clearly "
     'match any of those actions, respond with ONLY {"intent": null}.'
-)
+    )
 
 
 def classify_intent(text: str, config: Config) -> ParsedCommand | None:
@@ -72,7 +59,7 @@ def classify_intent(text: str, config: Config) -> ParsedCommand | None:
             json={
                 "model": config.ollama.model,
                 "messages": [
-                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "system", "content": _system_prompt()},
                     {"role": "user", "content": text},
                 ],
                 "format": "json",
@@ -89,7 +76,7 @@ def classify_intent(text: str, config: Config) -> ParsedCommand | None:
     if not isinstance(parsed, dict):
         return None
     intent = parsed.get("intent")
-    if intent not in _CLASSIFIABLE_INTENTS:
+    if intent not in skills.classifiable_intents():
         return None
     target = parsed.get("target", "")
     if not isinstance(target, str):

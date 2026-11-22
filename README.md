@@ -101,7 +101,8 @@ running in a visible console (see "Run at login" below). Set
 
 Speak the configured wake word (`hey_jarvis` by default — see
 `config/config.yaml`), then a command such as "open notepad" or "what
-is the Eiffel Tower".
+is the Eiffel Tower". Say "what can you do" for a quick spoken
+tour of the kinds of things Ash can do.
 
 If a command is ambiguous (e.g. two similarly-named apps, or more than
 one browser profile with none pinned in config), Ash asks a clarifying
@@ -421,6 +422,23 @@ matches what you said; otherwise it treats it as conversation (local
 AI) or says it's not sure. Either way, sharing a single word with an
 app's name isn't enough — "turn it down a bit" won't open "Python
 Module Docs (64-bit)" just because both contain "bit".
+
+## Adding a command
+
+Every voice command is declared once, in `ash/skills/catalog.py`: its
+phrases, its handler, a one-line description and example commands, its
+category, whether it needs confirmation, whether the local AI may use
+it in multi-step or loosely phrased commands, and which online features
+it uses. The grammar, the dispatcher, the confirmation gates, the
+lists the local AI chooses from, and the spoken "what can you do" are
+all built from that list (`ash/skills/registry.py`). To add a command,
+write its handler and add one `Skill` there — tests then check that its
+phrases don't clash with another command's and that every example
+phrase is actually understood as that command.
+
+Phrase matching is simple and predictable: a whole-utterance phrase
+("pause") wins outright; otherwise the longest command verb the
+utterance starts with wins ("search in browser for X" beats "search X").
 
 ## Testing
 

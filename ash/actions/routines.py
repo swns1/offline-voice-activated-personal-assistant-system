@@ -7,8 +7,15 @@ Execution reuses ash/actions/chain.py's run_chain() directly from
 dispatch(), since this module can't import dispatcher.py's _HANDLERS
 without a circular import.
 """
+import logging
+
 from rapidfuzz import fuzz, process, utils
 
+from ash.actions.chain import run_chain
+from ash.actions.results import HandlerResult
+from ash.audio.tts import TtsWorker
+from ash.config import Config
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 
 _FUZZY_SCORE_CUTOFF = 80.0
@@ -37,3 +44,18 @@ def find_routine(name: str, registry: Registry) -> list[dict] | None:
         return None
     matched_name, _score, _ = best
     return registry.routines[matched_name]
+
+
+def handle_routine_run(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    name = resolve_routine_name(target)
+    steps = find_routine(name, registry)
+    if steps is None:
+        log.info("No routine matches %s", said(name))
+        tts.say(f"I don't have a routine called {name}.")
+        return HandlerResult()
+    log.info("Running routine %s (%d steps)", said(name), len(steps))
+    # The dispatcher's handler table, looked up at call time: routine
+    # steps run exactly like the same commands spoken one by one
+    # (including any confirmation they need -- see run_chain).
+    from ash.actions import dispatcher
+    return run_chain(steps, dispatcher._HANDLERS, registry, tts, log, config)

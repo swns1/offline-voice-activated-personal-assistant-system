@@ -8,9 +8,10 @@ you sure?". A bare "Are you sure?" doesn't tell you what you're agreeing
 to.
 
 Two entry points:
-- Static per-intent gates (shutdown): dispatch() and run_chain() check
+- Static per-intent gates (shutdown): declared as a skill's `confirm`
+  in ash/skills/catalog.py. dispatch() and run_chain() check
   needs_confirmation() before calling the handler at all, and
-  wrap_with_confirmation() asks the question from _CONFIRM_REQUIRED.
+  wrap_with_confirmation() asks the gate's question.
 - Confirmations whose question depends on what's actually being done
   ("This will force Discord to quit...", "I'll click 'Save'...") are
   built inside the handler with ask_to_confirm(), once it knows the
@@ -25,7 +26,6 @@ the voice check is a gate in front of it, not inside it.
 """
 import logging
 import re
-from dataclasses import dataclass
 from typing import Callable
 
 from ash.actions.results import HandlerResult
@@ -33,26 +33,11 @@ from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
+from ash.skills import registry as skills
 
 Handler = Callable[[str, Registry, TtsWorker, logging.Logger, Config], HandlerResult | None]
 
 
-@dataclass(frozen=True)
-class _Gate:
-    question: str
-    declined_reply: str
-
-
-# intent -> what to ask, and what to say if the answer isn't yes. Add to
-# this to gate a new intent behind a confirmation without touching
-# dispatch().
-_CONFIRM_REQUIRED: dict[str, _Gate] = {
-    "shutdown": _Gate(
-        question=("Shutting down will close all your apps, and anything you "
-                  "haven't saved will be lost. Are you sure? Say yes to shut down."),
-        declined_reply="Okay, I won't shut down.",
-    ),
-}
 
 # Matched after normalize_answer(), so "Yes." / "Yeah!" / "YES please"
 # from speech-to-text all count.
@@ -74,7 +59,7 @@ def is_affirmative(answer: str) -> bool:
 
 
 def needs_confirmation(intent: str) -> bool:
-    return intent in _CONFIRM_REQUIRED
+    return skills.confirmation_gate(intent) is not None
 
 
 def ask_to_confirm(
@@ -103,7 +88,7 @@ def wrap_with_confirmation(
     intent: str, handler: Handler, target: str,
     registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
 ) -> HandlerResult:
-    gate = _CONFIRM_REQUIRED[intent]
+    gate = skills.confirmation_gate(intent)
     return ask_to_confirm(
         gate.question, lambda: handler(target, registry, tts, log, config),
         action=intent, declined_reply=gate.declined_reply,

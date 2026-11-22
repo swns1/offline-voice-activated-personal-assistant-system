@@ -29,30 +29,23 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.privacy import egress
 from ash.registry.schema import Registry
+from ash.skills import registry as skills
 
 _TIMEOUT_SECONDS = 30.0
 _CHAIN_MARKERS = (" and then ", " then ", " after that ")
 
-_CHAINABLE_INTENTS = [
-    "open", "search",
-    "spotify_play", "spotify_pause", "spotify_resume", "spotify_skip", "spotify_previous",
-    "volume_up", "volume_down", "volume_set", "mute", "unmute",
-    "timer_set", "reminder_set",
-    "close_app", "close_window", "minimize_window",
-    "memory_remember", "memory_forget", "memory_recall",
-]
-
-_SYSTEM_PROMPT = (
+def _system_prompt() -> str:
+    return (
     "You break a spoken command into a sequence of steps for a voice "
     "assistant. Each step's intent must be exactly one of: "
-    + ", ".join(_CHAINABLE_INTENTS) + ". "
+    + ", ".join(skills.chainable_intents()) + ". "
     "Respond with ONLY a JSON array of objects, each shaped "
     '{"intent": "...", "target": "..."}, no other text. "target" is '
     "whatever that intent needs (an app/song name, search query, volume "
     "number, timer duration and message, etc.), or an empty string if "
     "the intent needs nothing. If the command isn't actually multiple "
     "steps, respond with a single-element array."
-)
+    )
 
 
 def looks_like_chain(text: str) -> bool:
@@ -70,7 +63,7 @@ def resolve_chain(text: str, config: Config) -> list[dict] | None:
             json={
                 "model": config.ollama.model,
                 "messages": [
-                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "system", "content": _system_prompt()},
                     {"role": "user", "content": text},
                 ],
                 "format": "json",
@@ -97,7 +90,7 @@ def _validate_steps(steps) -> list[dict] | None:
             return None
         intent = step.get("intent")
         target = step.get("target", "")
-        if intent not in _CHAINABLE_INTENTS or not isinstance(target, str):
+        if intent not in skills.chainable_intents() or not isinstance(target, str):
             return None
         valid_steps.append({"intent": intent, "target": target})
     return valid_steps
