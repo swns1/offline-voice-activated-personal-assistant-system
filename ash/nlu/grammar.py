@@ -25,6 +25,8 @@ def parse(text: str) -> ParsedCommand:
     with_commas = _normalize(text)
     words = [w for w in with_commas.split() if w.strip(",")]
     plain_words = [w.replace(",", "") for w in words]
+    start, end = _without_politeness(plain_words)
+    words, plain_words = words[start:end], plain_words[start:end]
     normalized = " ".join(plain_words)
     if not normalized:
         return ParsedCommand(intent="unknown", target="")
@@ -46,6 +48,40 @@ def parse(text: str) -> ParsedCommand:
     # explicit=False flags this as a guess rather than something the user
     # actually said -- see ash/actions/semantic_fallback.py.
     return ParsedCommand(intent="open", target=normalized, explicit=False)
+
+
+# Politeness around a command, ignored when matching: "can you set a
+# timer for 5 minutes", "please pause", "open spotify for me thanks".
+_POLITE_OPENERS = [
+    "hey ash", "ash", "ok", "okay", "please", "can you please", "could you please",
+    "would you please", "will you please", "can you", "could you", "would you", "will you",
+    "i want you to", "i need you to", "i'd like you to",
+]
+_POLITE_CLOSERS = ["please", "for me", "thanks", "thank you", "thanks ash", "thank you ash"]
+_OPENER_WORDS = sorted((o.split() for o in _POLITE_OPENERS), key=len, reverse=True)
+_CLOSER_WORDS = sorted((c.split() for c in _POLITE_CLOSERS), key=len, reverse=True)
+
+
+def _without_politeness(words: list[str]) -> tuple[int, int]:
+    """(start, end) of `words` once polite openers/closers are dropped --
+    never all of it ("thank you" on its own is itself a command)."""
+    start, end = 0, len(words)
+    changed = True
+    while changed:
+        changed = False
+        for opener in _OPENER_WORDS:
+            n = len(opener)
+            if end - start > n and words[start:start + n] == opener:
+                start += n
+                changed = True
+                break
+        for closer in _CLOSER_WORDS:
+            n = len(closer)
+            if end - start > n and words[end - n:end] == closer:
+                end -= n
+                changed = True
+                break
+    return start, end
 
 
 def _normalize(text: str) -> str:

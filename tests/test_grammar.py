@@ -312,3 +312,28 @@ def test_reminder_set_recurring_daily_phrasing():
     cmd = parse("remind me every day at 8am to take medicine")
     assert cmd.intent == "reminder_set"
     assert cmd.target == "every day at 8am to take medicine"
+
+
+# --- politeness around a command is ignored ------------------------------------
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("said, intent, target", [
+    ("Can you set a timer for 5 minutes?", "timer_set", "5 minutes"),
+    ("Pause, please.", "media_pause", ""),
+    ("Could you please open Spotify for me?", "open", "spotify"),
+    ("Okay, what time is it?", "time_now", ""),
+    ("Hey Ash, what day is Christmas?", "day_of", "christmas"),
+    ("Please remember that I am vegetarian.", "memory_remember", "i am vegetarian"),
+    ("I want you to lock my computer", "lock", ""),
+    ("Stop, please", "stop", ""),
+])
+def test_polite_phrasing_is_understood(said, intent, target):
+    command = parse(said)
+    assert (command.intent, command.target) == (intent, target)
+
+
+@pytest.mark.parametrize("said, intent", [("Thank you.", "thanks"), ("thanks", "thanks"), ("please", "open")])
+def test_politeness_alone_is_not_stripped_to_nothing(said, intent):
+    assert parse(said).intent == intent

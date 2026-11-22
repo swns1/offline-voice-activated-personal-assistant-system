@@ -16,7 +16,7 @@ from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.clock import handle_date_today, handle_day_of, handle_days_until, handle_time_now
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.diagnostics import handle_diagnostics
-from ash.actions.help import handle_help
+from ash.actions.help import handle_help, handle_thanks
 from ash.actions.media import (
     handle_media_next,
     handle_media_now_playing,
@@ -520,5 +520,10 @@ SKILLS: list[Skill] = [
         "help", handle_help, ASSISTANT, "Say what Ash can do.",
         examples=("what can you do",),
         phrases=("what can you do", "what can i say", "what can i ask you", "help"),
+    ),
+    Skill(
+        "thanks", handle_thanks, ASSISTANT, "You're welcome.",
+        examples=("thank you",),
+        phrases=("thank you", "thanks", "thanks ash", "thank you ash", "thank you so much", "thanks a lot"),
     ),
 ]

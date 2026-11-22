@@ -24,3 +24,8 @@ def handle_help(target: str, registry: Registry, tts: TtsWorker, log: logging.Lo
     tts.say("Here's what I can do. " + " ".join(parts) +
             " Everything stays on this PC unless you've allowed a feature that needs the internet.")
     return HandlerResult()
+
+
+def handle_thanks(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    tts.say("You're welcome.")
+    return HandlerResult()
