@@ -1,7 +1,7 @@
 """Your data rights, as voice commands (and, in the GUI, buttons):
 
 - "what data do you have": what Ash keeps about you right now, and that
-  you can get a copy or erase it (RA 10173 Sec. 16(a), (c): the rights
+  you can get a copy or erase it (RA 10173 Sec. 16(a)-(c): the rights
   to be informed and to access).
 - "export my data": a readable copy in your Documents folder (Sec. 18:
   data portability). Asks first, because the copy isn't encrypted.

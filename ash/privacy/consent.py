@@ -5,7 +5,8 @@ allowed. Stored encrypted (ash/privacy/secure_store.py) in
 Each online feature (see FEATURES in ash/privacy/egress.py) starts out
 "unasked". The first time it's needed, Ash explains what it would send
 and to whom and asks; your answer is remembered with the time you gave
-it (RA 10173 Sec. 12(a): consent, given freely and specifically). You
+it (RA 10173 Sec. 3(b) defines consent as freely given, specific and
+informed; Sec. 12(a) makes it a basis for processing). You
 can change it any time ("allow web search" / "stop allowing web
 search"), and a "no" is respected rather than asked again.
 

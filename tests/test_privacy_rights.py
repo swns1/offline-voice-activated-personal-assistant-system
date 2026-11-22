@@ -236,3 +236,15 @@ def test_delete_all_with_nothing_stored(app_data):
     result = privacy_rights.handle_delete_all("", Registry(), tts, log, Config())
     assert result.done is True
     assert "nothing to delete" in tts.said[-1]
+
+
+def test_privacy_doc_covers_every_stored_item_and_online_feature():
+    """docs/PRIVACY.md is written by hand -- keep it in step with the code."""
+    from pathlib import Path
+
+    from ash.privacy.egress import FEATURES
+
+    doc = (Path(__file__).resolve().parents[1] / "docs" / "PRIVACY.md").read_text(encoding="utf-8")
+    missing = [item.name for item in inventory.INVENTORY if item.name not in doc]
+    missing += [f"{f.name} ({f.service})" for f in FEATURES.values() if f.name not in doc or f.service not in doc]
+    assert missing == [], f"Add these to docs/PRIVACY.md: {missing}"

@@ -25,6 +25,7 @@ from ash.tray.icon import run_with_tray
 from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.hotkey import register_mute_hotkey
+from ash.privacy.egress import OfflineModeError
 from ash.privacy.redact import said, set_log_content
 from ash.utils.logging_setup import apply_log_retention, setup_logging
 from ash.utils.ollama import MODEL_MISSING, READY, server_status
@@ -62,7 +63,16 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
             log.exception("Auto-rescan of registry.auto.yaml failed; using existing file")
 
     print("Loading speech-to-text model...")
-    stt = SpeechToText()
+    try:
+        stt = SpeechToText()
+    except OfflineModeError:
+        message = ("Ash needs to download its speech-recognition model once, but offline mode is on. "
+                   "Turn offline mode off to allow this one download: "
+                   r'.venv\Scripts\python.exe -c "from ash.privacy import consent; consent.set_offline_mode(False)"')
+        print(message)
+        log.error(message)
+        tts.stop()
+        return
     registry = load_registry()
     log.info("Ash starting (%d app entries, %d intents)",
               len(registry.apps), len(registry.intents))

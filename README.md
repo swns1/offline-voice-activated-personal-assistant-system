@@ -18,7 +18,10 @@ enabled) talks to your local desktop Outlook install, not the network.
 ## Privacy
 
 Ash's privacy features are designed in line with the principles of the
-Philippine Data Privacy Act of 2012 (RA 10173):
+Philippine Data Privacy Act of 2012 (RA 10173). The full assessment —
+what's stored, what leaves the PC, how each feature maps to the Act,
+the threat model, and how to verify it yourself — is in
+[docs/PRIVACY.md](docs/PRIVACY.md). In short:
 
 - **Encrypted at rest.** Everything personal Ash stores — remembered
   facts, timers and reminders, your voiceprint, and your Spotify login

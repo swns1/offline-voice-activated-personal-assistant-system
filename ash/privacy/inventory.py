@@ -2,8 +2,9 @@
 long, whether it's sensitive, and whether it's encrypted.
 
 This single list drives:
-- "what data do you have" (RA 10173 Sec. 16(a), (c): your rights to be
-  informed and to access),
+- "what data do you have" (RA 10173 Sec. 16(a)-(c): your rights to be
+  informed -- including each item's purpose and how long it's kept --
+  and to access),
 - "export my data" (Sec. 18: data portability),
 - "delete all my data" (Sec. 16(e): erasure),
 - the privacy dashboard, and the table in docs/PRIVACY.md.

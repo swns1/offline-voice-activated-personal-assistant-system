@@ -47,9 +47,12 @@ class OnlineFeature:
     # The website comes from your own config (e.g. an Ollama server on
     # another machine) rather than being fixed in code.
     any_domain: bool = False
-    # Configuring the server yourself is the consent (local AI on another
-    # machine); still logged, and still blocked by offline mode.
+    # No per-feature yes/no: consent comes from your own setup instead
+    # (configuring an Ollama server on another machine; installing Ash,
+    # for its one-time model download). Still logged, and still blocked
+    # by offline mode. `fixed_reason` says why, when you try to toggle it.
     consent_by_config: bool = False
+    fixed_reason: str = ""
 
 
 FEATURES: dict[str, OnlineFeature] = {}
@@ -77,6 +80,14 @@ LOCAL_AI = register(OnlineFeature(
     sends="what you say to the AI, and screenshots when you ask about your screen",
     purpose="answer questions and understand commands with a language model",
     any_domain=True, consent_by_config=True,
+    fixed_reason="is controlled by your Ollama settings",
+))
+MODEL_DOWNLOAD = register(OnlineFeature(
+    key="model_download", name="model downloads", service="Hugging Face",
+    sends="a request for the speech-recognition model (nothing about you)",
+    purpose="download the speech-recognition model, once, the first time Ash starts",
+    domains=("huggingface.co",), consent_by_config=True,
+    fixed_reason="only happens once, the first time Ash starts, to download its speech-recognition model",
 ))
 
 

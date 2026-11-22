@@ -40,7 +40,7 @@ def handle_allow(target: str, registry: Registry, tts: TtsWorker, log: logging.L
     if feature is None:
         return HandlerResult()
     if feature.consent_by_config:
-        tts.say(f"{feature.name.capitalize()} is controlled by your Ollama settings, not by voice.")
+        tts.say(f"{feature.name.capitalize()} {feature.fixed_reason}, so it isn't switched on or off by voice.")
         return HandlerResult()
     consent.grant(feature.key)
     log.info("You allowed %s", feature.key)
@@ -56,7 +56,7 @@ def handle_disallow(target: str, registry: Registry, tts: TtsWorker, log: loggin
     if feature is None:
         return HandlerResult()
     if feature.consent_by_config:
-        tts.say(f"{feature.name.capitalize()} is controlled by your Ollama settings, not by voice.")
+        tts.say(f"{feature.name.capitalize()} {feature.fixed_reason}, so it isn't switched on or off by voice.")
         return HandlerResult()
     consent.deny(feature.key)
     log.info("You withdrew permission for %s", feature.key)
