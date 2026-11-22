@@ -138,7 +138,13 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
             text = stt.transcribe(utterance)
             print(f"  heard: {text!r}")
             log.info("Transcript: %s", said(text))
-            follow_up(dispatch(text, registry, tts, log, config))
+            try:
+                follow_up(dispatch(text, registry, tts, log, config))
+            except Exception:
+                # One failing command must never take the whole assistant
+                # down: say so, keep the details in the log, keep listening.
+                log.exception("Command failed")
+                tts.say("Sorry, something went wrong with that.")
     except KeyboardInterrupt:
         pass
     finally:

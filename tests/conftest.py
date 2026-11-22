@@ -76,6 +76,24 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(consent_module, "PRIVACY_STATE_PATH", state_path)
     monkeypatch.setattr(network_log_module, "NETWORK_LOG_PATH", state_dir / "network_log.json")
 
+    # Every other file Ash stores, too: even *reading* an old plain-text
+    # file rewrites it encrypted (secure_store's migration), so a test
+    # that merely asked "what data do you have" once rewrote the real
+    # timers.json in your Ash data folder. Tests that need their own files
+    # still patch these themselves.
+    from ash.actions import diagnostics, memory, notes, privacy_rights, spotify, timers
+    from ash.security import voice_gate
+    from ash.utils import logging_setup, preferences
+    monkeypatch.setattr(memory, "MEMORY_PATH", state_dir / "memory.json")
+    monkeypatch.setattr(timers, "TIMERS_STATE_PATH", state_dir / "timers.json")
+    monkeypatch.setattr(voice_gate, "VOICEPRINT_PATH", state_dir / "voiceprint.json")
+    monkeypatch.setattr(notes, "NOTES_PATH", state_dir / "notes.json")
+    monkeypatch.setattr(preferences, "PREFERENCES_PATH", state_dir / "preferences.json")
+    monkeypatch.setattr(spotify, "_CACHE_PATH", state_dir / ".spotify_cache")
+    monkeypatch.setattr(diagnostics, "SPOTIFY_TOKEN_PATH", state_dir / ".spotify_cache")
+    monkeypatch.setattr(logging_setup, "LOG_DIR", state_dir / "logs")
+    monkeypatch.setattr(privacy_rights, "_documents_dir", lambda: state_dir / "Documents")
+
 
 @pytest.fixture(autouse=True)
 def _reset_recent_context():

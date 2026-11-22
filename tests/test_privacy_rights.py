@@ -73,7 +73,8 @@ def test_every_file_ash_stores_is_in_the_inventory():
         listed.update(p.name for p in item.paths())
     missing = sorted(p.name for p in stored_paths if p.name not in listed)
     assert missing == [], f"Add these to ash/privacy/inventory.py: {missing}"
-    assert logging_setup.LOG_DIR == paths.LOG_DIR  # the log folder is covered by the "logs" item
+    # The log folder (paths.LOG_DIR) is covered by the "logs" item.
+    assert "logs" in {item.key for item in inventory.INVENTORY}
 
 
 def test_every_item_says_why_and_for_how_long():
@@ -248,3 +249,18 @@ def test_privacy_doc_covers_every_stored_item_and_online_feature():
     missing = [item.name for item in inventory.INVENTORY if item.name not in doc]
     missing += [f"{f.name} ({f.service})" for f in FEATURES.values() if f.name not in doc or f.service not in doc]
     assert missing == [], f"Add these to docs/PRIVACY.md: {missing}"
+
+
+def test_tests_never_touch_your_real_data_folder():
+    """Every stored file is redirected away from your real Ash data
+    folder during tests (tests/conftest.py). A new kind of stored data
+    must be added there as well as to the inventory."""
+    import ash.utils.paths as real_paths
+
+    leaking = [
+        f"{item.key}: {path}"
+        for item in inventory.INVENTORY if item.key != "installed_apps"
+        for path in item.paths()
+        if real_paths.APP_DATA_DIR in path.parents or path.parent == real_paths.APP_DATA_DIR
+    ]
+    assert leaking == [], f"Redirect these in tests/conftest.py: {leaking}"
