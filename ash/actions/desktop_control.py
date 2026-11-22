@@ -41,7 +41,7 @@ import pytesseract
 from PIL import ImageGrab
 from rapidfuzz import fuzz, process
 
-from ash.actions.confirmation import AFFIRMATIVE_ANSWERS
+from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -129,11 +129,7 @@ def handle_screen_click(target: str, registry: Registry, tts: TtsWorker, log: lo
 
     x, y, matched_text = found
 
-    def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() not in AFFIRMATIVE_ANSWERS:
-            log.info("Screen click declined: %r", answer)
-            tts.say("Never mind.")
-            return HandlerResult()
+    def click() -> HandlerResult:
         try:
             pyautogui.click(x, y)
         except Exception:
@@ -144,9 +140,11 @@ def handle_screen_click(target: str, registry: Registry, tts: TtsWorker, log: lo
         tts.say(f"Clicked {matched_text}.")
         return HandlerResult()
 
-    return HandlerResult(
-        done=False, question=f"Click '{matched_text}'?", resume=resume,
-        requires_voice_match=config.security.voice_gate_enabled,
+    return ask_to_confirm(
+        f"I'll move your mouse and click '{matched_text}' on your screen. Are you sure?",
+        click, action=f"screen_click({matched_text!r})",
+        declined_reply="Okay, I won't click it.",
+        tts=tts, log=log, config=config,
     )
 
 
@@ -160,11 +158,7 @@ def handle_screen_type(target: str, registry: Registry, tts: TtsWorker, log: log
         tts.say("Type what?")
         return HandlerResult()
 
-    def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() not in AFFIRMATIVE_ANSWERS:
-            log.info("Screen type declined: %r", answer)
-            tts.say("Never mind.")
-            return HandlerResult()
+    def type_text() -> HandlerResult:
         try:
             pyautogui.write(text)
         except Exception:
@@ -175,7 +169,9 @@ def handle_screen_type(target: str, registry: Registry, tts: TtsWorker, log: log
         tts.say("Done.")
         return HandlerResult()
 
-    return HandlerResult(
-        done=False, question=f"Type '{text}'?", resume=resume,
-        requires_voice_match=config.security.voice_gate_enabled,
+    return ask_to_confirm(
+        f"I'll type '{text}' into whichever window is active right now. Are you sure?",
+        type_text, action="screen_type",
+        declined_reply="Okay, I won't type it.",
+        tts=tts, log=log, config=config,
     )

@@ -94,7 +94,7 @@ def test_click_found_asks_confirmation_then_clicks(monkeypatch):
     result = desktop_control.handle_screen_click("save", Registry(), tts, log, _enabled_config())
 
     assert result.done is False
-    assert result.question == "Click 'Save'?"
+    assert result.question == "I'll move your mouse and click 'Save' on your screen. Are you sure?"
     assert clicked == []  # not yet -- needs confirmation first
 
     final = result.resume("yes")
@@ -115,7 +115,7 @@ def test_click_declined_never_clicks(monkeypatch):
 
     assert final == HandlerResult()
     assert clicked == []
-    assert tts.said[-1] == "Never mind."
+    assert tts.said[-1] == "Okay, I won't click it."
 
 
 def test_click_matches_within_a_multi_word_line(monkeypatch):
@@ -132,7 +132,7 @@ def test_click_matches_within_a_multi_word_line(monkeypatch):
 
     result = desktop_control.handle_screen_click("ok button", Registry(), tts, log, _enabled_config())
 
-    assert result.question in ("Click 'OK Button'?", "Click 'Button'?")
+    assert any(f"click '{label}'" in result.question for label in ("OK Button", "Button"))
 
 
 def test_click_low_confidence_word_is_ignored(monkeypatch):
@@ -190,7 +190,7 @@ def test_type_confirms_then_writes(monkeypatch):
 
     result = desktop_control.handle_screen_type("hello world", Registry(), tts, log, _enabled_config())
 
-    assert result.question == "Type 'hello world'?"
+    assert result.question == "I'll type 'hello world' into whichever window is active right now. Are you sure?"
     assert written == []
 
     final = result.resume("yes")

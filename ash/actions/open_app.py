@@ -1,3 +1,15 @@
+"""Opens apps/games. Two entry points:
+
+- handle_open: you said "open/launch/start/run/play X". Loose phrasing
+  gets some benefit of the doubt, and a miss triggers one rescan of the
+  Start Menu/Steam library in case X was installed since Ash started.
+- handle_open_guess: no command verb was recognized, so the grammar
+  guessed "open <whole utterance>". Only a close name match opens
+  anything (see ash/nlu/matcher.py); otherwise the utterance goes to the
+  local AI as conversation, or gets "I'm not sure what you mean". No
+  rescan here: most such utterances aren't app names at all, and a
+  rescan costs a second and a file write each time.
+"""
 import logging
 
 from ash.actions.converse import handle_converse
@@ -11,6 +23,7 @@ from ash.nlu.matcher import MatchResult, match_app, match_candidates
 from ash.registry.auto_build import refresh_registry_auto
 from ash.registry.loader import load_registry
 from ash.registry.schema import Registry
+from ash.utils.ollama import ai_enabled
 
 _LAUNCHERS = [ExeLauncher(), UriLauncher()]
 
@@ -21,18 +34,27 @@ _AMBIGUITY_MARGIN = 5.0
 
 
 def handle_open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    result = match_app(target, registry)
-    if result is None:
+    return _open(target, registry, tts, log, config, guessed=False)
+
+
+def handle_open_guess(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    return _open(target, registry, tts, log, config, guessed=True)
+
+
+def _open(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
+          *, guessed: bool) -> HandlerResult:
+    result = match_app(target, registry, guessed=guessed)
+    if result is None and not guessed:
         result = _retry_after_rescan(target, registry, log)
     if result is None:
-        log.info("No match for open target: %r", target)
-        if config.ollama.enabled:
+        log.info("No match for %s target: %r", "guessed open" if guessed else "open", target)
+        if ai_enabled(config):
             return handle_converse(target, registry, tts, log, config)
         tts.say(f"I'm not sure what you mean by {target}.")
         return HandlerResult()
 
     if result.score < 100.0:  # an exact name match is never ambiguous
-        candidates = match_candidates(target, registry, limit=3)
+        candidates = match_candidates(target, registry, limit=3, guessed=guessed)
         if len(candidates) > 1 and candidates[0].score - candidates[1].score <= _AMBIGUITY_MARGIN:
             return _ask_which_app(candidates, tts, log)
 

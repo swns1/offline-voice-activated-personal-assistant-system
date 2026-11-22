@@ -1,6 +1,8 @@
 import logging
 
-from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
+import pytest
+
+from ash.actions.confirmation import is_affirmative, needs_confirmation, wrap_with_confirmation
 from ash.actions.results import HandlerResult
 from ash.config import Config
 from ash.registry.schema import Registry
@@ -59,7 +61,7 @@ def test_wrap_declined_never_runs_the_real_handler():
 
     assert final == HandlerResult()
     assert calls == []
-    assert tts.said == ["Never mind."]
+    assert tts.said == ["Okay, I won't shut down."]
 
 
 def test_wrap_handler_returning_none_still_normalizes():
@@ -87,3 +89,34 @@ def test_requires_voice_match_true_when_voice_gate_enabled():
     result = wrap_with_confirmation("shutdown", handler, "", Registry(), FakeTts(), log, config)
 
     assert result.requires_voice_match is True
+
+
+@pytest.mark.parametrize("answer", ["Yes.", "yes", " Yeah! ", "YES please.", "Sure.", "I'm sure.", "Go ahead."])
+def test_speech_to_text_style_yes_counts(answer):
+    # Regression: speech-to-text writes "Yes." -- the old exact match
+    # turned every real yes into "Never mind".
+    assert is_affirmative(answer) is True
+
+
+@pytest.mark.parametrize("answer", ["no", "No.", "nope", "yes and no", "", "wait"])
+def test_anything_but_a_clear_yes_is_no(answer):
+    assert is_affirmative(answer) is False
+
+
+def test_wrap_accepts_punctuated_yes():
+    calls = []
+    handler = lambda target, registry, tts, log, config: calls.append(target) or HandlerResult()
+    result = wrap_with_confirmation("shutdown", handler, "", Registry(), FakeTts(), log, Config())
+
+    result.resume("Yes.")
+
+    assert calls == [""]
+
+
+def test_shutdown_question_explains_what_will_happen():
+    result = wrap_with_confirmation("shutdown", lambda *a: None, "", Registry(), FakeTts(), log, Config())
+
+    question = result.question.lower()
+    assert "close all your apps" in question
+    assert "haven't saved will be lost" in question
+    assert "are you sure" in question

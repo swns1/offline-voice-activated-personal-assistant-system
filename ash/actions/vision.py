@@ -1,6 +1,6 @@
 """Screen understanding via a local Ollama vision model ("what's on my
 screen", "what does this error say") -- reuses the Ollama infrastructure
-already built for converse.py, gated behind the same config.ollama.enabled,
+already built for converse.py, gated behind the same ai_enabled() check,
 but a separate model pull (config.ollama.vision_model) since llama3.2
 itself is text-only.
 
@@ -22,6 +22,7 @@ from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
+from ash.utils.ollama import ai_enabled
 
 _TIMEOUT_SECONDS = 60.0  # vision inference is slower than text-only
 _MAX_WIDTH = 1280
@@ -40,8 +41,8 @@ def _capture_screenshot_base64() -> str:
 
 
 def handle_screen_describe(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    if not config.ollama.enabled:
-        tts.say("Screen understanding needs Ollama enabled.")
+    if not ai_enabled(config):
+        tts.say("Screen understanding needs Ollama running on this PC -- see the README.")
         return HandlerResult()
 
     tts.say("Let me look.")

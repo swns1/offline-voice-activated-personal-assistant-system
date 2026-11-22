@@ -1,6 +1,6 @@
 """Fallback conversational "brain" via a local Ollama server -- reached
 only from ash/actions/open_app.py's no-match branch (gated on
-config.ollama.enabled), not through its own grammar verb or dispatcher
+ash.utils.ollama.ai_enabled), not through its own grammar verb or dispatcher
 entry. No special trigger phrase needed: anything that isn't a known
 command and doesn't match an app just gets asked to the model, matching
 how a Siri-like assistant behaves.

@@ -1,4 +1,4 @@
-from ash.nlu.matcher import match_app, match_candidates
+from ash.nlu.matcher import match_app, match_candidates, word_coverage
 from ash.registry.schema import AppEntry, Registry
 
 
@@ -90,3 +90,55 @@ def test_match_candidates_empty_target():
 def test_match_candidates_below_cutoff_returns_empty():
     assert match_candidates("totally unrelated phrase", _spiderman_registry()) == []
 
+
+# --- a single shared word must not count as a match ---------------------
+
+def _registry_with_python_docs() -> Registry:
+    return Registry(apps=[
+        AppEntry(id="python_3_13_64_bit",
+                 names=["python 3.13 (64-bit)", "python 3.13 module docs (64-bit)"],
+                 launch={"type": "exe", "target": "python.exe"}),
+        AppEntry(id="elden_ring", names=["elden ring"],
+                 launch={"type": "uri", "protocol": "steam",
+                         "uri_template": "steam://rungameid/{appid}", "appid": "1245620"}),
+    ])
+
+
+def test_sentence_sharing_one_word_with_an_app_name_does_not_match():
+    # Regression: WRatio scores this 85.5 against "python 3.13 module
+    # docs (64-bit)" purely on "bit" -- it used to launch Python.
+    registry = _registry_with_python_docs()
+    assert match_app("turn it down a bit", registry) is None
+    assert match_app("turn it down a bit", registry, guessed=True) is None
+    assert match_candidates("turn it down a bit", registry) == []
+
+
+def test_explicit_open_still_tolerates_loose_phrasing():
+    result = match_app("my elden ring game", _registry_with_python_docs())
+    assert result is not None and result.entry.id == "elden_ring"
+
+
+def test_explicit_open_of_a_short_name_inside_a_long_one():
+    result = match_app("python", _registry_with_python_docs())
+    assert result is not None and result.entry.id == "python_3_13_64_bit"
+
+
+def test_guessed_open_needs_every_meaningful_word_in_the_name():
+    registry = _registry_with_python_docs()
+    # "game" is filler, so everything meaningful is in the name.
+    assert match_app("elden ring game", registry, guessed=True).entry.id == "elden_ring"
+    # "tell"/"about" aren't in any app's name -- this is a sentence, not an app.
+    assert match_app("tell me about elden ring", registry, guessed=True) is None
+
+
+def test_guessed_open_tolerates_a_small_transcription_slip():
+    registry = Registry(apps=[AppEntry(id="spotify", names=["spotify"],
+                                       launch={"type": "exe", "target": "spotify.exe"})])
+    result = match_app("spotfy", registry, guessed=True)
+    assert result is not None and result.entry.id == "spotify"
+
+
+def test_word_coverage():
+    assert word_coverage("my elden ring game", "elden ring") == 1.0
+    assert word_coverage("turn it down a bit", "python 3.13 module docs (64-bit)") == 1 / 3
+    assert word_coverage("the app", "app a") == 0.5  # all-filler target falls back to every word

@@ -136,3 +136,23 @@ def test_run_chain_skips_unknown_handler_gracefully():
 
     assert result == HandlerResult()
     assert calls == ["open"]
+
+
+def test_confirm_gated_step_asks_instead_of_running():
+    # Routines run through run_chain and may contain any intent -- a
+    # shutdown step must still ask, never shut down straight away.
+    calls = []
+    handlers = {
+        "volume_set": lambda target, registry, tts, log, config: calls.append("volume_set") or HandlerResult(),
+        "shutdown": lambda target, registry, tts, log, config: calls.append("shutdown") or HandlerResult(),
+    }
+    steps = [{"intent": "volume_set", "target": "20"}, {"intent": "shutdown", "target": ""}]
+
+    result = chain.run_chain(steps, handlers, Registry(), FakeTts(), log, Config())
+
+    assert calls == ["volume_set"]  # the safe step ran; shutdown is waiting on a yes
+    assert result.done is False
+    assert "are you sure" in result.question.lower()
+
+    result.resume("Yes.")
+    assert calls == ["volume_set", "shutdown"]

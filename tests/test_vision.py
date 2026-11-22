@@ -37,13 +37,14 @@ def _enabled_config() -> Config:
     return config
 
 
-def test_ollama_disabled_says_so():
+def test_ollama_unavailable_says_so():
     tts = FakeTts()
 
+    # Default "auto" + conftest's stubbed probe: Ollama isn't running.
     result = vision.handle_screen_describe("", Registry(), tts, log, Config())
 
     assert result == HandlerResult()
-    assert "Ollama enabled" in tts.said[-1]
+    assert "needs Ollama running" in tts.said[-1]
 
 
 def test_screenshot_capture_failure_reported(monkeypatch):

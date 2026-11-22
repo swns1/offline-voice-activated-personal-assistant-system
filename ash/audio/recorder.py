@@ -1,5 +1,5 @@
-"""Mic input. `record_fixed` is the Phase 2 fixed-duration recorder,
-kept for the standalone STT smoke test. `ContinuousListener` is the
+"""Mic input. `record_fixed` is a simple fixed-duration recorder, used
+by scripts/enroll_voice.py to capture a voiceprint sample. `ContinuousListener` is the
 real Phase 5+ pipeline: one continuous sounddevice.InputStream (not
 repeatedly opened/closed, per the plan) multiplexed between wake-word
 detection and VAD-gated command recording.

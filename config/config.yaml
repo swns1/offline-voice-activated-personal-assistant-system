@@ -102,7 +102,10 @@ calendar:
   proactive_poll_seconds: 60
 
 ollama:
-  enabled: false
+  # auto: use the local-AI features whenever Ollama is running on this
+  # PC with `model` downloaded, and quietly do without them otherwise.
+  # true/false: force them on or off.
+  enabled: auto
   # Ollama itself is a separate local install (https://ollama.com), not
   # a pip package -- see README for setup. Ash falls back to asking this
   # model anything that isn't a known command and doesn't match an app.

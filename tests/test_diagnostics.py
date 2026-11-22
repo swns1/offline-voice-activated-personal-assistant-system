@@ -52,9 +52,34 @@ def test_microphone_check_query_failure(monkeypatch):
 
 def test_ollama_check_disabled_reports_ok():
     config = Config()
+    config.ollama.enabled = False
     name, ok, detail = diagnostics._check_ollama(config)
     assert ok is True
     assert detail == "disabled"
+
+
+def test_ollama_check_auto_not_running_is_not_a_failure():
+    # Default "auto" + conftest's stubbed probe (Ollama not running):
+    # optional, so it reports OK with an explanation rather than FAIL.
+    name, ok, detail = diagnostics._check_ollama(Config())
+    assert ok is True
+    assert "not running" in detail
+
+
+def test_ollama_check_auto_running(monkeypatch):
+    from ash.utils import ollama
+    monkeypatch.setattr(ollama, "_probe", lambda host, model: ollama.READY)
+    name, ok, detail = diagnostics._check_ollama(Config())
+    assert ok is True
+    assert "AI features on" in detail
+
+
+def test_ollama_check_auto_model_missing_is_a_failure(monkeypatch):
+    from ash.utils import ollama
+    monkeypatch.setattr(ollama, "_probe", lambda host, model: ollama.MODEL_MISSING)
+    name, ok, detail = diagnostics._check_ollama(Config())
+    assert ok is False
+    assert "llama3.2" in detail
 
 
 def test_ollama_check_reachable(monkeypatch):

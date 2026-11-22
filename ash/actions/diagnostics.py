@@ -17,6 +17,7 @@ from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.registry.schema import Registry
+from ash.utils import ollama
 from ash.utils.paths import SECRETS_DIR
 
 _TIMEOUT_SECONDS = 3.0
@@ -42,8 +43,17 @@ def _check_microphone() -> tuple[str, bool, str]:
 
 
 def _check_ollama(config: Config) -> tuple[str, bool, str]:
-    if not config.ollama.enabled:
+    setting = config.ollama.enabled
+    if setting is False:
         return ("Ollama", True, "disabled")
+    if setting == "auto":
+        status = ollama.server_status(config, fresh=True)
+        if status == ollama.READY:
+            return ("Ollama", True, "running, AI features on")
+        if status == ollama.MODEL_MISSING:
+            return ("Ollama", False, f"running, but the {config.ollama.model} model isn't downloaded")
+        # Optional in auto mode -- not running isn't a failure.
+        return ("Ollama", True, "not running, AI features off")
     try:
         response = requests.get(f"{config.ollama.host}/api/tags", timeout=_TIMEOUT_SECONDS)
         response.raise_for_status()

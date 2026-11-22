@@ -186,7 +186,7 @@ def test_semantic_fallback_no_confident_match_keeps_open_guess(monkeypatch):
 
     monkeypatch.setattr(dispatcher_module, "classify_intent", lambda text, config: None)
     calls = []
-    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open_guess",
                          lambda target, registry, tts, log, config: calls.append(target) or HandlerResult())
     config = Config()
     config.ollama.enabled = True
@@ -227,3 +227,52 @@ def test_shutdown_intent_is_intercepted_for_confirmation_before_the_handler_runs
     assert result.done is False
     assert "sure" in result.question.lower()
     assert calls == []  # the real handler hasn't run yet -- confirmation comes first
+
+
+def test_routine_with_shutdown_step_still_asks_first(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "shutdown",
+                         lambda target, registry, tts, log, config: calls.append("shutdown") or HandlerResult())
+    registry = Registry(routines={"good night": [{"intent": "shutdown", "target": ""}]})
+
+    result = dispatch("run my good night routine", registry, FakeTts(), log, Config())
+
+    assert calls == []
+    assert result.done is False
+
+
+def test_no_verb_utterance_goes_to_the_strict_guessed_open(monkeypatch):
+    import ash.actions.dispatcher as dispatcher_module
+
+    calls = []
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open",
+                         lambda *a: calls.append("open") or HandlerResult())
+    monkeypatch.setitem(dispatcher_module._HANDLERS, "open_guess",
+                         lambda *a: calls.append("open_guess") or HandlerResult())
+
+    dispatch("discord", Registry(), FakeTts(), log, Config())
+    dispatch("open discord", Registry(), FakeTts(), log, Config())
+
+    assert calls == ["open_guess", "open"]
+
+
+def test_turn_it_down_a_bit_no_longer_launches_an_app(monkeypatch):
+    # The end-to-end version of the bug: no Ollama, a real-looking
+    # registry, and a sentence sharing only "bit" with an app's name.
+    from ash.actions import open_app
+    from ash.launchers.exe_launcher import ExeLauncher
+    from ash.registry.schema import AppEntry
+
+    launched = []
+    monkeypatch.setattr(ExeLauncher, "launch", lambda self, launch: launched.append(launch))
+    registry = Registry(apps=[AppEntry(
+        id="python_3_13_64_bit", names=["python 3.13 module docs (64-bit)"],
+        launch={"type": "exe", "target": "python.exe"})])
+    tts = FakeTts()
+
+    dispatch("turn it down a bit", registry, tts, log, Config())
+
+    assert launched == []
+    assert "not sure what you mean" in tts.said[-1]

@@ -6,3 +6,4 @@ models/
 *.ppn
 .env
 debug.log
+*.egg-info/

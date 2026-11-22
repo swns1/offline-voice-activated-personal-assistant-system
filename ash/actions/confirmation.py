@@ -1,15 +1,20 @@
-"""Centralizes "should this action ask before doing it?" so a
-destructive/write intent opts in with one line here instead of every
-handler hand-rolling its own ask-then-resume dance. dispatch() checks
-needs_confirmation() before calling a handler at all -- see
-ash/actions/dispatcher.py.
+"""Centralizes "should this action ask before doing it?" and how it asks,
+so every risky action confirms the same way instead of each handler
+hand-rolling its own ask-then-resume dance.
 
-This covers the common case: a static intent with a fixed yes/no gate
-(shutdown). Confirmations whose question depends on what's actually
-being done (e.g. "add 'Team Meeting' to your calendar at 3pm?") don't
-fit a static per-intent string -- those handlers keep building their
-own HandlerResult(done=False, question=..., resume=...) directly, the
-same general mechanism this just wraps for the static case.
+Every confirmation question follows one rule: say what will actually
+happen -- including what you'd lose, if anything -- before asking "Are
+you sure?". A bare "Are you sure?" doesn't tell you what you're agreeing
+to.
+
+Two entry points:
+- Static per-intent gates (shutdown): dispatch() and run_chain() check
+  needs_confirmation() before calling the handler at all, and
+  wrap_with_confirmation() asks the question from _CONFIRM_REQUIRED.
+- Confirmations whose question depends on what's actually being done
+  ("This will force Discord to quit...", "I'll click 'Save'...") are
+  built inside the handler with ask_to_confirm(), once it knows the
+  specifics.
 
 With config.security.voice_gate_enabled, the returned HandlerResult
 also sets requires_voice_match=True -- ash/main.py's loop checks the
@@ -19,6 +24,8 @@ isn't enough. resume() itself doesn't need to know about any of this;
 the voice check is a gate in front of it, not inside it.
 """
 import logging
+import re
+from dataclasses import dataclass
 from typing import Callable
 
 from ash.actions.results import HandlerResult
@@ -28,32 +35,76 @@ from ash.registry.schema import Registry
 
 Handler = Callable[[str, Registry, TtsWorker, logging.Logger, Config], HandlerResult | None]
 
-# intent -> spoken confirmation question. Add to this to gate a new
-# intent behind a yes/no confirmation without touching dispatch().
-_CONFIRM_REQUIRED: dict[str, str] = {
-    "shutdown": "Are you sure you want to shut down? Say yes to confirm.",
+
+@dataclass(frozen=True)
+class _Gate:
+    question: str
+    declined_reply: str
+
+
+# intent -> what to ask, and what to say if the answer isn't yes. Add to
+# this to gate a new intent behind a confirmation without touching
+# dispatch().
+_CONFIRM_REQUIRED: dict[str, _Gate] = {
+    "shutdown": _Gate(
+        question=("Shutting down will close all your apps, and anything you "
+                  "haven't saved will be lost. Are you sure? Say yes to shut down."),
+        declined_reply="Okay, I won't shut down.",
+    ),
 }
 
-AFFIRMATIVE_ANSWERS = {"yes", "yeah", "yep", "yes please", "confirm", "do it", "sure"}
+# Matched after normalize_answer(), so "Yes." / "Yeah!" / "YES please"
+# from speech-to-text all count.
+AFFIRMATIVE_ANSWERS = {
+    "yes", "yeah", "yep", "yes please", "confirm", "do it", "sure",
+    "go ahead", "yes do it", "i'm sure", "yes i'm sure",
+}
+
+
+def normalize_answer(answer: str) -> str:
+    """Lowercase, drop punctuation (speech-to-text writes "Yes." not
+    "yes"), and collapse whitespace."""
+    answer = re.sub(r"[^\w\s']", "", answer.lower())
+    return " ".join(answer.split())
+
+
+def is_affirmative(answer: str) -> bool:
+    return normalize_answer(answer) in AFFIRMATIVE_ANSWERS
 
 
 def needs_confirmation(intent: str) -> bool:
     return intent in _CONFIRM_REQUIRED
 
 
+def ask_to_confirm(
+    question: str, on_yes: Callable[[], HandlerResult | None], *,
+    action: str, declined_reply: str,
+    tts: TtsWorker, log: logging.Logger, config: Config,
+) -> HandlerResult:
+    """Ask `question`; run `on_yes` only if the answer is affirmative.
+    Anything else -- "no", silence-turned-noise, an unclear answer -- is
+    treated as no, since these are the actions that can't be undone."""
+    def resume(answer: str) -> HandlerResult:
+        if not is_affirmative(answer):
+            log.info("Confirmation declined for %s: %r", action, answer)
+            tts.say(declined_reply)
+            return HandlerResult()
+        result = on_yes()
+        return result if result is not None else HandlerResult()
+
+    return HandlerResult(
+        done=False, question=question, resume=resume,
+        requires_voice_match=config.security.voice_gate_enabled,
+    )
+
+
 def wrap_with_confirmation(
     intent: str, handler: Handler, target: str,
     registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
 ) -> HandlerResult:
-    def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() not in AFFIRMATIVE_ANSWERS:
-            log.info("Confirmation declined for intent %r: %r", intent, answer)
-            tts.say("Never mind.")
-            return HandlerResult()
-        result = handler(target, registry, tts, log, config)
-        return result if result is not None else HandlerResult()
-
-    return HandlerResult(
-        done=False, question=_CONFIRM_REQUIRED[intent], resume=resume,
-        requires_voice_match=config.security.voice_gate_enabled,
+    gate = _CONFIRM_REQUIRED[intent]
+    return ask_to_confirm(
+        gate.question, lambda: handler(target, registry, tts, log, config),
+        action=intent, declined_reply=gate.declined_reply,
+        tts=tts, log=log, config=config,
     )

@@ -21,7 +21,7 @@ from typing import Callable
 import pythoncom
 import win32com.client
 
-from ash.actions.confirmation import AFFIRMATIVE_ANSWERS
+from ash.actions.confirmation import is_affirmative
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -125,7 +125,7 @@ def handle_calendar_add(target: str, registry: Registry, tts: TtsWorker, log: lo
     when = format_time_of_day(start.hour, start.minute)
 
     def resume(answer: str) -> HandlerResult:
-        if answer.strip().lower() not in AFFIRMATIVE_ANSWERS:
+        if not is_affirmative(answer):
             log.info("Calendar add declined: %r", answer)
             tts.say("Never mind.")
             return HandlerResult()

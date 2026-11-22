@@ -1,8 +1,11 @@
 """Closes/minimizes apps and windows -- the missing opposite of
 open_app.py's launch. Closing a *named* app terminates its process
 (psutil); there's no window handle to target without one, so this is a
-harder stop than clicking the X -- an accepted trade-off for a voice
-command. Closing/minimizing "this"/"the window" instead targets the
+harder stop than clicking the X: the app gets no chance to ask "save
+changes?", so anything unsaved is lost. That's why closing a named app
+always asks first, naming exactly which program(s) will be force-quit --
+which also catches a loose name match about to close more than you
+meant. Closing/minimizing "this"/"the window" instead targets the
 current foreground window, via a graceful WM_CLOSE (not a hard kill)
 for close, and ShowWindow(SW_MINIMIZE) for minimize.
 """
@@ -13,6 +16,7 @@ import psutil
 import win32con
 import win32gui
 
+from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -33,15 +37,50 @@ def handle_close_app(target: str, registry: Registry, tts: TtsWorker, log: loggi
         tts.say(f"I don't see {target} running.")
         return HandlerResult()
 
-    for proc in matches:
-        try:
-            proc.terminate()
-        except psutil.Error:
-            log.exception("Failed to terminate process %s", proc)
+    programs = _program_names(matches)
+    if len(programs) == 1:
+        question = (f"This will force {target} to quit, and anything unsaved in it "
+                    f"will be lost. Are you sure?")
+    else:
+        question = (f"This will force {len(programs)} programs to quit: {_spoken_list(programs)}. "
+                    f"Anything unsaved in them will be lost. Are you sure?")
 
-    log.info("Closed %d process(es) matching %r", len(matches), target)
-    tts.say(f"Closing {target}.")
-    return HandlerResult()
+    def close() -> HandlerResult:
+        for proc in matches:
+            try:
+                proc.terminate()
+            except psutil.Error:
+                log.exception("Failed to terminate process %s", proc)
+        log.info("Closed %d process(es) matching %r: %s", len(matches), target, programs)
+        tts.say(f"Closed {target}.")
+        return HandlerResult()
+
+    return ask_to_confirm(
+        question, close, action=f"close_app({target!r})",
+        declined_reply=f"Okay, I'll leave {target} open.",
+        tts=tts, log=log, config=config,
+    )
+
+
+def _program_names(processes: list) -> list[str]:
+    """Distinct program names, in first-seen order -- a browser's 30
+    processes are still one program as far as the question goes."""
+    names: list[str] = []
+    for proc in processes:
+        name = proc.info.get("name") or ""
+        if name.lower().endswith(".exe"):
+            name = name[:-4]
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _spoken_list(names: list[str], limit: int = 3) -> str:
+    shown = names[:limit]
+    hidden = len(names) - len(shown)
+    if hidden:
+        return ", ".join(shown) + f", and {hidden} more"
+    return ", ".join(shown[:-1]) + f" and {shown[-1]}"
 
 
 def _resolve_process_name(target: str, registry: Registry) -> str | None:

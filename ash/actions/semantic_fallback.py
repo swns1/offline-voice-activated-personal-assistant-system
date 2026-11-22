@@ -4,7 +4,7 @@ thing as "open <utterance>" -- the most permissive interpretation, but
 wrong for natural phrasing that doesn't match a literal template ("dim
 the volume a bit", "shut this thing down"). Before that guess is acted
 on, ash/actions/dispatcher.py asks the already-running local Ollama
-model (only if config.ollama.enabled) to classify the utterance against
+model (only if ash.utils.ollama.ai_enabled) to classify the utterance against
 Ash's other known intents; if it's confident, that replaces the "open"
 guess. If Ollama is disabled, unreachable, times out, or isn't
 confident, the existing "open" -> app-match -> converse fallback chain

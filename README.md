@@ -10,8 +10,9 @@ wake-word detection, and text-to-speech all run locally; nothing is
 sent to a cloud API. The only network calls Ash ever makes are to
 DuckDuckGo's free Instant Answer API (for "what is X"-style questions —
 no account/key, can be turned off), Spotify's API (only if you use
-Spotify commands), and your own local Ollama server (only if you enable
-it) — never anything else, and never your files. Calendar access (if
+Spotify commands), and your own local Ollama server on this PC (only
+if it's installed — see "Local AI" below) — never anything else, and
+never your files. Calendar access (if
 enabled) talks to your local desktop Outlook install, not the network.
 
 ## Setup
@@ -100,8 +101,12 @@ turning on deliberately rather than defaulting into it.
 ## System control
 
 - Volume: "volume up" / "volume down" / "set the volume to 50" / "mute" / "unmute"
-- Windows: "close discord" (closes the app), "close this window" /
-  "minimize this window" (acts on whatever's currently focused)
+- Windows: "close discord" force-quits the app — so it first says what
+  will be closed and that anything unsaved in it will be lost, and asks
+  "are you sure?" (if the name matches several different programs, it
+  names each one). "close this window" / "minimize this window" act on
+  whatever's currently focused; closing a window this way is a normal
+  close, so the app can still ask you to save.
 - Timers: "set a timer for 5 minutes", "remind me at 3pm to call mom",
   "remind me every day at 8am to take medicine" (recurring — daily or
   "every weekday"), "cancel my timer", "list my timers" — timers survive
@@ -112,18 +117,24 @@ turning on deliberately rather than defaulting into it.
 - Routines: "run my `<name>` routine" runs a named sequence of steps you
   define under `routines:` in `config/registry.yaml` (e.g. a "good
   morning" routine that sets the volume, opens Spotify, and lists your
-  timers — see the commented example in that file).
-- Power: "lock my computer", "go to sleep", "shut down" (asks "are you
-  sure?" before actually shutting down)
+  timers — see the commented example in that file). A risky step in a
+  routine (e.g. shut down) still asks first, exactly as if you'd said it.
+- Power: "lock my computer", "go to sleep", "shut down". Lock and sleep
+  happen right away (nothing is lost). Shut down first explains that all
+  your apps will close and anything unsaved will be lost, then asks "are
+  you sure?" — only a clear yes ("yes", "yeah", "sure", "go ahead", ...)
+  goes ahead; anything else, or no answer, cancels.
 - Diagnostics: "are you working" / "run diagnostics" checks the
-  microphone, and (if enabled) whether Ollama and Spotify are reachable
+  microphone, whether Ollama is running (and has its model downloaded),
+  and, if enabled, whether Spotify is connected
   — also available standalone via `scripts\selftest.py`, no need to
   talk to Ash for it.
 
 ### Voice-verified confirmation (optional)
 
-By default, confirming a destructive action ("are you sure you want to
-shut down?") just needs a spoken "yes" — anyone in earshot. Set
+By default, confirming a risky action (shutting down, force-closing an
+app, clicking/typing on screen) just needs a spoken "yes" — anyone in
+earshot. Set
 `security.voice_gate_enabled: true` for an extra check on top of that:
 the confirmation itself has to sound like you, not just be an
 affirmative word, checked against a voiceprint you enroll once:
@@ -154,10 +165,18 @@ mean" — no cloud, no account, runs entirely on your PC via
 1. Install Ollama (separate installer, not a pip package) from
    https://ollama.com — it runs as a local background server.
 2. Pull a model: `ollama pull llama3.2` (a few GB, one-time).
-3. Set `ollama.enabled: true` in `config/config.yaml`.
+
+That's it — no config change needed. With `ollama.enabled: auto` (the
+default), Ash uses the local-AI features whenever Ollama is running with
+that model downloaded, and quietly does without them when it isn't: it
+just says "I'm not sure what you mean" as before. It re-checks every 30
+seconds or so, so starting Ollama after Ash (e.g. both launching at
+login) is picked up without a restart. Ash prints whether local AI is on
+when it starts, and "run diagnostics" reports it too. Set
+`ollama.enabled: true` or `false` to force it on or off instead.
 
 Replies can take a few seconds on CPU — Ash says "Let me think" while it
-waits. If Ollama isn't running, Ash says so instead of crashing. It
+waits. It
 remembers the last few exchanges, so a follow-up like "what's its
 population" after "what's the capital of France" works; say "stop" to
 end the conversation early.
@@ -166,7 +185,7 @@ end the conversation early.
 
 Ash's command parsing is a fixed set of phrase templates ("volume up",
 "lock my computer", etc.) — fast and predictable, but it only recognizes
-phrasing close to those templates. With `ollama.enabled: true`, anything
+phrasing close to those templates. With local AI on (see above), anything
 that doesn't match any template gets one extra check before falling
 back to a conversational reply: the local model is asked whether it
 actually means one of Ash's other commands. So "turn it down a bit" or
@@ -187,9 +206,8 @@ in-conversation history above, which resets every conversation. It's
 automatically folded into every Local AI reply so it's used naturally
 without having to ask; "what do you know about me" speaks everything
 remembered, and "forget that I'm vegetarian" / "forget everything"
-removes it. This is plain local storage, so it works even with
-`ollama.enabled: false` — only the "used naturally in chat" half needs
-Local AI turned on.
+removes it. This is plain local storage, so it works even without
+Ollama — only the "used naturally in chat" half needs local AI.
 
 ### Screen understanding
 
@@ -217,9 +235,9 @@ looser prose description instead; use whichever fits what you're
 after. Needs the free [Tesseract OCR
 engine](https://github.com/UB-Mannheim/tesseract/wiki) installed
 separately (a Windows installer, not a pip package — like Ollama), and
-adds itself to your PATH during setup. No `ollama.enabled` needed — this
-runs fully offline with no model, so it works even without Ollama set
-up at all. Very long on-screen text is cut short with a spoken note
+adds itself to your PATH during setup. No Ollama needed — this runs
+fully offline with no model, so it works even without Ollama set up at
+all. Very long on-screen text is cut short with a spoken note
 rather than read in full.
 
 ### Guided desktop actions (optional, off by default)
@@ -234,9 +252,10 @@ wherever focus currently is. Set `desktop_control.enabled: true` in
 guarded than every other integration in this project, since it's the
 one feature that directly manipulates your PC:
 
-- Every single click/type still asks "click 'X'?" / "type 'Y'?" before
-  doing anything — naming exactly what it found, not a generic
-  yes/no. With `security.voice_gate_enabled` (see "Voice-verified
+- Every single click/type says exactly what it's about to do and asks
+  first — "I'll move your mouse and click 'Save' on your screen. Are you
+  sure?" / "I'll type 'hello' into whichever window is active right now.
+  Are you sure?" — naming exactly what it found, not a generic yes/no. With `security.voice_gate_enabled` (see "Voice-verified
   confirmation" above) also on, that confirmation needs to match your
   enrolled voice too.
 - Text-label only: it can click a labeled button or menu item, not a
@@ -330,6 +349,17 @@ it also retries with a one-off rescan before giving up and saying it
 doesn't know what you mean — so most of the time you can just ask,
 restart or not. The script is there for forcing a rescan on demand, or
 if you've set `auto_rescan_on_startup: false` to control it manually.
+
+### How spoken app names are matched
+
+"open X" (or launch/start/run/play X) matches X against app names
+loosely — "open my elden ring game" finds Elden Ring, and small
+speech-to-text slips like "spotfy" still work. If you just say a name
+with no verb ("discord"), Ash only opens an app whose name closely
+matches what you said; otherwise it treats it as conversation (local
+AI) or says it's not sure. Either way, sharing a single word with an
+app's name isn't enough — "turn it down a bit" won't open "Python
+Module Docs (64-bit)" just because both contain "bit".
 
 ## Testing
 

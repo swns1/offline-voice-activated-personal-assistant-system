@@ -1,8 +1,6 @@
-"""Ash orchestrator.
-
-Phase 5 milestone: wake-word triggered instead of a keypress. Saying
-the configured keyword starts a VAD-gated recording, which is
-transcribed and dispatched exactly as in Phase 3/4.
+"""Ash orchestrator: wake word -> VAD-gated recording -> speech-to-text
+-> dispatch, then any follow-up questions (clarifications,
+confirmations) the handler asks.
 
 _run_assistant() is the actual listening loop, split out from main()
 so it can run on a background thread when the tray icon is enabled --
@@ -28,6 +26,7 @@ from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.hotkey import register_mute_hotkey
 from ash.utils.logging_setup import setup_logging
+from ash.utils.ollama import MODEL_MISSING, READY, server_status
 
 
 def main() -> None:
@@ -60,8 +59,9 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
     print("Loading speech-to-text model...")
     stt = SpeechToText()
     registry = load_registry()
-    log.info("Ash Phase 5 starting (%d app entries, %d intents)",
+    log.info("Ash starting (%d app entries, %d intents)",
               len(registry.apps), len(registry.intents))
+    _report_local_ai(config, log)
 
     wake_detector = WakeWordDetector(
         keyword=config.wake_word.keyword,
@@ -117,7 +117,28 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
     finally:
         wake_detector.delete()
         tts.stop()
-        log.info("Ash Phase 5 stopped")
+        log.info("Ash stopped")
+
+
+def _report_local_ai(config: Config, log: logging.Logger) -> None:
+    """One line at startup saying whether the local-AI features are on,
+    so "why doesn't it chat?" has an answer without digging into config."""
+    setting = config.ollama.enabled
+    if setting is False:
+        message = "Local AI: off (ollama.enabled is false in config.yaml)"
+    else:
+        status = server_status(config, fresh=True)
+        if status == READY:
+            message = f"Local AI: on (Ollama running, model {config.ollama.model})"
+        elif status == MODEL_MISSING:
+            message = (f"Local AI: off -- Ollama is running but the {config.ollama.model} "
+                       f"model isn't downloaded (run: ollama pull {config.ollama.model})")
+        elif setting == "auto":
+            message = "Local AI: off for now (Ollama not running -- it'll be picked up automatically once it is)"
+        else:
+            message = f"Local AI: ON in config, but Ollama isn't reachable at {config.ollama.host}"
+    print(message)
+    log.info(message)
 
 
 if __name__ == "__main__":

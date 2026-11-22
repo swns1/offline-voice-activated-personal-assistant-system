@@ -180,3 +180,39 @@ def test_no_match_rescan_failure_is_swallowed(monkeypatch):
 
     assert result == HandlerResult()
     assert any("not sure" in msg for msg in tts.said)
+
+
+def test_guessed_open_launches_on_a_close_name_match(monkeypatch):
+    launched = _no_real_launches(monkeypatch)
+    tts = FakeTts()
+
+    open_app.handle_open_guess("notepad", _registry(), tts, log, Config())
+
+    assert len(launched) == 1
+
+
+def test_guessed_open_miss_does_not_rescan(monkeypatch):
+    # Most no-verb utterances aren't app names -- rescanning the Start
+    # Menu/Steam (and rewriting registry.auto.yaml) for each one is waste.
+    _no_real_launches(monkeypatch)
+    rescans = []
+    monkeypatch.setattr(open_app, "refresh_registry_auto", lambda: rescans.append(1) or 0)
+    tts = FakeTts()
+
+    open_app.handle_open_guess("how was your day", _registry(), tts, log, Config())
+
+    assert rescans == []
+    assert "not sure what you mean" in tts.said[-1]
+
+
+def test_guessed_open_miss_goes_to_local_ai_when_available(monkeypatch):
+    from ash.utils import ollama
+
+    monkeypatch.setattr(ollama, "_probe", lambda host, model: ollama.READY)
+    conversed = []
+    monkeypatch.setattr(open_app, "handle_converse",
+                        lambda target, *a: conversed.append(target) or HandlerResult())
+
+    open_app.handle_open_guess("how was your day", _registry(), FakeTts(), log, Config())
+
+    assert conversed == ["how was your day"]

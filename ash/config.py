@@ -1,5 +1,6 @@
 """Pydantic config models + loader for config.yaml."""
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel
@@ -128,7 +129,10 @@ class RegistryConfig(BaseModel):
 
 
 class OllamaConfig(BaseModel):
-    enabled: bool = False
+    # true/false force the local-AI features on/off; "auto" uses them
+    # only while Ollama is actually running with `model` downloaded. Read
+    # it through ash.utils.ollama.ai_enabled(), never directly.
+    enabled: bool | Literal["auto"] = "auto"
     host: str = "http://localhost:11434"
     model: str = "llama3.2"
     # A separate pull from `model` -- vision-capable models (llama3.2

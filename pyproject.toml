@@ -9,3 +9,8 @@ requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]
 include = ["ash*"]
+
+[tool.pytest.ini_options]
+# Only collect real tests -- without this, pytest also scans scripts/
+# and imports anything there named like a test file.
+testpaths = ["tests"]

@@ -3,7 +3,7 @@ import logging
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.memory import handle_memory_forget, handle_memory_recall, handle_memory_remember
-from ash.actions.open_app import handle_open
+from ash.actions.open_app import handle_open, handle_open_guess
 from ash.actions.search import handle_browser_search, handle_search
 from ash.actions.spotify import (
     handle_spotify_now_playing,
@@ -42,9 +42,13 @@ from ash.config import Config
 from ash.nlu.context import resolve_target
 from ash.nlu.grammar import parse
 from ash.registry.schema import Registry
+from ash.utils.ollama import ai_enabled
 
 _HANDLERS = {
     "open": handle_open,
+    # Not a grammar intent: dispatch() routes here when no verb was
+    # recognized and the grammar fell back to guessing "open <utterance>".
+    "open_guess": handle_open_guess,
     "search": handle_search,
     "browser_search": handle_browser_search,
     "spotify_play": handle_spotify_play,
@@ -83,7 +87,7 @@ _HANDLERS = {
 
 
 def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
-    if config.ollama.enabled and looks_like_chain(text):
+    if looks_like_chain(text) and ai_enabled(config):
         steps = resolve_chain(text, config)
         if steps is not None:
             log.info("Resolved %r into a %d-step chain", text, len(steps))
@@ -92,7 +96,7 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
 
     command = parse(text)
 
-    if not command.explicit and config.ollama.enabled:
+    if not command.explicit and ai_enabled(config):
         reclassified = classify_intent(text, config)
         if reclassified is not None:
             log.info("Semantic fallback reclassified %r as %s(%r)",
@@ -111,7 +115,10 @@ def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
         log.info("Running routine %r (%d steps)", name, len(steps))
         return run_chain(steps, _HANDLERS, registry, tts, log, config)
 
-    handler = _HANDLERS.get(command.intent)
+    intent = command.intent
+    if intent == "open" and not command.explicit:
+        intent = "open_guess"  # you never said "open" -- only open on a close name match
+    handler = _HANDLERS.get(intent)
     if handler is None:
         log.info("Unrecognized command: %r", text)
         tts.say("I didn't catch that.")

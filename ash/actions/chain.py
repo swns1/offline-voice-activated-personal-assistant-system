@@ -3,13 +3,17 @@ remind me in 30 minutes to take a break") -- one utterance, multiple
 actions. The existing rule-based grammar stays the primary, fast path
 for every ordinary single command; this only engages when the
 utterance contains an explicit sequencing word ("then"/"and then") and
-config.ollama.enabled is set, since resolving a chain needs a real
-model call and would be wasted latency on the common case.
+local AI is available (ash.utils.ollama.ai_enabled), since resolving a
+chain needs a real model call and would be wasted latency on the common
+case.
 
 Destructive/confirm-gated intents (shutdown) and session-interrupting
 power actions (lock, sleep) are deliberately excluded from the
 chainable set -- composing per-step confirmation with a multi-step
-chain is a real design problem, not solved here. If a chain step
+chain is a real design problem, not solved here. run_chain() still
+routes any confirm-gated step through the same confirmation as a
+spoken command, though -- it also runs user-defined routines, which
+can contain any intent (shutdown included). If a chain step
 itself needs a follow-up (e.g. an ambiguous app match), the chain ends
 there rather than trying to interleave a pending question with the
 remaining steps; the user answers that one question normally.
@@ -19,6 +23,7 @@ import logging
 
 import requests
 
+from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -105,6 +110,10 @@ def run_chain(
         if handler is None:
             continue
         log.info("Chain step: %s(%r)", step["intent"], step["target"])
+        if needs_confirmation(step["intent"]):
+            # Same gate as a spoken command -- a routine step must never
+            # skip it. Asking ends the chain here, like any follow-up.
+            return wrap_with_confirmation(step["intent"], handler, step["target"], registry, tts, log, config)
         result = handler(step["target"], registry, tts, log, config)
         if result is not None and not result.done:
             return result  # a step needs a follow-up -- stop chaining, let the user answer it

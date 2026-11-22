@@ -37,16 +37,61 @@ def _registry_with_discord() -> Registry:
     ])
 
 
-def test_close_app_terminates_matching_process(monkeypatch):
+def test_close_app_explains_and_asks_before_closing(monkeypatch):
     proc = FakeProcess("Discord.exe")
     monkeypatch.setattr(window.psutil, "process_iter", lambda attrs: iter([proc]))
     tts = FakeTts()
 
     result = window.handle_close_app("discord", _registry_with_discord(), tts, log, Config())
 
-    assert result == HandlerResult()
+    assert result.done is False
+    assert "force discord to quit" in result.question
+    assert "unsaved" in result.question
+    assert result.question.endswith("Are you sure?")
+    assert proc.terminated is False  # nothing happens until you say yes
+
+
+def test_close_app_terminates_after_yes(monkeypatch):
+    proc = FakeProcess("Discord.exe")
+    monkeypatch.setattr(window.psutil, "process_iter", lambda attrs: iter([proc]))
+    tts = FakeTts()
+    result = window.handle_close_app("discord", _registry_with_discord(), tts, log, Config())
+
+    final = result.resume("Yes.")
+
+    assert final == HandlerResult()
     assert proc.terminated is True
-    assert "Closing discord" in tts.said[-1]
+    assert tts.said[-1] == "Closed discord."
+
+
+def test_close_app_declined_leaves_it_running(monkeypatch):
+    proc = FakeProcess("Discord.exe")
+    monkeypatch.setattr(window.psutil, "process_iter", lambda attrs: iter([proc]))
+    tts = FakeTts()
+    result = window.handle_close_app("discord", _registry_with_discord(), tts, log, Config())
+
+    final = result.resume("No.")
+
+    assert final == HandlerResult()
+    assert proc.terminated is False
+    assert tts.said[-1] == "Okay, I'll leave discord open."
+
+
+def test_close_app_names_every_program_a_loose_match_would_close(monkeypatch):
+    # "code" substring-matches several different programs -- the question
+    # must say so, so you can refuse before the wrong things get killed.
+    procs = [FakeProcess("Code.exe"), FakeProcess("Code.exe", pid=2), FakeProcess("CodeHelper.exe", pid=3)]
+    monkeypatch.setattr(window.psutil, "process_iter", lambda attrs: iter(procs))
+
+    result = window.handle_close_app("code", Registry(), FakeTts(), log, Config())
+
+    assert "2 programs" in result.question
+    assert "Code and CodeHelper" in result.question
+
+
+def test_spoken_list_caps_long_lists():
+    assert window._spoken_list(["a", "b", "c", "d", "e"]) == "a, b, c, and 2 more"
+    assert window._spoken_list(["a", "b"]) == "a and b"
 
 
 def test_close_app_uses_registry_to_resolve_process_name(monkeypatch):
@@ -57,7 +102,8 @@ def test_close_app_uses_registry_to_resolve_process_name(monkeypatch):
     monkeypatch.setattr(window.psutil, "process_iter", lambda attrs: iter([proc, other]))
     tts = FakeTts()
 
-    window.handle_close_app("discord", _registry_with_discord(), tts, log, Config())
+    result = window.handle_close_app("discord", _registry_with_discord(), tts, log, Config())
+    result.resume("yes")
 
     assert proc.terminated is True
     assert other.terminated is False
