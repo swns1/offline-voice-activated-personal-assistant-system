@@ -160,6 +160,15 @@ Tune how far ahead and how often it checks with
 is the one feature where Ash initiates speech on its own, so it's worth
 turning on deliberately rather than defaulting into it.
 
+## Quick answers (offline)
+
+Answered from this PC, with nothing sent anywhere — so they work in
+offline mode and never need permission:
+
+- Time and date: "what time is it", "what's the date", "what day is
+  Christmas", "what day is December 25", "how many days until New
+  Year's Eve"
+
 ## System control
 
 - Volume: "volume up" / "volume down" / "set the volume to 50" / "mute" / "unmute"

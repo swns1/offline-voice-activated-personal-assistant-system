@@ -12,6 +12,7 @@ wins, if something follows it. Two skills may not claim the same phrase
 (a test checks).
 """
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
+from ash.actions.clock import handle_date_today, handle_day_of, handle_days_until, handle_time_now
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.help import handle_help
@@ -51,6 +52,7 @@ from ash.skills.skill import Gate, Skill
 
 APPS = "Apps and windows"
 SEARCH = "Questions and search"
+QUICK = "Quick answers"
 MUSIC = "Music"
 SYSTEM = "Your PC"
 TIMERS = "Timers, reminders and routines"
@@ -104,6 +106,36 @@ SKILLS: list[Skill] = [
         "browser_search", handle_browser_search, SEARCH, "Open a web search in your browser.",
         examples=("search in browser for pizza near me",),
         verbs=("search in browser for", "browser search for", "search the web for"),
+        classifiable=True,
+    ),
+
+    # --- quick answers (offline) ----------------------------------------------
+    Skill(
+        "time_now", handle_time_now, QUICK, "Say the time.",
+        examples=("what time is it",),
+        phrases=("what time is it", "what time is it now", "what time is it right now", "what's the time",
+                 "whats the time", "what is the time", "tell me the time", "time"),
+        classifiable=True,
+    ),
+    Skill(
+        "date_today", handle_date_today, QUICK, "Say today's date.",
+        examples=("what's the date",),
+        phrases=("what's the date", "whats the date", "what is the date", "what's the date today",
+                 "what's today's date", "whats todays date", "what is today's date", "what day is it",
+                 "what day is today", "what day is it today", "what's today", "whats today"),
+        classifiable=True,
+    ),
+    Skill(
+        "day_of", handle_day_of, QUICK, "Say which day of the week a date or holiday falls on.",
+        examples=("what day is Christmas", "what day is December 25"),
+        verbs=("what day is", "what day of the week is", "which day is"),
+        classifiable=True,
+    ),
+    Skill(
+        "days_until", handle_days_until, QUICK, "Count the days until a date or holiday.",
+        examples=("how many days until Christmas",),
+        verbs=("how many days until", "how many days till", "how many days are left until",
+               "how long until", "how long till", "how long is it until", "days until"),
         classifiable=True,
     ),
 
