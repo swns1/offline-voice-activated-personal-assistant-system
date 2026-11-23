@@ -10,11 +10,12 @@ import ctypes
 import logging
 import os
 import threading
+from concurrent.futures import Future
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from ash.config import Config
-from ash.core import STATUS_NO_MIC
+from ash.core import STATUS_DOWNLOADING, STATUS_NO_MIC
 from ash.gui.bridge import CoreBridge
 from ash.gui.icon import make_icon
 from ash.gui.tray import AshTray
@@ -70,6 +71,13 @@ def run_gui(config: Config, log: logging.Logger, *, minimized: bool = False) -> 
 
     bridge.voice_failed.connect(window.chat.note)
 
+    def ask(text: str, answer: Future) -> None:
+        if not window.isVisible():
+            window.show()
+        reply = QMessageBox.question(window, "Ash", text)
+        answer.set_result(reply == QMessageBox.StandardButton.Yes)
+    bridge.ask.connect(ask)
+
     if minimized:
         hidden_to_tray()
     else:
@@ -109,6 +117,8 @@ def _start_ash(bridge: CoreBridge, config: Config, log: logging.Logger) -> None:
         core.set_status(STATUS_NO_MIC)
         core.ask_startup_questions()  # still asked once; answered with the buttons
 
+    if not _ensure_models(bridge, core, config, log, without_voice):
+        return
     try:
         voice = VoiceLoop.load(core, config, log)
     except OfflineModeError:
@@ -128,6 +138,44 @@ def _start_ash(bridge: CoreBridge, config: Config, log: logging.Logger) -> None:
         log.exception("The microphone loop stopped")
         bridge.voice_failed.emit("The microphone stopped working. Typing still works; restart Ash to try again.")
         core.set_status(STATUS_NO_MIC)
+
+
+def _ensure_models(bridge: CoreBridge, core, config: Config, log: logging.Logger, without_voice) -> bool:
+    """First run: ask before downloading the speech models, then download
+    the wake-word model here (VoiceLoop.load downloads the speech model).
+    False if voice can't start."""
+    from ash import setup_models
+    from ash.privacy.egress import NetworkBlocked
+
+    keyword = config.wake_word.keyword
+    if setup_models.custom_wake_word_missing(keyword):
+        without_voice(f"The custom wake-word model {keyword!r} wasn't found. "
+                      "Check wake_word.keyword in config.yaml. Typing still works.")
+        return False
+    missing = setup_models.missing_downloads(keyword)
+    if not missing:
+        return True
+
+    answer: Future = Future()
+    bridge.ask.emit(setup_models.download_question(missing), answer)
+    if not answer.result():
+        log.info("Model download declined")
+        without_voice("Voice is off until Ash's speech models are downloaded; you'll be asked again "
+                      "next time Ash starts. Typing works now.")
+        return False
+
+    core.set_status(STATUS_DOWNLOADING)
+    try:
+        if setup_models.wake_word_model_missing(keyword):
+            setup_models.download_wake_word_model(keyword)
+    except NetworkBlocked:
+        return True  # offline mode: VoiceLoop.load reports it, with how to fix it
+    except Exception:
+        log.exception("Wake-word model download failed")
+        without_voice("Downloading the wake-word model failed (are you online?). "
+                      "Typing still works; restart Ash to try again.")
+        return False
+    return True
 
 
 def _connect_mic_switches(bridge: CoreBridge, window: MainWindow, tray: AshTray) -> None:

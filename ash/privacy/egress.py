@@ -100,11 +100,11 @@ LOCAL_AI = register(OnlineFeature(
     fixed_reason="is controlled by your Ollama settings",
 ))
 MODEL_DOWNLOAD = register(OnlineFeature(
-    key="model_download", name="model downloads", service="Hugging Face",
-    sends="a request for the speech-recognition model (nothing about you)",
-    purpose="download the speech-recognition model, once, the first time Ash starts",
-    domains=("huggingface.co",), consent_by_config=True,
-    fixed_reason="only happens once, the first time Ash starts, to download its speech-recognition model",
+    key="model_download", name="model downloads", service="GitHub and Hugging Face",
+    sends="requests for Ash's speech models (nothing about you)",
+    purpose="download the wake-word and speech-recognition models, once, when Ash is set up",
+    domains=("huggingface.co", "github.com"), consent_by_config=True,
+    fixed_reason="only happens once, when Ash is set up, to download its speech models (the window asks first)",
 ))
 
 

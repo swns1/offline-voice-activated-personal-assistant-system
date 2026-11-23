@@ -9,6 +9,8 @@ The window adds a second input (typing, buttons) to the same core.
 """
 import argparse
 import logging
+import os
+import sys
 from collections.abc import Callable
 
 from ash.actions.proactive import start as start_proactive_nudges
@@ -41,7 +43,17 @@ def main(argv: list[str] | None = None) -> None:
                         help="voice only, in this terminal (no desktop window)")
     parser.add_argument("--minimized", action="store_true",
                         help="start with the window hidden in the system tray")
+    parser.add_argument("--selftest", action="store_true",
+                        help="check every engine loads (no speaking, microphone or downloads), then exit")
     args = parser.parse_args(argv)
+    _ensure_std_streams()
+
+    if args.selftest:
+        from ash.selftest import report, run_selftest
+
+        text, passed = report(run_selftest(load_config()))
+        print(text)
+        sys.exit(0 if passed else 1)
 
     log = setup_logging()
     config = load_config()
@@ -49,8 +61,6 @@ def main(argv: list[str] | None = None) -> None:
     deleted = apply_log_retention(config.privacy.log_retention_days, log)
     if deleted:
         log.info("Deleted %d log file(s) older than %d days", len(deleted), config.privacy.log_retention_days)
-    check_wake_word_models(config.wake_word.keyword)
-
     try:
         sync_autostart(config.autostart)
     except Exception:
@@ -63,13 +73,27 @@ def main(argv: list[str] | None = None) -> None:
             log.warning("PySide6 isn't installed; running voice-only")
             print("The desktop window needs PySide6 (pip install -r requirements.txt). Running voice-only.")
         else:
+            # The window checks for the speech models itself, and offers to
+            # download any that are missing.
             run_gui(config, log, minimized=args.minimized or config.gui.start_minimized)
             return
 
+    check_wake_word_models(config.wake_word.keyword)
     if config.tray.enabled:
         run_with_tray(lambda: run_console(config, log), log)
     else:
         run_console(config, log)
+
+
+def _ensure_std_streams() -> None:
+    """Without a console (Ash.exe, or pythonw.exe at sign-in) there is no
+    stdout/stderr, and any library that writes progress to them -- e.g.
+    the speech model's download progress bar -- would crash. Send them
+    nowhere instead; the log file has everything that matters."""
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")  # open for the life of the process
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 
 def start_assistant(config: Config, log: logging.Logger,

@@ -1,0 +1,45 @@
+name: release
+
+# Push a version tag (git tag v1.0.0 && git push origin v1.0.0) to build
+# Ash.exe and attach the zip to a GitHub release for that tag.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write  # to create the release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+          pip install -e .
+
+      - name: Test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest -q
+
+      - name: Build
+        run: python scripts/build_release.py
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/Ash-*-windows.zip \
+            --title "Ash $GITHUB_REF_NAME" \
+            --notes "Unzip, then run Ash\Ash.exe. On first start Ash asks before downloading its speech models (about 475 MB, once). See CHANGELOG.md for what's new and docs/PRIVACY.md for what Ash stores and sends."

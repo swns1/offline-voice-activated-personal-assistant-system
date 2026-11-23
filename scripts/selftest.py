@@ -1,13 +1,18 @@
-"""Standalone health check -- prints the same checks the "run
-diagnostics" voice command speaks, without needing to talk to Ash.
+r"""Standalone health check: loads every engine Ash needs (wake word,
+speech recognition, voice output, encryption, the window) without
+speaking, opening the microphone or downloading anything, plus the
+checks the "run diagnostics" voice command speaks.
 
-Run: .venv\\Scripts\\python.exe scripts\\selftest.py
+Run: .venv\Scripts\python.exe scripts\selftest.py
+(The same as `python -m ash --selftest`, or `Ash.exe --selftest` for
+the packaged app.)
 """
-from ash.actions.diagnostics import run_diagnostics
+import sys
+
 from ash.config import load_config
+from ash.selftest import report, run_selftest
 
 if __name__ == "__main__":
-    config = load_config()
-    for name, ok, detail in run_diagnostics(config):
-        status = "OK" if ok else "FAIL"
-        print(f"[{status}] {name}: {detail}")
+    text, passed = report(run_selftest(load_config()))
+    print(text)
+    sys.exit(0 if passed else 1)

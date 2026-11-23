@@ -91,7 +91,7 @@ module imports the HTTP library. The gate works like this:
 | Spotify | the songs you ask for and your playback commands | Spotify (`api.spotify.com`, `accounts.spotify.com`) | Spotify commands, if you've set Spotify up | asked at the first start after you set it up; "allow / stop allowing Spotify"; offline mode |
 | weather | the name of your city once, then its map coordinates — never your exact location | Open-Meteo (`geocoding-api.open-meteo.com`, `api.open-meteo.com`) | weather questions, and "my city is …" | asked at the first start after you set your city; "allow / stop allowing weather"; offline mode |
 | the AI server | what you say to the AI, and screenshots when you ask about your screen | your Ollama server, **only if you configure one on another machine** | AI replies | your Ollama settings; offline mode |
-| model downloads | a request for the speech-recognition model (nothing about you) | Hugging Face (`huggingface.co`) | **once**, the first time Ash starts | offline mode |
+| model downloads | requests for Ash's speech models (nothing about you) | GitHub and Hugging Face (`github.com` for the wake-word model, `huggingface.co` for the speech-recognition model) | **once**, when Ash is set up; the desktop window asks first | offline mode |
 
 **Spotify** uses its own library's HTTP calls, which can't pass through
 the gate. Each Spotify command checks permission in the same way and
@@ -109,7 +109,8 @@ and it's logged and blocked by offline mode.
 - **One-time setup.** You run these yourself, following the README:
   - `pip install` downloads Python packages from PyPI
   - `scripts\download_wake_word_models.py` downloads openWakeWord's
-    models
+    models (it goes through the same check as the window's first-run
+    download: blocked in offline mode, and logged)
   - `ollama pull` downloads AI models (Ollama is a separate program)
 - **"search in browser for …"** opens your web browser on a search
   page. From there your browser's own privacy settings apply.

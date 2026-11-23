@@ -255,3 +255,37 @@ def test_tray_icon_shows_the_microphone_state(ash):
     tray = AshTray(ash, ash._bridge)
     ash._bridge.event.emit(Event(STATUS, text=STATUS_MIC_OFF))
     wait_until(lambda: tray.toolTip() == "Ash: microphone off")
+
+
+# --- first run --------------------------------------------------------------------------
+
+class _StatusCore:
+    def __init__(self):
+        self.statuses = []
+
+    def set_status(self, state):
+        self.statuses.append(state)
+
+
+@pytest.mark.parametrize("allow", [False, True])
+def test_first_run_asks_before_downloading_the_speech_models(qapp, monkeypatch, allow):
+    from ash import setup_models
+    from ash.core import STATUS_DOWNLOADING
+    from ash.gui.app import _ensure_models
+
+    monkeypatch.setattr(setup_models, "missing_downloads", lambda keyword: ["the wake-word model"])
+    monkeypatch.setattr(setup_models, "wake_word_model_missing", lambda keyword: True)
+    downloads = []
+    monkeypatch.setattr(setup_models, "download_wake_word_model", downloads.append)
+    bridge = CoreBridge()
+    asked = []
+    bridge.ask.connect(lambda text, answer: (asked.append(text), answer.set_result(allow)))
+    core, problems = _StatusCore(), []
+
+    assert _ensure_models(bridge, core, Config(), log, problems.append) is allow
+
+    assert "Download now?" in asked[0]
+    if allow:
+        assert downloads == ["hey_jarvis"] and core.statuses == [STATUS_DOWNLOADING] and problems == []
+    else:
+        assert downloads == [] and "Typing works now" in problems[0]

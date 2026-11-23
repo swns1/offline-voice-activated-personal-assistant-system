@@ -43,7 +43,7 @@ def test_first_run_downloads_once_and_logs_it():
 
     assert FakeWhisper.calls == [{"local_files_only": True}, {"local_files_only": False}]
     [entry] = network_log.entries()
-    assert entry["service"] == "Hugging Face"
+    assert entry["domain"] == "huggingface.co"
     assert "nothing about you" in entry["sends"]
 
 

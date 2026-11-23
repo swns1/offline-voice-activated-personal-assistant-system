@@ -17,6 +17,7 @@ from ash.core import (
     QUESTION_CLOSED,
     SAID,
     STATUS,
+    STATUS_DOWNLOADING,
     STATUS_LISTENING,
     STATUS_LOADING,
     STATUS_MIC_OFF,
@@ -42,6 +43,7 @@ def status_text(state: str, wake_phrase: str) -> str:
         STATUS_TRANSCRIBING: "Working it out…",
         STATUS_MIC_OFF: "Microphone off. Typing still works.",
         STATUS_NO_MIC: "Voice isn't available. Typing still works.",
+        STATUS_DOWNLOADING: "Downloading the speech models (once). Typing already works.",
     }.get(state, state)
 
 

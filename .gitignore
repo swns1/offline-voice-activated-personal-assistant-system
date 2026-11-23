@@ -7,3 +7,5 @@ models/
 .env
 debug.log
 *.egg-info/
+build/
+dist/

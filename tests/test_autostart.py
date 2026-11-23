@@ -109,3 +109,9 @@ def test_sync_autostart_true_then_is_enabled_round_trips(monkeypatch):
     autostart.sync_autostart(True)
 
     assert autostart.is_autostart_enabled() is True
+
+
+def test_command_for_the_packaged_app(monkeypatch):
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", r"C:\Users\me\Ash\Ash.exe")
+    assert autostart._command() == r'"C:\Users\me\Ash\Ash.exe" --minimized'

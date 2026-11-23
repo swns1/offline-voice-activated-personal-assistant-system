@@ -12,6 +12,8 @@ _VALUE_NAME = "Ash"
 
 
 def _command() -> str:
+    if getattr(sys, "frozen", False):  # the packaged Ash.exe (PyInstaller)
+        return f'"{sys.executable}" --minimized'
     pythonw = Path(sys.executable).with_name("pythonw.exe")
     # --minimized: at login, start in the tray rather than opening the window.
     return f'"{pythonw}" -m ash --minimized'

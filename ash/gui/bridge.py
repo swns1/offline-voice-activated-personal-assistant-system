@@ -22,6 +22,9 @@ class CoreBridge(QObject):
     core_ready = Signal(object)     # the AssistantCore, once it's running
     voice_ready = Signal(object)    # the VoiceLoop, once the speech models are loaded
     voice_failed = Signal(str)      # why voice couldn't start (typing still works)
+    # A yes/no question from a background thread: (text, Future). The
+    # window shows it and sets the Future's result to True/False.
+    ask = Signal(str, object)
     _done = Signal(object, object)  # (callback, Future), see run()
 
     def __init__(self):

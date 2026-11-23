@@ -59,6 +59,7 @@ STATUS_LISTENING = "listening"      # recording what you say
 STATUS_TRANSCRIBING = "transcribing"
 STATUS_MIC_OFF = "mic_off"          # microphone switched off from the window/tray
 STATUS_NO_MIC = "no_mic"            # voice couldn't start; typing still works
+STATUS_DOWNLOADING = "downloading"  # first run: downloading the speech models
 
 FAILED_REPLY = "Sorry, something went wrong with that."
 
