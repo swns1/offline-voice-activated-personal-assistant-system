@@ -27,6 +27,7 @@ from ash.actions.device import (
 )
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.email import handle_email_check, handle_email_send
+from ash.actions.files import handle_find_file, handle_latest_download
 from ash.actions.help import handle_help, handle_thanks
 from ash.actions.media import (
     handle_media_next,
@@ -93,6 +94,7 @@ MUSIC = "Music"
 SYSTEM = "Your PC"
 TIMERS = "Timers, reminders and routines"
 CALENDAR = "Calendar and email"
+FILES = "Files"
 SCREEN = "Your screen"
 MEMORY = "Memory"
 NOTES = "Notes and lists"
@@ -478,6 +480,25 @@ SKILLS: list[Skill] = [
         "Send an email through Outlook (says exactly what and to whom, then asks first).",
         examples=("email Anna saying I'm running late",),
         verbs=("send an email to", "send email to", "write an email to", "send a message to", "email"),
+        classifiable=True,
+    ),
+
+    # --- files ------------------------------------------------------------------------
+    Skill(
+        "find_file", handle_find_file, FILES,
+        "Find a file by name in your folders (Windows Search, offline), and offer to open it.",
+        examples=("find my resume", "where is my tax return"),
+        verbs=("find the file called", "find a file called", "find the file", "find file", "find my",
+               "where is my", "where's my", "wheres my", "search my files for", "look for my", "locate my"),
+        classifiable=True,
+    ),
+    Skill(
+        "latest_download", handle_latest_download, FILES,
+        "Open your latest download (asks first; never opens programs).",
+        examples=("open my latest download",),
+        phrases=("open my latest download", "open the latest download", "open my last download",
+                 "open the last file i downloaded", "open my most recent download",
+                 "what did i download last", "what was my last download"),
         classifiable=True,
     ),
 

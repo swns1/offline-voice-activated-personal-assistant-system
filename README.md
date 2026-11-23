@@ -18,7 +18,8 @@ with offline mode, and leave a record you can read.
 | **Notes and lists** | "add milk and eggs to my shopping list", "what's on my shopping list", "take a note buy flowers for mom" |
 | **Music and video** | "pause", "next track", "what's playing" (any app); Spotify search and play |
 | **Your PC** | volume, brightness, dark mode, battery, storage, screenshot, lock, sleep, shut down (asks first) |
-| **Calendar** | "what's on my calendar", "add to my calendar team meeting at 3pm" (Outlook, on this PC; asks first) |
+| **Calendar and email** | "what's on my calendar", "check my email", "email Anna saying I'm running late" (Outlook; sending asks first) |
+| **Files** | "find my resume", "open my latest download" (Windows Search, offline; never opens programs) |
 | **Online, with consent** | weather (Open-Meteo), "what is the Eiffel Tower" (DuckDuckGo) |
 | **Local AI, optional** | conversation, "what's on my screen", multi-step commands, memory (Ollama on this PC) |
 | **Privacy** | "go offline", "what data do you have", "what have you sent online", "export my data", "delete all my data" |
@@ -265,6 +266,20 @@ desktop Outlook set up:
 
 Nothing about your email is stored, and neither addresses nor message
 text appear in Ash's logs.
+
+## Finding files (offline)
+
+- "find my resume", "where is my tax return", "search my files for
+  invoice": searches file names with the Windows Search index, the same
+  one File Explorer's search box uses, so it's instant and stays on this
+  PC. Only your own user folder is searched, never AppData (program data
+  and caches). Ash says the newest match, where it is and when it
+  changed, then asks "Open it?".
+- "open my latest download": the newest file in your Downloads folder,
+  after asking. **Programs and scripts are never opened by voice**
+  (`.exe`, `.msi`, `.bat`, `.ps1`, shortcuts and the like). Downloads are
+  the usual way malware arrives, so Ash shows them in File Explorer
+  instead and leaves the decision to you.
 
 ## Quick answers (offline)
 

@@ -65,6 +65,9 @@ sensitive thing it stores:
   model.
 - **Calendar and email** are read live from Outlook when you ask, and
   never copied.
+- **File searches.** "find my …" asks Windows' own search index on
+  this PC, within your user folder only (never AppData). What you
+  searched for isn't logged, and results aren't kept.
 - **The chat in the desktop window.** What you type and what Ash
   replies is shown on screen only, and is gone when Ash closes. Typed
   commands follow the same logging rule as spoken ones.

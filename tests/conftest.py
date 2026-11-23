@@ -101,10 +101,13 @@ def _no_real_side_effects(monkeypatch, tmp_path):
         raise RuntimeError("Tests must not change real Windows settings")
 
     monkeypatch.setattr(device, "_pictures_dir", lambda: state_dir / "Pictures")
+    from ash.actions import files
+    monkeypatch.setattr(files, "_downloads_dir", lambda: state_dir / "Downloads")
     monkeypatch.setattr(device, "_set_theme", _blocked_setting)
     monkeypatch.setattr(device, "set_brightness", _blocked_setting)
 
-    # Nor reach your real Outlook (calendar, inbox, address book, sending).
+    # Nor reach your real Outlook (calendar, inbox, address book, sending),
+    # or search your real files.
     import win32com.client
 
     real_dispatch = win32com.client.Dispatch
@@ -112,6 +115,8 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     def _no_outlook(prog_id, *args, **kwargs):
         if str(prog_id).lower().startswith("outlook."):
             raise RuntimeError("Tests must not use the real Outlook")
+        if str(prog_id).lower().startswith("adodb."):
+            raise RuntimeError("Tests must not query the real Windows Search index")
         return real_dispatch(prog_id, *args, **kwargs)
 
     monkeypatch.setattr(win32com.client, "Dispatch", _no_outlook)
