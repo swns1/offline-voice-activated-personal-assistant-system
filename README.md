@@ -1,19 +1,58 @@
 # Ash
 
-A local, fully-offline, wake-word-activated voice assistant for Windows.
+[![tests](https://github.com/swns1/offline-voice-activated-personal-assistant-system/actions/workflows/tests.yml/badge.svg)](https://github.com/swns1/offline-voice-activated-personal-assistant-system/actions/workflows/tests.yml)
 
-Say the wake word, speak a command, and Ash opens an app/game, answers
-a question, controls Spotify, checks/adds to your calendar, adjusts the
-volume, sets timers/reminders and routines, locks/sleeps/shuts down the
-PC, or — for anything else — asks a local AI model. Transcription,
-wake-word detection, and text-to-speech all run locally; nothing is
-sent to a cloud API. The only network calls Ash ever makes are to
-DuckDuckGo's free Instant Answer API (for "what is X"-style questions —
-no account/key, can be turned off), Spotify's API (only if you use
-Spotify commands), and your own local Ollama server on this PC (only
-if it's installed — see "Local AI" below) — never anything else, and
-never your files. Calendar access (if
-enabled) talks to your local desktop Outlook install, not the network.
+**An offline, privacy-first voice assistant for Windows.** Say "hey
+Jarvis", then a command. The wake word, speech recognition, command
+handling and voice all run on your PC, with no cloud speech service.
+The few features that need the internet ask first, can be switched off
+with offline mode, and leave a record you can read.
+
+![Ash's chat window](docs/images/chat.png)
+
+| | What you can say or type |
+|---|---|
+| **Apps and windows** | "open Spotify", "launch Elden Ring", "close Discord" (asks first), "minimize this window" |
+| **Quick answers, offline** | "what time is it", "what day is Christmas", "what's 15% of 80", "convert 5 miles to kilometers" |
+| **Timers and reminders** | "set a timer for 10 minutes", "remind me at 3pm to call mom", routines |
+| **Notes and lists** | "add milk and eggs to my shopping list", "what's on my shopping list", "take a note buy flowers for mom" |
+| **Music and video** | "pause", "next track", "what's playing" (any app); Spotify search and play |
+| **Your PC** | volume, brightness, dark mode, battery, storage, screenshot, lock, sleep, shut down (asks first) |
+| **Calendar** | "what's on my calendar", "add to my calendar team meeting at 3pm" (Outlook, on this PC; asks first) |
+| **Online, with consent** | weather (Open-Meteo), "what is the Eiffel Tower" (DuckDuckGo) |
+| **Local AI, optional** | conversation, "what's on my screen", multi-step commands, memory (Ollama on this PC) |
+| **Privacy** | "go offline", "what data do you have", "what have you sent online", "export my data", "delete all my data" |
+
+Ash also has a desktop window for typing instead of talking. It has a
+privacy dashboard, settings, and a list of every command (see
+[Running](#running)).
+
+**How it's built:** pretrained deep-learning models run on the PC:
+openWakeWord for the wake word, and Whisper (through CTranslate2) for
+speech recognition. A rule-based command grammar is generated from one
+catalog of skills, and every command runs on a single worker thread
+shared by voice and the window. A privacy layer adds DPAPI encryption,
+a single audited network gate, consent, and a data inventory. There are
+about 1,000 tests, run on Windows CI. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+### Measured
+
+From the end of a spoken command to the first word of the reply, Ash
+takes about **2.8 seconds** on a 6-core desktop CPU (Ryzen 5 5600, no
+GPU). Measured with `scripts/benchmark.py`: 30 runs of 10 offline
+commands, spoken by a Windows voice.
+
+| Stage | Median |
+|---|---|
+| Waiting for 900 ms of silence (`audio.silence_ms`) | 900 ms |
+| Speech to text (Whisper small, int8, CPU) | 1.8 s |
+| Understanding and running the command | 0.1 ms |
+| Start of the spoken reply (Windows voice) | 45 ms |
+
+Speech recognition is most of the wait. `scripts/stt_accuracy.py`
+measures the trade-off between model size, speed and accuracy on a real
+user's voice.
 
 ## Privacy
 
@@ -78,15 +117,33 @@ the threat model, and how to verify it yourself — is in
 
 ## Setup
 
+**The packaged app:** download `Ash-<version>-windows.zip` from the
+[releases page](https://github.com/swns1/offline-voice-activated-personal-assistant-system/releases),
+unzip it anywhere you can write to (e.g. your Documents folder), and run
+`Ash\Ash.exe`. On first start Ash asks before downloading its speech
+models: the wake-word model from the openWakeWord project, and the
+speech-recognition model from Hugging Face (about 475 MB together, once).
+To check everything works: `Ash.exe --selftest > selftest.txt`.
+
+**From source** (Python 3.11+; developed on 3.13):
+
 ```
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\pip install -e .
 .venv\Scripts\python.exe scripts\download_wake_word_models.py
 ```
 
-The last step is a one-time download of openWakeWord's pretrained model
-files (wake-word + feature-extraction models). Ash checks for these at
-startup and will tell you to run this if they're missing.
+The last step downloads openWakeWord's pretrained model files once (the
+window offers to do this too). The speech-recognition model downloads
+the first time Ash starts. Optional extras, each a separate install:
+[Ollama](https://ollama.com) with `ollama pull llama3.2` for the local AI,
+and [Tesseract](https://github.com/UB-Mannheim/tesseract/wiki) for
+reading on-screen text.
+
+`.venv\Scripts\python.exe -m ash --selftest` checks every engine loads
+(wake word, speech recognition, voice, encryption, window) without
+speaking, listening or downloading anything.
 
 ## Running
 
@@ -535,4 +592,39 @@ utterance starts with wins ("search in browser for X" beats "search X").
 
 ```
 .venv\Scripts\python.exe -m pytest
+.venv\Scripts\ruff.exe check ash tests scripts
 ```
+
+GitHub Actions runs both on Windows for every push. The tests never
+touch the real PC: `tests/conftest.py` blocks launching programs, real
+network requests, registry writes, changing Windows settings and your
+real data. The window is tested headless (Qt's offscreen platform).
+
+## Measuring
+
+- `scripts\benchmark.py`: the time from the end of a spoken command to
+  the first word of Ash's reply, broken down by stage. It uses a muted
+  Windows voice as the speaker, so it needs no microphone.
+- `scripts\stt_accuracy.py`: how well speech recognition understands
+  *your* voice. Record about 50 of Ash's commands (`record --out
+  FOLDER`, about 10 minutes), then `evaluate --clips FOLDER` reports word
+  error rate, command accuracy and speed for each Whisper model size.
+  The recordings stay in the folder you chose.
+
+## Building the release
+
+```
+.venv\Scripts\pip install pyinstaller
+.venv\Scripts\python.exe scripts\build_release.py
+```
+
+This builds `dist\Ash\Ash.exe` and `dist\Ash-<version>-windows.zip`.
+Pushing a version tag (`git tag v1.0.0`, then `git push origin v1.0.0`)
+builds the zip on GitHub Actions and attaches it to a release.
+
+## Licence
+
+MIT (see [LICENSE](LICENSE)). The openWakeWord pretrained models Ash
+downloads are licensed separately by their authors, under CC BY-NC-SA
+4.0 (non-commercial), which is why they aren't included in Ash's
+download.
