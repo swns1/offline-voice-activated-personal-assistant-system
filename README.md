@@ -207,6 +207,12 @@ my data".
 ## System control
 
 - Volume: "volume up" / "volume down" / "set the volume to 50" / "mute" / "unmute"
+- Battery and storage: "what's my battery", "how much storage do I have"
+- Screenshots: "take a screenshot" (saved to Pictures\Screenshots)
+- Brightness: "set the brightness to 60", "brightness up", "dim the
+  screen" — built-in laptop screens only; most desktop monitors can't be
+  dimmed by software, and Ash says so
+- Theme: "turn on dark mode", "switch to light mode"
 - Windows: "close discord" force-quits the app — so it first says what
   will be closed and that anything unsaved in it will be lost, and asks
   "are you sure?" (if the name matches several different programs, it

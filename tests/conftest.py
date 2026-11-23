@@ -94,6 +94,16 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(logging_setup, "LOG_DIR", state_dir / "logs")
     monkeypatch.setattr(privacy_rights, "_documents_dir", lambda: state_dir / "Documents")
 
+    # Nor change real PC settings or save into your real folders.
+    from ash.actions import device
+
+    def _blocked_setting(*args, **kwargs):
+        raise RuntimeError("Tests must not change real Windows settings")
+
+    monkeypatch.setattr(device, "_pictures_dir", lambda: state_dir / "Pictures")
+    monkeypatch.setattr(device, "_set_theme", _blocked_setting)
+    monkeypatch.setattr(device, "set_brightness", _blocked_setting)
+
 
 @pytest.fixture(autouse=True)
 def _reset_recent_context():

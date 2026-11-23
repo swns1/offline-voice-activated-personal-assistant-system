@@ -15,6 +15,16 @@ from ash.actions.calculator import handle_calculate, handle_how_many
 from ash.actions.calendar import handle_calendar_add, handle_calendar_list
 from ash.actions.clock import handle_date_today, handle_day_of, handle_days_until, handle_time_now
 from ash.actions.desktop_control import handle_screen_click, handle_screen_type
+from ash.actions.device import (
+    handle_battery,
+    handle_brightness_down,
+    handle_brightness_set,
+    handle_brightness_up,
+    handle_dark_mode,
+    handle_light_mode,
+    handle_screenshot,
+    handle_storage,
+)
 from ash.actions.diagnostics import handle_diagnostics
 from ash.actions.help import handle_help, handle_thanks
 from ash.actions.media import (
@@ -320,6 +330,61 @@ SKILLS: list[Skill] = [
         "unmute", handle_unmute, SYSTEM, "Unmute the sound.",
         examples=("unmute",),
         phrases=("unmute", "unmute the volume"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "battery", handle_battery, SYSTEM, "Say how much battery is left.",
+        examples=("what's my battery",),
+        phrases=("what's my battery", "whats my battery", "battery", "battery level", "what's my battery level",
+                 "how much battery do i have", "how much battery is left", "is my laptop charging", "is it charging"),
+        classifiable=True,
+    ),
+    Skill(
+        "storage", handle_storage, SYSTEM, "Say how much disk space is free.",
+        examples=("how much storage do I have",),
+        phrases=("how much storage do i have", "how much space do i have", "how much disk space do i have",
+                 "how much storage is left", "how much space is left", "disk space", "storage",
+                 "how full is my drive", "check my storage"),
+        classifiable=True,
+    ),
+    Skill(
+        "screenshot", handle_screenshot, SYSTEM, "Take a screenshot (saved to Pictures, Screenshots).",
+        examples=("take a screenshot",),
+        phrases=("take a screenshot", "take a screen shot", "screenshot", "capture my screen", "capture the screen",
+                 "grab a screenshot"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "brightness_set", handle_brightness_set, SYSTEM, "Set the screen brightness (built-in screens).",
+        examples=("set the brightness to 60",),
+        verbs=("set the brightness to", "set brightness to", "brightness to", "change the brightness to"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "brightness_up", handle_brightness_up, SYSTEM, "Make the screen brighter.",
+        examples=("brightness up",),
+        phrases=("brightness up", "turn up the brightness", "turn the brightness up", "make the screen brighter",
+                 "brighter"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "brightness_down", handle_brightness_down, SYSTEM, "Make the screen dimmer.",
+        examples=("brightness down",),
+        phrases=("brightness down", "turn down the brightness", "turn the brightness down", "make the screen dimmer",
+                 "dimmer", "dim the screen"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "dark_mode", handle_dark_mode, SYSTEM, "Switch Windows to dark mode.",
+        examples=("turn on dark mode",),
+        phrases=("turn on dark mode", "dark mode", "switch to dark mode", "enable dark mode", "turn off light mode"),
+        chainable=True, classifiable=True,
+    ),
+    Skill(
+        "light_mode", handle_light_mode, SYSTEM, "Switch Windows to light mode.",
+        examples=("switch to light mode",),
+        phrases=("turn on light mode", "light mode", "switch to light mode", "enable light mode", "turn off dark mode",
+                 "disable dark mode"),
         chainable=True, classifiable=True,
     ),
     Skill(
