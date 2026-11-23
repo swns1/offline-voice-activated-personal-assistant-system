@@ -28,7 +28,8 @@ def test_corpus_wer_weights_by_words_not_by_clip():
 def test_a_transcript_can_be_wrong_and_still_run_the_right_command():
     assert same_command("open spotify please", "Open Spotify.")       # WER 1/3, same command
     assert same_command("set a timer for ten minutes", "Set a timer for 10 minutes.")
-    assert not same_command("set a timer for ten minutes", "set the timer for 10 minutes")
+    assert same_command("set a timer for ten minutes", "set the timer for 10 minutes")
+    assert not same_command("set a timer for ten minutes", "set a time for 10 minutes")
     assert same_command("what's the weather tomorrow", "What's the weather tomorrow?")
     assert not same_command("open spotify", "open spot a fly")
     assert not same_command("pause", "post")

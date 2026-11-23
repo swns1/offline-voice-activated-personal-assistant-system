@@ -32,7 +32,7 @@ flowchart LR
 | Speech to text | `ash/audio/stt.py` | faster-whisper (Whisper `small`, int8 on CPU). Loaded with `local_files_only` so it never contacts Hugging Face after the one-time download. |
 | Understanding | `ash/nlu/grammar.py`, `ash/skills/` | Rule-based first (fast and predictable); the optional local AI only handles what the rules don't match |
 | Doing | `ash/actions/` | One module per area: apps, timers, notes, weather, media, privacy, ... |
-| Voice | `ash/audio/tts.py` | Windows SAPI on its own thread (COM isn't safe to call from arbitrary threads) |
+| Voice | `ash/audio/tts.py` | One speech thread (SAPI is COM, which isn't safe to call from arbitrary threads). The Windows voice, or optionally a Piper neural voice that runs on this PC. Piper plays a sentence while it generates the next, and falls back to Windows if it's unavailable. |
 
 Ash only runs pretrained models (it doesn't train any). The
 accuracy of the speech model on a real user's voice is measured with
@@ -91,8 +91,24 @@ Every command is declared once, in `ash/skills/catalog.py`, as a
 - a description and example commands
 
 The grammar, the dispatcher, the confirmation gates, the "what can you
-do" answer and the window's "What can I say" tab are all generated from
-that list. Adding a command is one declaration and one handler.
+do" answer, the window's "What can I say" tab and the local AI's tools
+are all generated from that list. Adding a command is one declaration
+and one handler.
+
+### The local AI as a fallback, through tool calling
+
+The rule-based grammar always goes first. Only when it doesn't
+understand (or the sentence has several steps, "... then ...") does Ash
+ask the local model. It offers Ash's commands as tools, using Ollama's
+native tool calling (`ash/nlu/tools.py`). Before anything runs, the
+model's choice is validated:
+
+- it must be a command that was offered, with a text argument
+- one invalid call cancels the whole plan
+- risky commands are never offered as steps of a chain
+- confirmations still apply
+
+The model never gets to run anything Ash's own grammar couldn't.
 
 ## Privacy layer
 

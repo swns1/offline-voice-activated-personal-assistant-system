@@ -2,6 +2,26 @@
 
 ## Unreleased (planned as 1.0.0)
 
+### Integrations and AI
+
+- **Email through Outlook:** "check my email" says the unread count and
+  who the latest emails are from, never the messages themselves. "Email
+  Anna saying I'm running late" says exactly who, which address and
+  what, then asks before sending. Off by default.
+- **Finding files** with the Windows Search index, offline: "find my
+  resume". "Open my latest download" asks first, and never opens
+  programs or scripts.
+- **Translation** by the local AI, with a pronunciation for languages in
+  other scripts.
+- **An optional natural voice** (Piper, running on this PC), with the
+  Windows voice as the fallback. It's not bundled, because Piper is
+  GPL-licensed.
+- **The local AI calls Ash's commands as tools** (Ollama's native tool
+  calling), generated from the command list. This is used for loose
+  phrasing and multi-step requests. Every call is validated, and
+  confirmations still apply.
+- "set the timer for …" now works as well as "set a timer for …".
+
 ### Desktop app
 
 - **A desktop window** (PySide6) with four tabs:

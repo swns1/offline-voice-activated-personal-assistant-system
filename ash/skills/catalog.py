@@ -425,8 +425,9 @@ SKILLS: list[Skill] = [
     Skill(
         "timer_set", handle_timer_set, TIMERS, "Set a timer.",
         examples=("set a timer for 10 minutes",),
-        verbs=("set a timer for", "set timer for", "start a timer for", "timer for",
-               "set an alarm for", "set alarm for", "start an alarm for"),
+        verbs=("set a timer for", "set the timer for", "set timer for", "start a timer for",
+               "start the timer for", "timer for", "set an alarm for", "set the alarm for", "set alarm for",
+               "start an alarm for"),
         chainable=True, classifiable=True,
     ),
     Skill(
