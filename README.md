@@ -94,10 +94,39 @@ startup and will tell you to run this if they're missing.
 .venv\Scripts\python.exe -m ash
 ```
 
-A tray icon appears (right-click for "Open logs folder" / "Quit Ash") —
-this is the normal way to stop Ash instead of Ctrl+C once it's not
-running in a visible console (see "Run at login" below). Set
-`tray.enabled: false` in `config/config.yaml` to turn it off.
+This opens Ash's window, with a tray icon (blue: waiting for the wake
+word, green: listening, grey: microphone off). Closing the window hides
+it to the tray and Ash keeps listening; quit from the tray icon's menu.
+The window has four tabs:
+
+- **Chat**: type to Ash instead of speaking. Everything said either way
+  appears here. Yes/no questions ("Are you sure?") get Yes/No buttons,
+  and you can answer by voice, typing or clicking, whichever is easiest.
+  Untick "Speak replies" to read the replies instead of hearing them;
+  "Microphone on" switches the microphone off completely (Windows'
+  microphone-in-use indicator goes away). The conversation is never
+  saved.
+- **What can I say**: every command, with examples, generated from the
+  command list itself. Double-click an example to try it.
+- **Settings**: the everyday options from `config/config.yaml`, saved
+  back into it with its comments kept, and your city for the weather.
+- **Privacy**: offline mode; an on/off switch for each online feature,
+  saying what it sends and to whom; what Ash stores, whether it's
+  encrypted and how long it's kept; the network log; and export, delete
+  my voiceprint, delete all my data (which ask first, as they do by
+  voice).
+
+To run voice-only in the terminal, as before the window existed:
+`.venv\Scripts\python.exe -m ash --console` (or set `gui.enabled: false`).
+A pystray tray icon then appears (right-click for "Open logs folder" /
+"Quit Ash"); set `tray.enabled: false` to turn that off.
+
+How it fits together: every command, from the microphone, the chat box
+or a button, runs on one worker thread (`ash/core.py`), in the order it
+arrived, so voice and typing at the same time can't trip over each other
+or over Ash's data files. A follow-up question stays open there rather
+than in whichever input asked it, which is why it can be answered from
+any of them.
 
 Speak the configured wake word (`hey_jarvis` by default — see
 `config/config.yaml`), then a command such as "open notepad" or "what

@@ -63,8 +63,16 @@ winrt-Windows.Foundation.Collections==3.2.1
 winrt-Windows.Storage.Streams==3.2.1
 winrt-Windows.Media.Control==3.2.1
 
-# Phase 10: tray icon
+# Phase 10: tray icon (voice-only mode; the window has its own)
 pystray
+
+# The desktop window (chat, settings, privacy dashboard). Optional: without
+# it Ash runs voice-only. Essentials is the core Qt widgets, without the
+# much larger add-ons (web engine, 3D, multimedia) Ash doesn't use.
+PySide6-Essentials
+
+# Saving the window's settings back into config.yaml without losing its comments
+ruamel.yaml
 
 # Mute keyboard hotkey
 keyboard

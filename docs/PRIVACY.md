@@ -65,6 +65,9 @@ sensitive thing it stores:
   model.
 - **Calendar and email** are read live from Outlook when you ask, and
   never copied.
+- **The chat in the desktop window.** What you type and what Ash
+  replies is shown on screen only, and is gone when Ash closes. Typed
+  commands follow the same logging rule as spoken ones.
 
 ## 2. What leaves this PC
 
@@ -125,9 +128,9 @@ and it's logged and blocked by offline mode.
 | Sec. 11(e) | Keep data only as long as necessary | Logs: 7 days by default. Network log: 30 days. Timers: until they go off. Everything else: until you delete it. |
 | Sec. 3(b), Sec. 12(a) | Consent: freely given, specific, informed | Asked per feature once, when Ash first starts (or the first start after you set a feature up), saying what is sent, to whom, and why. If you don't answer, nothing is sent and Ash asks again later. Remembered with a timestamp. A "no" is respected and not asked again. You can withdraw any time. |
 | Sec. 16(a), (b) | Right to be informed, including purposes, recipients and how long data is kept | "what data do you have". The inventory's purpose and retention for each item. This document. |
-| Sec. 16(c) | Right to reasonable access | "what data do you have"; "export my data". |
+| Sec. 16(c) | Right to reasonable access | "what data do you have"; "export my data". The window's Privacy tab shows the same inventory (whether each item is stored right now, its size, and whether it's encrypted) and the full network log. |
 | Sec. 16(d) | Right to correct errors | "forget that …", then remember the corrected fact. |
-| Sec. 16(e) | Right to suspend, withdraw, block, remove or destroy | "stop allowing …"; offline mode; "delete my voiceprint"; "delete all my data". |
+| Sec. 16(e) | Right to suspend, withdraw, block, remove or destroy | "stop allowing …"; offline mode; "delete my voiceprint"; "delete all my data". In the window: one click per feature (withdrawing asks nothing; allowing shows the same explanation as the spoken question), an offline switch, and delete buttons that ask first. |
 | Sec. 16(f) | Right to damages | A legal remedy, not a software feature. Not applicable. |
 | Sec. 18 | Right to a copy in a structured, commonly used electronic format | "export my data" writes JSON to your Documents folder. It warns first that the copy isn't encrypted. Secrets and the voiceprint are listed but not copied. |
 | Sec. 20(a) | Reasonable organizational, physical and technical security measures | DPAPI encryption at rest. Atomic writes. One audited path out of the PC, enforced by a test. Confirmation (and optional voice match) before risky actions, export and deletion. |
@@ -159,6 +162,11 @@ and it's logged and blocked by offline mode.
 - **People nearby hearing Ash's spoken replies.**
 - **The export file.** It's unencrypted on purpose, so you can read it,
   and Ash tells you so.
+- **Typed or clicked answers bypass the voiceprint check.** In the
+  desktop window you can answer "Are you sure?" with a click. The voice
+  check exists to stop another voice in the room from confirming; the
+  keyboard and mouse are already behind your Windows sign-in, the same
+  boundary DPAPI relies on.
 - **The voiceprint check as a security boundary.** It's a classical
   MFCC-similarity check, a soft extra check rather than strong
   biometrics (see the README).

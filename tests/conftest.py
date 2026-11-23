@@ -104,6 +104,17 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(device, "_set_theme", _blocked_setting)
     monkeypatch.setattr(device, "set_brightness", _blocked_setting)
 
+    # Nor write to the real Windows registry (e.g. the "start at sign-in"
+    # entry, which the Settings tab's save applies). Reading is fine.
+    # tests/test_autostart.py swaps in its own fake functions.
+    import winreg
+
+    def _blocked_registry_write(*args, **kwargs):
+        raise RuntimeError("Tests must not write to the real Windows registry")
+
+    for name in ("CreateKey", "CreateKeyEx", "SetValue", "SetValueEx", "DeleteKey", "DeleteKeyEx", "DeleteValue"):
+        monkeypatch.setattr(winreg, name, _blocked_registry_write)
+
 
 @pytest.fixture(autouse=True)
 def _reset_recent_context():

@@ -9,6 +9,7 @@ The window adds a second input (typing, buttons) to the same core.
 """
 import argparse
 import logging
+from typing import Callable
 
 from ash.actions.proactive import start as start_proactive_nudges
 from ash.actions.timers import rehydrate as rehydrate_timers
@@ -71,9 +72,12 @@ def main(argv: list[str] | None = None) -> None:
         run_console(config, log)
 
 
-def start_assistant(config: Config, log: logging.Logger) -> AssistantCore:
+def start_assistant(config: Config, log: logging.Logger,
+                    on_event: Callable[[Event], None] | None = None) -> AssistantCore:
     """Everything except the microphone: voice output, the app list,
-    the command worker, timers, reminders and the mute hotkey."""
+    the command worker, timers, reminders and the mute hotkey.
+    `on_event` is subscribed before anything can speak (a timer that
+    went off while Ash was closed announces itself right away)."""
     tts = TtsWorker()
     tts.start()
 
@@ -89,6 +93,8 @@ def start_assistant(config: Config, log: logging.Logger) -> AssistantCore:
     _report_local_ai(config, log)
 
     core = AssistantCore(registry, tts, log, config)
+    if on_event is not None:
+        core.subscribe(on_event)
     core.start()
 
     if config.hotkey.toggle_mute:
@@ -99,8 +105,7 @@ def start_assistant(config: Config, log: logging.Logger) -> AssistantCore:
 
 
 def run_console(config: Config, log: logging.Logger) -> None:
-    core = start_assistant(config, log)
-    core.subscribe(_print_event)
+    core = start_assistant(config, log, on_event=_print_event)
 
     print("Loading speech-to-text model...")
     try:

@@ -1,6 +1,9 @@
-"""Pydantic config models + loader for config.yaml."""
+"""Pydantic config models + loader for config.yaml, and save_settings()
+for the desktop window's Settings tab."""
+import io
+import os
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -201,3 +204,52 @@ def load_config(path: Path = CONFIG_PATH) -> Config:
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
     return Config.model_validate(data)
+
+
+def save_settings(updates: dict[str, Any], path: Path = CONFIG_PATH) -> Config:
+    """Write changed settings into config.yaml -- keys are dotted paths
+    ("weather.units", "autostart") -- keeping every comment and every
+    setting you didn't change exactly as it was. The result is checked
+    (pydantic) before anything is written, so a bad value raises
+    pydantic.ValidationError and leaves the file untouched. Returns the
+    new Config."""
+    from ruamel.yaml import YAML
+    from ruamel.yaml.comments import CommentedMap
+
+    rt = YAML()  # round-trip mode: keeps comments, order and quoting
+    rt.preserve_quotes = True
+    rt.width = 4096  # never re-wrap long values
+    rt.indent(mapping=2, sequence=4, offset=2)
+    # Write None as "null" (ruamel's default is an empty value), as the file has it.
+    rt.representer.add_representer(
+        type(None), lambda representer, _: representer.represent_scalar("tag:yaml.org,2002:null", "null"))
+    data = rt.load(path.read_text(encoding="utf-8")) if path.exists() else None
+    if data is None:
+        data = CommentedMap()
+
+    for dotted, value in updates.items():
+        *sections, key = dotted.split(".")
+        node = data
+        for section in sections:
+            if not isinstance(node.get(section), dict):
+                node[section] = CommentedMap()
+            node = node[section]
+        node[key] = value
+
+    config = Config.model_validate(_plain(data))
+
+    buffer = io.StringIO()
+    rt.dump(data, buffer)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(buffer.getvalue(), encoding="utf-8")
+    os.replace(tmp, path)
+    return config
+
+
+def _plain(node):
+    if isinstance(node, dict):
+        return {key: _plain(value) for key, value in node.items()}
+    if isinstance(node, list):
+        return [_plain(value) for value in node]
+    return node
