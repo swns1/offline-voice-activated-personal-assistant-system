@@ -28,7 +28,7 @@ import logging
 from typing import Callable
 
 from ash.actions.confirmation import is_affirmative
-from ash.actions.results import HandlerResult
+from ash.actions.results import YES_NO, HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.privacy import consent
@@ -89,7 +89,7 @@ def _ask(pending: list[OnlineFeature], index: int, tts: TtsWorker, log: logging.
 
     return HandlerResult(
         done=False, question=consent_question(feature), resume=resume,
-        timeout_reply="I'll ask again later. Nothing is sent until you say yes.",
+        timeout_reply="I'll ask again later. Nothing is sent until you say yes.", choices=YES_NO,
     )
 
 
@@ -129,5 +129,5 @@ def ask_permission_if_needed(
     return HandlerResult(
         done=False,
         question=consent_question(feature) + " I'll remember your answer, and you can change it any time.",
-        resume=resume,
+        resume=resume, choices=YES_NO,
     )

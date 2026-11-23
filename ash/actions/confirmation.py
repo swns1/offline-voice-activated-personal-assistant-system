@@ -28,7 +28,7 @@ import logging
 import re
 from typing import Callable
 
-from ash.actions.results import HandlerResult
+from ash.actions.results import YES_NO, HandlerResult
 from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -80,7 +80,7 @@ def ask_to_confirm(
 
     return HandlerResult(
         done=False, question=question, resume=resume,
-        requires_voice_match=config.security.voice_gate_enabled,
+        requires_voice_match=config.security.voice_gate_enabled, choices=YES_NO,
     )
 
 

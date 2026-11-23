@@ -1,38 +1,47 @@
-"""Ash orchestrator: wake word -> VAD-gated recording -> speech-to-text
--> dispatch, then any follow-up questions (clarifications,
-confirmations) the handler asks.
+"""Ash's entry point: `python -m ash` opens the desktop window (if
+PySide6 is installed and gui.enabled is on); `python -m ash --console`
+runs voice-only in the terminal, as before the window existed.
 
-_run_assistant() is the actual listening loop, split out from main()
-so it can run on a background thread when the tray icon is enabled --
-pystray's Windows backend needs to own the calling thread's message
-loop (see ash/tray/icon.py).
+Both modes share the same pieces, built by start_assistant(): one
+AssistantCore (ash/core.py) that runs every command on a single worker
+thread, and a VoiceLoop (ash/voice.py) feeding it from the microphone.
+The window adds a second input (typing, buttons) to the same core.
 """
+import argparse
 import logging
 
-from ash.actions.dispatcher import dispatch
 from ash.actions.proactive import start as start_proactive_nudges
-from ash.actions.results import HandlerResult
 from ash.actions.timers import rehydrate as rehydrate_timers
-from ash.audio.recorder import ContinuousListener
-from ash.audio.stt import SpeechToText
 from ash.audio.tts import TtsWorker
-from ash.audio.wake_word import WakeWordDetector
 from ash.config import Config, load_config
+from ash.core import HEARD, STATUS, AssistantCore, Event
+from ash.privacy.egress import OfflineModeError
+from ash.privacy.redact import set_log_content
 from ash.registry.auto_build import refresh_registry_auto
 from ash.registry.loader import load_registry
-from ash.security import voice_gate
 from ash.tray.icon import run_with_tray
 from ash.utils.autostart import sync_autostart
 from ash.utils.bootstrap import check_wake_word_models
 from ash.utils.hotkey import register_mute_hotkey
-from ash.privacy.egress import OfflineModeError
-from ash.privacy.permission import startup_questions
-from ash.privacy.redact import said, set_log_content
 from ash.utils.logging_setup import apply_log_retention, setup_logging
 from ash.utils.ollama import MODEL_MISSING, READY, server_status
+from ash.voice import VoiceLoop
+
+OFFLINE_DOWNLOAD_MESSAGE = (
+    "Ash needs to download its speech-recognition model once, but offline mode is on. "
+    "Turn offline mode off to allow this one download (in the window's Privacy tab, or: "
+    r'.venv\Scripts\python.exe -c "from ash.privacy import consent; consent.set_offline_mode(False)")'
+)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog="ash", description="Ash, an offline voice assistant")
+    parser.add_argument("--console", action="store_true",
+                        help="voice only, in this terminal (no desktop window)")
+    parser.add_argument("--minimized", action="store_true",
+                        help="start with the window hidden in the system tray")
+    args = parser.parse_args(argv)
+
     log = setup_logging()
     config = load_config()
     set_log_content(config.privacy.log_transcripts)
@@ -46,13 +55,25 @@ def main() -> None:
     except Exception:
         log.exception("Failed to sync autostart registry setting")
 
+    if config.gui.enabled and not args.console:
+        try:
+            from ash.gui.app import run_gui
+        except ImportError:
+            log.warning("PySide6 isn't installed; running voice-only")
+            print("The desktop window needs PySide6 (pip install -r requirements.txt). Running voice-only.")
+        else:
+            run_gui(config, log, minimized=args.minimized or config.gui.start_minimized)
+            return
+
     if config.tray.enabled:
-        run_with_tray(lambda: _run_assistant(config, log), log)
+        run_with_tray(lambda: run_console(config, log), log)
     else:
-        _run_assistant(config, log)
+        run_console(config, log)
 
 
-def _run_assistant(config: Config, log: logging.Logger) -> None:
+def start_assistant(config: Config, log: logging.Logger) -> AssistantCore:
+    """Everything except the microphone: voice output, the app list,
+    the command worker, timers, reminders and the mute hotkey."""
     tts = TtsWorker()
     tts.start()
 
@@ -63,94 +84,49 @@ def _run_assistant(config: Config, log: logging.Logger) -> None:
         except Exception:
             log.exception("Auto-rescan of registry.auto.yaml failed; using existing file")
 
-    print("Loading speech-to-text model...")
-    try:
-        stt = SpeechToText()
-    except OfflineModeError:
-        message = ("Ash needs to download its speech-recognition model once, but offline mode is on. "
-                   "Turn offline mode off to allow this one download: "
-                   r'.venv\Scripts\python.exe -c "from ash.privacy import consent; consent.set_offline_mode(False)"')
-        print(message)
-        log.error(message)
-        tts.stop()
-        return
     registry = load_registry()
-    log.info("Ash starting (%d app entries, %d intents)",
-              len(registry.apps), len(registry.intents))
+    log.info("Ash starting (%d app entries, %d intents)", len(registry.apps), len(registry.intents))
     _report_local_ai(config, log)
 
-    wake_detector = WakeWordDetector(
-        keyword=config.wake_word.keyword,
-        threshold=config.wake_word.threshold,
-    )
-    listener = ContinuousListener(
-        wake_detector,
-        input_device=config.audio.input_device,
-        silence_ms=config.audio.silence_ms,
-        max_record_seconds=config.audio.max_record_seconds,
-        is_speaking=tts.is_speaking if config.audio.barge_in_enabled else None,
-        on_barge_in=tts.stop_speaking if config.audio.barge_in_enabled else None,
-        is_talking=tts.is_speaking,
-    )
+    core = AssistantCore(registry, tts, log, config)
+    core.start()
 
     if config.hotkey.toggle_mute:
-        register_mute_hotkey(config.hotkey.toggle_mute, tts, log)
+        register_mute_hotkey(config.hotkey.toggle_mute, core.tts, log)
+    rehydrate_timers(core.tts, log)
+    start_proactive_nudges(config, core.tts, log)
+    return core
 
-    rehydrate_timers(tts, log)
-    start_proactive_nudges(config, tts, log)
 
-    def on_state_change(state: str) -> None:
-        print(f"  [{state}]")
+def run_console(config: Config, log: logging.Logger) -> None:
+    core = start_assistant(config, log)
+    core.subscribe(_print_event)
 
-    def follow_up(result: HandlerResult) -> None:
-        """Ask/answer until the result is done: clarifying questions,
-        confirmations, privacy questions, conversation turns."""
-        while not result.done:
-            if result.question:  # None for a conversational continuation --
-                tts.say(result.question)  # the reply just spoken is prompt enough
-            followup_audio = listener.listen_for_followup(
-                timeout_seconds=6.0, on_state_change=on_state_change
-            )
-            if followup_audio is None:
-                tts.say(result.timeout_reply)
-                return
-            answer = stt.transcribe(followup_audio)
-            print(f"  heard (follow-up): {answer!r}")
-            log.info("Follow-up transcript: %s", said(answer))
-            if result.requires_voice_match and not voice_gate.verify(followup_audio, config, log):
-                log.warning("Voice gate blocked a confirmation answer")
-                tts.say("That didn't sound like you, so I'm not doing that.")
-                return
-            result = result.resume(answer)
-
+    print("Loading speech-to-text model...")
     try:
-        # Privacy questions for online features you haven't answered yet
-        # (all of them on first run) -- asked here, once, rather than in
-        # the middle of the first command that needs one.
-        setup = startup_questions(config, tts, log)
-        if not setup.done:  # only open the mic if there's something to ask
-            with listener.open_stream():
-                follow_up(setup)
+        voice = VoiceLoop.load(core, config, log)
+    except OfflineModeError:
+        print(OFFLINE_DOWNLOAD_MESSAGE)
+        log.error(OFFLINE_DOWNLOAD_MESSAGE)
+        core.tts.stop()
+        return
 
-        tts.say("Ash is listening.")
-        print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
-        for utterance in listener.listen(on_state_change=on_state_change):
-            text = stt.transcribe(utterance)
-            print(f"  heard: {text!r}")
-            log.info("Transcript: %s", said(text))
-            try:
-                follow_up(dispatch(text, registry, tts, log, config))
-            except Exception:
-                # One failing command must never take the whole assistant
-                # down: say so, keep the details in the log, keep listening.
-                log.exception("Command failed")
-                tts.say("Sorry, something went wrong with that.")
+    print(f"Listening for wake word {config.wake_word.keyword!r}. Ctrl+C to quit.")
+    try:
+        voice.run()
     except KeyboardInterrupt:
         pass
     finally:
-        wake_detector.delete()
-        tts.stop()
+        core.stop()
+        core.tts.stop()
         log.info("Ash stopped")
+
+
+def _print_event(event: Event) -> None:
+    if event.kind == HEARD:
+        print(f"  heard ({event.source}): {event.text!r}")
+    elif event.kind == STATUS:
+        print(f"  [{event.text}]")
 
 
 def _report_local_ai(config: Config, log: logging.Logger) -> None:

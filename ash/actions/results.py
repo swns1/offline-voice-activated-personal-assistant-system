@@ -10,6 +10,10 @@ type but dispatcher.py imports *them*.
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+# The answers a yes/no question offers as buttons in the desktop window.
+# Spoken answers are still matched loosely (confirmation.is_affirmative).
+YES_NO = ("Yes", "No")
+
 
 @dataclass
 class HandlerResult:
@@ -26,3 +30,7 @@ class HandlerResult:
     # mind." suits a dropped command; a setup question says something
     # that tells you it'll come back ("I'll ask again next time.").
     timeout_reply: str = "Never mind."
+    # Answers the desktop window shows as buttons (e.g. YES_NO). Empty
+    # for open questions ("Which app?"): those are answered by typing or
+    # speaking. Clicking a button is the same as saying its text.
+    choices: tuple[str, ...] = ()

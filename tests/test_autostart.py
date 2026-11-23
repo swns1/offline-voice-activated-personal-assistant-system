@@ -58,7 +58,7 @@ def _install_fake_registry(monkeypatch, key_exists=True) -> FakeRegistry:
 def test_command_uses_pythonw_and_module_flag():
     command = autostart._command()
     assert "pythonw.exe" in command
-    assert command.endswith("-m ash")
+    assert command.endswith("-m ash --minimized")
     assert sys.executable.rsplit("\\", 1)[0] in command  # same directory as the running interpreter
 
 

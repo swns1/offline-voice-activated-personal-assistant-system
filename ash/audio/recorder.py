@@ -19,6 +19,7 @@ barge-in. config.audio.barge_in_enabled is the escape hatch if that
 happens on your setup.
 """
 import queue
+import threading
 import time
 from contextlib import contextmanager
 from typing import Callable
@@ -94,6 +95,11 @@ class ContinuousListener:
         # A follow-up answer's time limit only starts once Ash has
         # finished asking (see _wait_for_speech).
         self._is_talking = is_talking or (lambda: False)
+        # Cleared by set_mic_enabled(False): listen() then closes the
+        # microphone stream entirely (Windows' "microphone in use"
+        # indicator goes away) until it's switched back on.
+        self._mic_on = threading.Event()
+        self._mic_on.set()
 
     def _callback(self, indata, frames, time_info, status):
         self._queue.put(indata[:, 0].copy())
@@ -116,18 +122,37 @@ class ContinuousListener:
             self._queue = queue.Queue()
             self._pending = np.zeros(0, dtype="int16")
 
+    def set_mic_enabled(self, enabled: bool) -> None:
+        """Switch the microphone off (or back on) from another thread.
+        Takes effect within one audio block (80 ms) while waiting for the
+        wake word; a command already being recorded finishes first."""
+        if enabled:
+            self._mic_on.set()
+        else:
+            self._mic_on.clear()
+
+    @property
+    def mic_enabled(self) -> bool:
+        return self._mic_on.is_set()
+
     def listen(self, on_state_change=None):
         wake_frame_len = self._wake.frame_length
 
-        with self.open_stream():
-            while True:
-                self._wait_for_wake(wake_frame_len)
+        while True:
+            if not self._mic_on.is_set():
                 if on_state_change:
-                    on_state_change("listening")
-                utterance = self._record_until_silence()
+                    on_state_change("mic_off")
+                self._mic_on.wait()
                 if on_state_change:
                     on_state_change("idle")
-                yield utterance
+            with self.open_stream():
+                while self._wait_for_wake(wake_frame_len):
+                    if on_state_change:
+                        on_state_change("listening")
+                    utterance = self._record_until_silence()
+                    if on_state_change:
+                        on_state_change("idle")
+                    yield utterance
 
     def listen_for_followup(self, timeout_seconds: float = 6.0, on_state_change=None) -> np.ndarray | None:
         """Records one VAD-gated utterance without waiting for the wake
@@ -143,20 +168,28 @@ class ContinuousListener:
             on_state_change("idle")
         return utterance
 
-    def _wait_for_wake(self, wake_frame_len: int) -> None:
+    def _wait_for_wake(self, wake_frame_len: int) -> bool:
+        """True once the wake word (or a barge-in) is heard; False if the
+        microphone was switched off meanwhile."""
         barge_in_streak = 0
         while True:
-            self._pending = np.concatenate([self._pending, self._queue.get()])
+            if not self._mic_on.is_set():
+                return False
+            try:
+                chunk = self._queue.get(timeout=_TALKING_POLL_SECONDS)
+            except queue.Empty:
+                continue  # re-check the microphone switch
+            self._pending = np.concatenate([self._pending, chunk])
             while len(self._pending) >= wake_frame_len:
                 frame, self._pending = self._pending[:wake_frame_len], self._pending[wake_frame_len:]
                 if self._wake.process(frame):
-                    return
+                    return True
 
                 if self._is_speaking() and self._frame_has_speech(frame):
                     barge_in_streak += 1
                     if barge_in_streak >= _BARGE_IN_FRAMES_NEEDED:
                         self._on_barge_in()
-                        return
+                        return True
                 else:
                     barge_in_streak = 0
 

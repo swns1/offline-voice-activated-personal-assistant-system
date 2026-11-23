@@ -13,7 +13,8 @@ _VALUE_NAME = "Ash"
 
 def _command() -> str:
     pythonw = Path(sys.executable).with_name("pythonw.exe")
-    return f'"{pythonw}" -m ash'
+    # --minimized: at login, start in the tray rather than opening the window.
+    return f'"{pythonw}" -m ash --minimized'
 
 
 def is_autostart_enabled() -> bool:

@@ -22,7 +22,7 @@ import pythoncom
 import win32com.client
 
 from ash.actions.confirmation import is_affirmative
-from ash.actions.results import HandlerResult
+from ash.actions.results import YES_NO, HandlerResult
 from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
@@ -138,4 +138,5 @@ def handle_calendar_add(target: str, registry: Registry, tts: TtsWorker, log: lo
         tts.say(f"Added {subject} at {when}.")
         return HandlerResult()
 
-    return HandlerResult(done=False, question=f"Add '{subject}' to your calendar at {when}?", resume=resume)
+    return HandlerResult(done=False, question=f"Add '{subject}' to your calendar at {when}?", resume=resume,
+                         choices=YES_NO)

@@ -30,7 +30,15 @@ tray:
   # A system tray icon with a Quit option -- lets Ash run with no
   # visible console window, which is the point of `autostart` below
   # (it launches via pythonw.exe). Harmless to leave on from a terminal.
+  # With the desktop window open, the window's own tray icon is used.
   enabled: true
+
+gui:
+  # The desktop window: chat, settings, privacy dashboard, "what can I
+  # say". Set to false (or run `python -m ash --console`) for voice-only.
+  enabled: true
+  # Start hidden in the system tray (autostart at login always does).
+  start_minimized: false
 
 registry:
   # Rescans the Start Menu + Steam library and rewrites

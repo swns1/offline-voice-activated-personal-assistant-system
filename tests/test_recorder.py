@@ -332,3 +332,53 @@ def test_open_stream_drops_unconsumed_audio_when_it_closes(monkeypatch):
 
     assert listener._queue.empty()
     assert len(listener._pending) == 0
+
+
+# --- microphone switch ------------------------------------------------------------------
+
+def test_switching_the_mic_off_stops_waiting_for_the_wake_word():
+    listener = _make_listener()
+    listener.set_mic_enabled(False)
+    assert listener._wait_for_wake(_VAD_FRAME_SAMPLES) is False
+    assert listener.mic_enabled is False
+
+
+def test_mic_off_closes_the_stream_until_switched_back_on(monkeypatch):
+    import threading
+
+    opened = []
+
+    class CountingStream(_NullStream):
+        def __enter__(self):
+            opened.append("open")
+            return self
+
+        def __exit__(self, *args):
+            opened.append("close")
+            return False
+
+    monkeypatch.setattr(recorder_module.sd, "InputStream", lambda **kwargs: CountingStream())
+    speech = _speech_frame()
+    listener = ContinuousListener(_FakeWake(triggers_on_frame=speech.tobytes()), silence_ms=30)
+    listener._vad.is_speech = _content_based_is_speech
+    states = []
+
+    def on_state(state):
+        states.append(state)
+        if state == "mic_off":
+            # While it's off, the stream is closed; then you switch it back
+            # on and say the wake word and a command.
+            assert opened == ["open", "close"]
+            for frame in (speech, speech, _silence_frame()):
+                listener._queue.put(frame)
+            threading.Timer(0.05, listener.set_mic_enabled, args=(True,)).start()
+
+    gen = listener.listen(on_state_change=on_state)
+    # Switched off while it's waiting for the wake word (stream open).
+    threading.Timer(0.05, listener.set_mic_enabled, args=(False,)).start()
+    utterance = next(gen)
+    gen.close()
+
+    assert states[:2] == ["mic_off", "idle"]
+    assert opened[:3] == ["open", "close", "open"]
+    assert len(utterance) == 2 * _VAD_FRAME_SAMPLES

@@ -83,6 +83,15 @@ class TrayConfig(BaseModel):
     enabled: bool = True
 
 
+class GuiConfig(BaseModel):
+    # The desktop window (chat, settings, privacy dashboard, "what can I
+    # say"). Needs PySide6; without it, or with this off, Ash runs
+    # voice-only (as does `python -m ash --console`).
+    enabled: bool = True
+    # Start hidden in the system tray -- what autostart at login does.
+    start_minimized: bool = False
+
+
 class HotkeyConfig(BaseModel):
     # A global keyboard shortcut (works even when Ash isn't the focused
     # window) that toggles mute -- set to null to disable it.
@@ -172,6 +181,7 @@ class Config(BaseModel):
     calendar: CalendarConfig = CalendarConfig()
     ollama: OllamaConfig = OllamaConfig()
     tray: TrayConfig = TrayConfig()
+    gui: GuiConfig = GuiConfig()
     hotkey: HotkeyConfig = HotkeyConfig()
     registry: RegistryConfig = RegistryConfig()
     security: SecurityConfig = SecurityConfig()
