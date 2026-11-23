@@ -28,6 +28,7 @@ from ash.config import Config
 from ash.nlu.grammar import parse
 from ash.privacy import egress
 from ash.registry.schema import Registry
+from ash.utils.ollama import chat
 
 _TIMEOUT_SECONDS = 30.0
 _MAX_MESSAGES = 20  # ~10 exchanges -- keeps the prompt bounded and gives a long chat a natural end
@@ -72,12 +73,5 @@ def _ask_and_continue(messages: list[dict], tts: TtsWorker, log: logging.Logger,
 
 def _ask(messages: list[dict], config: Config) -> str:
     system_prompt = config.ollama.system_prompt + facts_context()
-    payload_messages = [{"role": "system", "content": system_prompt}] + messages
-    response = egress.post(
-        f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key,
-        json={"model": config.ollama.model, "messages": payload_messages, "stream": False},
-        timeout=_TIMEOUT_SECONDS,
-    )
-    response.raise_for_status()
-    content = response.json().get("message", {}).get("content", "").strip()
+    content = (chat(config, messages, system=system_prompt, timeout=_TIMEOUT_SECONDS).get("content") or "").strip()
     return content or "I don't have anything to say to that."

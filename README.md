@@ -416,20 +416,30 @@ end the conversation early.
 
 ### Understanding phrasing that doesn't match a template
 
-Ash's command parsing is a fixed set of phrase templates ("volume up",
-"lock my computer", etc.) — fast and predictable, but it only recognizes
-phrasing close to those templates. With local AI on (see above), anything
-that doesn't match any template gets one extra check before falling
-back to a conversational reply: the local model is asked whether it
-actually means one of Ash's other commands. So "turn it down a bit" or
-"shut this thing down" can still trigger `volume_down`/`shutdown` even
-though neither is phrased like the literal template — while an actual
-question or conversational remark just falls through to Local AI as
-before. Adds a few seconds of latency (a second local model call) only
-for utterances that didn't match a template in the first place; normal
-commands are completely unaffected. Destructive actions still ask for
-confirmation either way — this only decides *which* command was meant,
-not whether it's safe to run.
+Ash's command parsing is a fixed set of phrases ("volume up", "lock my
+computer", and so on): fast and predictable, but it only recognizes
+wording close to those phrases. With local AI on, anything that doesn't
+match gets one more chance before Ash treats it as conversation. Ash
+offers the local model every command it has, as **tools** (Ollama's
+native tool calling), each with its one-line description and an example,
+generated from the same command list as everything else
+(`ash/nlu/tools.py`). So "turn it down a bit" or "shut this thing down"
+can still run volume down or shut down, while a real question falls
+through to conversation as before.
+
+The same mechanism handles **several steps in one sentence**: "open
+Spotify, then set a timer for 10 minutes". Ash offers the commands that
+are safe to chain (never shutting down, locking or deleting), and the
+model calls one per step, in order.
+
+Whatever the model asks for is checked before anything runs. It must be
+a command it was offered, with a text target; if any call in a plan is
+invalid, none of them run. Commands it picks still ask for confirmation
+exactly as when spoken. Normal commands never wait for the model: this
+only runs when the phrase parser didn't understand. The model reads
+about 4,000 tokens of command descriptions per request; Ollama reuses
+them between requests, so only the first one after the model loads is
+slow.
 
 ### Translation
 

@@ -1,4 +1,3 @@
-import json
 import logging
 
 import requests
@@ -29,7 +28,7 @@ class FakeResponse:
             raise RuntimeError("500")
 
     def json(self):
-        return {"message": {"content": self._content}}
+        return {"message": self._content}
 
 
 def test_looks_like_chain_detects_then():
@@ -47,52 +46,41 @@ def test_looks_like_chain_false_for_plain_command():
     assert chain.looks_like_chain("open notepad") is False
 
 
+def _calls(*calls):
+    return {"tool_calls": [{"function": {"name": name, "arguments": args}} for name, args in calls]}
+
+
 def test_resolve_chain_parses_valid_steps(monkeypatch):
-    steps_json = json.dumps([
-        {"intent": "open", "target": "spotify"},
-        {"intent": "spotify_play", "target": "jazz"},
-    ])
-    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
+    sent = []
 
-    steps = chain.resolve_chain("open spotify and then play jazz", Config())
+    def post(url, json, timeout):
+        sent.append(json)
+        return FakeResponse(_calls(("open", {"target": "spotify"}), ("timer_set", {"target": "10 minutes"})))
+    monkeypatch.setattr(requests, "post", post)
 
-    assert steps == [
-        {"intent": "open", "target": "spotify"},
-        {"intent": "spotify_play", "target": "jazz"},
-    ]
+    steps = chain.resolve_chain("open spotify then set a timer for 10 minutes", Config())
 
-
-def test_resolve_chain_rejects_unknown_intent(monkeypatch):
-    steps_json = json.dumps([{"intent": "shutdown", "target": ""}])
-    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(steps_json))
-
-    assert chain.resolve_chain("shut down then open notepad", Config()) is None
+    assert steps == [{"intent": "open", "target": "spotify"}, {"intent": "timer_set", "target": "10 minutes"}]
+    offered = {tool["function"]["name"] for tool in sent[0]["tools"]}
+    assert "timer_set" in offered and "shutdown" not in offered  # risky actions are never chain steps
 
 
-def test_resolve_chain_rejects_malformed_json(monkeypatch):
-    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse("not json {{{"))
-
-    assert chain.resolve_chain("whatever", Config()) is None
-
-
-def test_resolve_chain_rejects_empty_list(monkeypatch):
-    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse("[]"))
-
-    assert chain.resolve_chain("whatever", Config()) is None
+def test_resolve_chain_rejects_a_step_it_wasnt_offered(monkeypatch):
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse(
+        _calls(("open", {"target": "spotify"}), ("shutdown", {}))))
+    assert chain.resolve_chain("open spotify then shut down", Config()) is None
 
 
-def test_resolve_chain_rejects_non_list(monkeypatch):
-    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse('{"intent": "open"}'))
-
-    assert chain.resolve_chain("whatever", Config()) is None
+def test_resolve_chain_with_no_tool_calls(monkeypatch):
+    monkeypatch.setattr(requests, "post", lambda url, json, timeout: FakeResponse({"content": "Sure!"}))
+    assert chain.resolve_chain("do a thing then another", Config()) is None
 
 
 def test_resolve_chain_connection_failure_returns_none(monkeypatch):
     def boom(url, json, timeout):
-        raise RuntimeError("connection refused")
+        raise requests.exceptions.ConnectionError("refused")
     monkeypatch.setattr(requests, "post", boom)
-
-    assert chain.resolve_chain("whatever", Config()) is None
+    assert chain.resolve_chain("open spotify then pause", Config()) is None
 
 
 def test_run_chain_executes_each_step_in_order():
