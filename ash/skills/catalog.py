@@ -75,6 +75,7 @@ from ash.actions.spotify import (
 from ash.actions.stop import handle_stop
 from ash.actions.system_power import handle_lock, handle_shutdown, handle_sleep
 from ash.actions.timers import handle_reminder_set, handle_timer_cancel, handle_timer_list, handle_timer_set
+from ash.actions.translate import handle_translate
 from ash.actions.vision import handle_screen_describe
 from ash.actions.volume import handle_mute, handle_unmute, handle_volume_down, handle_volume_set, handle_volume_up
 from ash.actions.weather import (
@@ -480,6 +481,14 @@ SKILLS: list[Skill] = [
         "Send an email through Outlook (says exactly what and to whom, then asks first).",
         examples=("email Anna saying I'm running late",),
         verbs=("send an email to", "send email to", "write an email to", "send a message to", "email"),
+        classifiable=True,
+    ),
+
+    # --- translation ------------------------------------------------------------------
+    Skill(
+        "translate", handle_translate, SEARCH, "Translate a phrase into another language (local AI, on this PC).",
+        examples=("translate good morning to Japanese", "how do you say thank you in Spanish"),
+        verbs=("translate", "how do you say", "how do i say", "how would you say"),
         classifiable=True,
     ),
 

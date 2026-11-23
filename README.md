@@ -21,7 +21,7 @@ with offline mode, and leave a record you can read.
 | **Calendar and email** | "what's on my calendar", "check my email", "email Anna saying I'm running late" (Outlook; sending asks first) |
 | **Files** | "find my resume", "open my latest download" (Windows Search, offline; never opens programs) |
 | **Online, with consent** | weather (Open-Meteo), "what is the Eiffel Tower" (DuckDuckGo) |
-| **Local AI, optional** | conversation, "what's on my screen", multi-step commands, memory (Ollama on this PC) |
+| **Local AI, optional** | conversation, translation, "what's on my screen", multi-step commands, memory (Ollama on this PC) |
 | **Privacy** | "go offline", "what data do you have", "what have you sent online", "export my data", "delete all my data" |
 
 Ash also has a desktop window for typing instead of talking. It has a
@@ -430,6 +430,19 @@ for utterances that didn't match a template in the first place; normal
 commands are completely unaffected. Destructive actions still ask for
 confirmation either way — this only decides *which* command was meant,
 not whether it's safe to run.
+
+### Translation
+
+"translate good morning to Japanese", "how do you say thank you in
+Spanish". The local AI translates on this PC, so what you translate
+never leaves it. For languages not written in the Latin alphabet, Ash
+adds how to say it ("In Japanese: おはようございます. It's pronounced
+ohayou gozaimasu"), because the Windows voice can't read other scripts
+aloud. The window shows the script itself. If you don't say a language
+Ash knows, it asks which one, so "translate meet me in Paris" doesn't
+end up translated into "Paris". How good the translation is depends on
+the model: llama3.2 is fine for everyday phrases, and a larger model
+does better.
 
 ### Persistent memory
 

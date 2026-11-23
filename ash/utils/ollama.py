@@ -74,3 +74,28 @@ def _probe(host: str, model: str) -> str:
     except Exception:
         return NOT_RUNNING
     return READY if has_model(names, model) else MODEL_MISSING
+
+
+CHAT_TIMEOUT_SECONDS = 60.0  # CPU inference on a long answer can take a while
+
+
+def chat(config: Config, messages: list[dict], *, system: str | None = None, format: str | dict | None = None,
+         tools: list[dict] | None = None, timeout: float = CHAT_TIMEOUT_SECONDS) -> dict:
+    """One /api/chat call to the configured model, through the network
+    gate (a local server never leaves the PC; one on another machine is
+    the "AI server" online feature). Returns the reply message: its
+    "content", and "tool_calls" if `tools` were offered. Raises on
+    failure (egress.NetworkUnreachable if Ollama isn't running)."""
+    payload: dict = {
+        "model": config.ollama.model,
+        "messages": ([{"role": "system", "content": system}] if system else []) + messages,
+        "stream": False,
+    }
+    if format is not None:
+        payload["format"] = format
+    if tools:
+        payload["tools"] = tools
+    response = egress.post(f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key, json=payload,
+                           timeout=timeout)
+    response.raise_for_status()
+    return response.json().get("message", {}) or {}
