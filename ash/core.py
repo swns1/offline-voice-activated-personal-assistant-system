@@ -25,9 +25,10 @@ mode doesn't need PySide6 installed.
 import logging
 import queue
 import threading
+from collections.abc import Callable
 from concurrent.futures import Future
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from ash.actions.dispatcher import dispatch
 from ash.actions.results import HandlerResult
@@ -111,7 +112,7 @@ class AssistantCore:
         self.config = config
         self.tts = ReplyTts(tts, self.publish)
         self._dispatch = dispatch_fn
-        self._jobs: "queue.Queue[Any]" = queue.Queue()
+        self._jobs: queue.Queue[Any] = queue.Queue()
         self._thread = threading.Thread(target=self._run, name="ash-core", daemon=True)
         self._subscribers: list[Callable[[Event], None]] = []
         # Written only by the worker thread; read from anywhere (a plain

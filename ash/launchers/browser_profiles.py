@@ -29,7 +29,7 @@ def list_profiles(browser: str) -> dict[str, str]:
 
     path = Path(os.path.expandvars(template))
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         info_cache = data["profile"]["info_cache"]
         return {

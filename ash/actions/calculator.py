@@ -170,7 +170,10 @@ def _ureg():
 
 _AMOUNT = r"(?P<amount>-?\d+(?:\.\d+)?|an?|one)"
 _CONVERT_RE = re.compile(rf"^(?:convert\s+)?{_AMOUNT}\s+(?P<source>.+?)\s+(?:to|in|into)\s+(?P<dest>[a-z][a-z /]*)$")
-_HOW_MANY_RE = re.compile(rf"^(?:how many\s+)?(?P<dest>[a-z][a-z /]*?)\s+(?:are\s+|is\s+)?(?:there\s+)?in\s+{_AMOUNT}\s+(?P<source>[a-z][a-z /]*)$")
+_HOW_MANY_RE = re.compile(
+    rf"^(?:how many\s+)?(?P<dest>[a-z][a-z /]*?)\s+(?:are\s+|is\s+)?(?:there\s+)?"
+    rf"in\s+{_AMOUNT}\s+(?P<source>[a-z][a-z /]*)$"
+)
 
 
 _TEMPERATURES = {"celsius": "degrees Celsius", "centigrade": "degrees Celsius",
@@ -213,7 +216,8 @@ def convert(text: str) -> str | None:
         # clearly asked to convert -- otherwise it's probably an ordinary
         # question ("a way to get to Manila") for web search.
         if text.startswith("convert "):
-            return f"I can't convert {source_spoken} to {dest_spoken}. I can do units like distance, weight, volume, speed and temperature."
+            return (f"I can't convert {source_spoken} to {dest_spoken}. "
+                    "I can do units like distance, weight, volume, speed and temperature.")
         return None
 
     if how_many:

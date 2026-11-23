@@ -15,18 +15,18 @@ HandlerResult(done=False, ...) directly rather than going through
 ash/actions/confirmation.py's static per-intent map.
 """
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Callable
 
 import pythoncom
 import win32com.client
 
 from ash.actions.confirmation import is_affirmative
 from ash.actions.results import YES_NO, HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import format_time_of_day, parse_absolute_time
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 
 _OL_FOLDER_CALENDAR = 9

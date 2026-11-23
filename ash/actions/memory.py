@@ -18,7 +18,6 @@ import logging
 from rapidfuzz import fuzz, process
 
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.privacy import secure_store

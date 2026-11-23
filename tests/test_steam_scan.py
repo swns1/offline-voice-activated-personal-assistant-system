@@ -28,7 +28,7 @@ def test_follows_libraryfolders_vdf_to_additional_drives(tmp_path):
     other_library = tmp_path / "games_on_d"
     _write(
         steam_path / "steamapps" / "libraryfolders.vdf",
-        '"libraryfolders"\n{\n\t"0"\n\t{\n\t\t"path"\t\t"%s"\n\t}\n}\n' % str(other_library).replace("\\", "\\\\"),
+        '"libraryfolders"\n{\n\t"0"\n\t{\n\t\t"path"\t\t"%s"\n\t}\n}\n' % str(other_library).replace("\\", "\\\\"),  # noqa: UP031
     )
     _write(
         other_library / "steamapps" / "appmanifest_945360.acf",

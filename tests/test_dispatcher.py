@@ -261,7 +261,6 @@ def test_no_verb_utterance_goes_to_the_strict_guessed_open(monkeypatch):
 def test_turn_it_down_a_bit_no_longer_launches_an_app(monkeypatch):
     # The end-to-end version of the bug: no Ollama, a real-looking
     # registry, and a sentence sharing only "bit" with an app's name.
-    from ash.actions import open_app
     from ash.launchers.exe_launcher import ExeLauncher
     from ash.registry.schema import AppEntry
 

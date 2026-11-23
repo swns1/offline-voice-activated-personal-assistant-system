@@ -10,7 +10,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 QtWidgets = pytest.importorskip("PySide6.QtWidgets")
 
 from ash.config import Config, load_config  # noqa: E402
-from ash.core import (BUTTON, STATUS_LISTENING, STATUS_MIC_OFF, AssistantCore, Event, STATUS)  # noqa: E402
+from ash.core import BUTTON, STATUS, STATUS_LISTENING, STATUS_MIC_OFF, AssistantCore, Event  # noqa: E402
 from ash.gui.bridge import CoreBridge  # noqa: E402
 from ash.gui.tray import AshTray  # noqa: E402
 from ash.gui.window import MainWindow  # noqa: E402

@@ -5,10 +5,10 @@ import time
 
 import pytest
 
-from ash.privacy import secure_store
 from ash.actions import timers
 from ash.actions.results import HandlerResult
 from ash.config import Config
+from ash.privacy import secure_store
 from ash.registry.schema import Registry
 
 log = logging.getLogger("test")

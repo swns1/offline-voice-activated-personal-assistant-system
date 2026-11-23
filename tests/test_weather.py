@@ -162,7 +162,8 @@ def test_todays_weather_sends_only_coordinates(open_meteo):
 @pytest.mark.parametrize("said, reply", [
     ("what's the weather tomorrow", "Tomorrow in Manila: light rain, a high of 31 and a low of 25, with a 80% chance of rain."),
     ("weather on friday", "On Friday in Manila: clear skies, a high of 33 and a low of 26, with a 5% chance of rain."),
-    ("what's the weather on saturday", "On Saturday in Manila: thunderstorms, a high of 30 and a low of 24, with a 90% chance of rain."),
+    ("what's the weather on saturday",
+     "On Saturday in Manila: thunderstorms, a high of 30 and a low of 24, with a 90% chance of rain."),
     ("what's the weather like on thursday", "On Thursday in Manila: clear skies, a high of 33 and a low of 26."),
 ])
 def test_other_days(open_meteo, said, reply):

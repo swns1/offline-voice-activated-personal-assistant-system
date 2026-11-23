@@ -25,7 +25,7 @@ handlers start with:
 Either way, nothing is sent until you've said yes.
 """
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from ash.actions.confirmation import is_affirmative
 from ash.actions.results import YES_NO, HandlerResult

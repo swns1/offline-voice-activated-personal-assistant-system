@@ -14,8 +14,7 @@ import sounddevice as sd
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
-from ash.privacy import egress
-from ash.privacy import secure_store
+from ash.privacy import egress, secure_store
 from ash.registry.schema import Registry
 from ash.utils import ollama
 from ash.utils.paths import SPOTIFY_TOKEN_PATH

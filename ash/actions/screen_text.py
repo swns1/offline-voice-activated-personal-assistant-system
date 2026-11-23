@@ -40,13 +40,15 @@ def _read_screen_text() -> str:
     image = ImageGrab.grab()
     data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
     words = [
-        word for word, conf in zip(data["text"], data["conf"])
+        word for word, conf in zip(data["text"], data["conf"], strict=False)
         if word.strip() and float(conf) >= _MIN_CONFIDENCE
     ]
     return " ".join(words)
 
 
-def handle_screen_read_text(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+def handle_screen_read_text(
+    target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
+) -> HandlerResult:
     tts.say("Let me read that.")
     try:
         text = _read_screen_text()

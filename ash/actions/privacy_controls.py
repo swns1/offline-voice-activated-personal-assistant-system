@@ -64,7 +64,9 @@ def handle_disallow(target: str, registry: Registry, tts: TtsWorker, log: loggin
     return HandlerResult()
 
 
-def handle_network_activity(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+def handle_network_activity(
+    target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
+) -> HandlerResult:
     summary = network_log.summary(days=7)
     if consent.offline_mode():
         summary += " Offline mode is on right now."

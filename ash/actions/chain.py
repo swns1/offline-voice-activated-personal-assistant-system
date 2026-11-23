@@ -21,13 +21,12 @@ remaining steps; the user answers that one question normally.
 import json
 import logging
 
-
 from ash.actions.confirmation import needs_confirmation, wrap_with_confirmation
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.privacy import egress
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.skills import registry as skills
 

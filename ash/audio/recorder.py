@@ -21,8 +21,8 @@ happens on your setup.
 import queue
 import threading
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Callable
 
 import numpy as np
 import sounddevice as sd
@@ -80,7 +80,7 @@ class ContinuousListener:
         self._silence_frames_needed = max(1, silence_ms // _VAD_FRAME_MS)
         self._max_record_samples = int(max_record_seconds * SAMPLE_RATE)
         self._vad = webrtcvad.Vad(vad_aggressiveness)
-        self._queue: "queue.Queue[np.ndarray]" = queue.Queue()
+        self._queue: queue.Queue[np.ndarray] = queue.Queue()
         # Audio pulled from the queue but not yet consumed by whichever
         # phase (wake-word / silence-cutoff / follow-up-timeout) is
         # running. Shared instance state, not a local variable, so

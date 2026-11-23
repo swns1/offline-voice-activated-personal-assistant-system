@@ -7,7 +7,8 @@ for that, only what populates `profile_directory` does.
 """
 import os
 import subprocess
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from ash.launchers.base import Launcher
 

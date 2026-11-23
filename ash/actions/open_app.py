@@ -14,13 +14,13 @@ import logging
 
 from ash.actions.converse import handle_converse
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.exe_launcher import ExeLauncher
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_app
 from ash.nlu.matcher import MatchResult, match_app, match_candidates
+from ash.privacy.redact import said
 from ash.registry.auto_build import refresh_registry_auto
 from ash.registry.loader import load_registry
 from ash.registry.schema import Registry
@@ -85,7 +85,7 @@ def _retry_after_rescan(target: str, registry: Registry, log: logging.Logger) ->
 
 def _launch_entry(result: MatchResult, target: str, tts: TtsWorker, log: logging.Logger) -> HandlerResult:
     entry = result.entry
-    launcher = next((l for l in _LAUNCHERS if l.can_handle(entry.launch)), None)
+    launcher = next((launcher for launcher in _LAUNCHERS if launcher.can_handle(entry.launch)), None)
     if launcher is None:
         log.warning("No launcher handles entry %s (type %r)", entry.id, entry.launch.get("type"))
         tts.say(f"I don't know how to open {entry.id} yet.")

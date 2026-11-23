@@ -5,7 +5,8 @@ flash, no shell-quoting concerns. Adding a new launcher-gated ecosystem
 later is a new registry entry with this launch type, not new code here.
 """
 import os
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from ash.launchers.base import Launcher
 

@@ -1,7 +1,7 @@
 import logging
 
-from ash.actions.stop import handle_stop
 from ash.actions.results import HandlerResult
+from ash.actions.stop import handle_stop
 from ash.config import Config
 from ash.registry.schema import Registry
 

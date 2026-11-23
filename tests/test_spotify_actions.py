@@ -1,7 +1,5 @@
 import logging
 
-import pytest
-
 from ash.actions import spotify
 from ash.nlu import context
 

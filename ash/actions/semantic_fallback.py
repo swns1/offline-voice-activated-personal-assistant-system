@@ -20,12 +20,10 @@ wrap_with_confirmation() before its handler runs, same as if the user
 had said the literal template phrase.
 """
 import json
-import logging
-
 
 from ash.config import Config
-from ash.privacy import egress
 from ash.nlu.intents import ParsedCommand
+from ash.privacy import egress
 from ash.skills import registry as skills
 
 # Short relative to converse.py's 30s -- this sits in front of every

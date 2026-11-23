@@ -10,8 +10,9 @@ AssistantCore's worker thread (the only thread that touches Ash's data
 files, so nothing races a command that's running), and the result
 comes back to `on_done` on the GUI thread.
 """
+from collections.abc import Callable
 from concurrent.futures import Future
-from typing import Any, Callable
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 

@@ -24,8 +24,8 @@ through here; their features check permission the same way and call
 record_use() per command instead.
 """
 import ipaddress
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 from urllib.parse import urlparse
 
 import requests

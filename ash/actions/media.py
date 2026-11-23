@@ -102,7 +102,9 @@ def handle_media_previous(target: str, registry: Registry, tts: TtsWorker, log: 
     return _control("try_skip_previous_async", _VK_MEDIA_PREV_TRACK, "Going back.", "Nothing is playing.", tts, log)
 
 
-def handle_media_now_playing(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+def handle_media_now_playing(
+    target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
+) -> HandlerResult:
     if _SessionManager is None:
         tts.say("I can't see what's playing on this PC.")
         return HandlerResult()

@@ -1,6 +1,7 @@
-import requests
 import json
 import logging
+
+import requests
 
 from ash.actions import chain
 from ash.actions.results import HandlerResult

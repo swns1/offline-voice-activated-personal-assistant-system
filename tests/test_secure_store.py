@@ -82,6 +82,7 @@ class _FakeTts:
 
 def test_remembered_facts_are_stored_encrypted(monkeypatch, tmp_path):
     import logging
+
     from ash.config import Config
     from ash.registry.schema import Registry
 

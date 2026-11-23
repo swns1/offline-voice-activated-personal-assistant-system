@@ -1,7 +1,4 @@
 import sys
-from pathlib import Path
-
-import pytest
 
 from ash.utils import autostart
 

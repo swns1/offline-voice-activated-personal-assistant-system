@@ -21,7 +21,7 @@ def test_changes_only_what_you_changed_and_keeps_comments(tmp_path):
     written_comments = [line.strip() for line in written.splitlines() if line.strip().startswith("#")]
     assert written_comments == original_comments
     # Every other line is unchanged.
-    changed = [(a, b) for a, b in zip(original.splitlines(), written.splitlines()) if a != b]
+    changed = [(a, b) for a, b in zip(original.splitlines(), written.splitlines(), strict=True) if a != b]
     assert len(original.splitlines()) == len(written.splitlines())
     assert all(any(k in a for k in ("units:", "autostart:", "silence_ms:")) for a, _ in changed)
 

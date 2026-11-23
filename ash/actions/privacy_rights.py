@@ -24,7 +24,6 @@ from ash.config import Config
 from ash.privacy import inventory
 from ash.registry.schema import Registry
 
-
 # --- what data do you have --------------------------------------------------
 
 def handle_data_inventory(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
@@ -133,7 +132,9 @@ def handle_export(target: str, registry: Registry, tts: TtsWorker, log: logging.
 
 # --- delete my voiceprint -------------------------------------------------------
 
-def handle_delete_voiceprint(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+def handle_delete_voiceprint(
+    target: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config,
+) -> HandlerResult:
     item = inventory.by_key("voiceprint")
     if not inventory.is_stored(item):
         tts.say("You don't have a voiceprint saved.")

@@ -131,7 +131,7 @@ def test_close_app_empty_target_asks():
 def test_close_window_sends_wm_close(monkeypatch):
     calls = []
     monkeypatch.setattr(window.win32gui, "GetForegroundWindow", lambda: 12345)
-    monkeypatch.setattr(window.win32gui, "PostMessage", lambda hwnd, msg, w, l: calls.append((hwnd, msg)))
+    monkeypatch.setattr(window.win32gui, "PostMessage", lambda hwnd, msg, wparam, lparam: calls.append((hwnd, msg)))
     tts = FakeTts()
 
     result = window.handle_close_window("", Registry(), tts, log, Config())

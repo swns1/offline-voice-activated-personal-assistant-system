@@ -26,12 +26,12 @@ the voice check is a gate in front of it, not inside it.
 """
 import logging
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from ash.actions.results import YES_NO, HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.skills import registry as skills
 

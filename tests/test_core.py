@@ -7,8 +7,7 @@ import pytest
 
 from ash.actions.results import YES_NO, HandlerResult
 from ash.config import Config
-from ash.core import (BUTTON, FAILED_REPLY, HEARD, QUESTION, QUESTION_CLOSED, SAID, SYSTEM, TYPED, VOICE,
-                      AssistantCore, ReplyTts)
+from ash.core import BUTTON, FAILED_REPLY, HEARD, QUESTION, QUESTION_CLOSED, SAID, SYSTEM, TYPED, VOICE, AssistantCore, ReplyTts
 from ash.privacy import consent
 from ash.registry.schema import Registry
 

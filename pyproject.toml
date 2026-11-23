@@ -14,3 +14,20 @@ include = ["ash*"]
 # Only collect real tests -- without this, pytest also scans scripts/
 # and imports anything there named like a test file.
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+extend-exclude = [".venv", "models", "build", "dist"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, pyupgrade, bugbear. Broad
+# `except Exception` is deliberate here (one failing command must never
+# stop the assistant), so blind-except isn't checked.
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E731",  # small lambdas assigned to names read fine in tests and closures
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ash"]

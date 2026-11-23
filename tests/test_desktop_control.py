@@ -139,7 +139,7 @@ def test_click_low_confidence_word_is_ignored(monkeypatch):
     _mock_ocr(monkeypatch, [{"text": "Save", "left": 100, "top": 200, "width": 40, "height": 20, "conf": 5}])
     tts = FakeTts()
 
-    result = desktop_control.handle_screen_click("save", Registry(), tts, log, _enabled_config())
+    desktop_control.handle_screen_click("save", Registry(), tts, log, _enabled_config())
 
     assert "couldn't find" in tts.said[-1]
 

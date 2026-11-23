@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 from ash.actions import semantic_fallback
 from ash.config import Config

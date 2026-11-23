@@ -17,7 +17,7 @@ to justify the extra complexity of a clean cross-thread shutdown signal.
 import logging
 import os
 import threading
-from typing import Callable
+from collections.abc import Callable
 
 import pystray
 from PIL import Image, ImageDraw

@@ -18,10 +18,10 @@ import win32gui
 
 from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.matcher import match_app
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 
 

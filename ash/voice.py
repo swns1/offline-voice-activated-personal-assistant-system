@@ -12,8 +12,7 @@ from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
 from ash.audio.wake_word import WakeWordDetector
 from ash.config import Config
-from ash.core import (STATUS_LISTENING, STATUS_MIC_OFF, STATUS_READY, STATUS_TRANSCRIBING, VOICE,
-                      AssistantCore)
+from ash.core import STATUS_LISTENING, STATUS_MIC_OFF, STATUS_READY, STATUS_TRANSCRIBING, VOICE, AssistantCore
 from ash.security import voice_gate
 
 FOLLOWUP_SECONDS = 6.0

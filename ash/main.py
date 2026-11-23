@@ -9,7 +9,7 @@ The window adds a second input (typing, buttons) to the same core.
 """
 import argparse
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from ash.actions.proactive import start as start_proactive_nudges
 from ash.actions.timers import rehydrate as rehydrate_timers

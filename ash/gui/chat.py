@@ -8,12 +8,25 @@ import html
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPalette
-from PySide6.QtWidgets import (QCheckBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser,
-                               QVBoxLayout, QWidget)
+from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTextBrowser, QVBoxLayout, QWidget
 
-from ash.core import (BUTTON, HEARD, QUESTION, QUESTION_CLOSED, SAID, STATUS, STATUS_LISTENING,
-                      STATUS_LOADING, STATUS_MIC_OFF, STATUS_NO_MIC, STATUS_READY, STATUS_TRANSCRIBING,
-                      TYPED, VOICE, Event)
+from ash.core import (
+    BUTTON,
+    HEARD,
+    QUESTION,
+    QUESTION_CLOSED,
+    SAID,
+    STATUS,
+    STATUS_LISTENING,
+    STATUS_LOADING,
+    STATUS_MIC_OFF,
+    STATUS_NO_MIC,
+    STATUS_READY,
+    STATUS_TRANSCRIBING,
+    TYPED,
+    VOICE,
+    Event,
+)
 
 # (light theme, dark theme): readable on either, as Windows' dark mode
 # carries over to the window.

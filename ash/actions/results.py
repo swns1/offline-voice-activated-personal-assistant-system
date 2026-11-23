@@ -7,8 +7,8 @@ Kept in its own module rather than in dispatcher.py to avoid a circular
 import: action modules (open_app.py, search.py, spotify.py) need this
 type but dispatcher.py imports *them*.
 """
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional
 
 # The answers a yes/no question offers as buttons in the desktop window.
 # Spoken answers are still matched loosely (confirmation.is_affirmative).
@@ -19,7 +19,7 @@ YES_NO = ("Yes", "No")
 class HandlerResult:
     done: bool = True
     question: str | None = None
-    resume: Optional[Callable[[str], "HandlerResult"]] = None
+    resume: Callable[[str], "HandlerResult"] | None = None
     # Set only by ash/actions/confirmation.py's wrap_with_confirmation()
     # when config.security.voice_gate_enabled -- tells ash/main.py's loop
     # to check the follow-up answer's raw audio against the enrolled

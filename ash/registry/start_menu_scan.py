@@ -5,8 +5,8 @@ A shortcut's real target can only be read via the shell COM interface
 target directly that's simpler or more reliable than this.
 """
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pythoncom
 import win32com.client

@@ -201,7 +201,7 @@ class Config(BaseModel):
 def load_config(path: Path = CONFIG_PATH) -> Config:
     if not path.exists():
         return Config()
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
     return Config.model_validate(data)
 

@@ -43,9 +43,9 @@ from rapidfuzz import fuzz, process
 
 from ash.actions.confirmation import ask_to_confirm
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 
 _MIN_CONFIDENCE = 40  # same OCR-noise filter as ash/actions/screen_text.py

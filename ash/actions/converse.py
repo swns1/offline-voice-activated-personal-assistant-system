@@ -21,13 +21,12 @@ this one conversation and past restarts.
 """
 import logging
 
-
 from ash.actions.memory import facts_context
 from ash.actions.results import HandlerResult
 from ash.audio.tts import TtsWorker
 from ash.config import Config
-from ash.privacy import egress
 from ash.nlu.grammar import parse
+from ash.privacy import egress
 from ash.registry.schema import Registry
 
 _TIMEOUT_SECONDS = 30.0

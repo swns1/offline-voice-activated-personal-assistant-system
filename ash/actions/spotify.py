@@ -24,9 +24,9 @@ from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.launchers.uri_launcher import UriLauncher
 from ash.nlu.context import remember_spotify_track
-from ash.privacy.redact import said
 from ash.privacy import egress, secure_store
 from ash.privacy.permission import ask_permission_if_needed
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.utils.paths import SPOTIFY_TOKEN_PATH, ensure_app_data_dirs
 

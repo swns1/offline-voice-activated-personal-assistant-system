@@ -17,17 +17,16 @@
 import logging
 from urllib.parse import quote_plus
 
-
 from ash.actions import calculator
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
-from ash.privacy import egress
-from ash.privacy.permission import ask_permission_if_needed
 from ash.launchers.browser_launcher import BrowserLauncher
 from ash.launchers.browser_profiles import list_profiles, resolve_profile
 from ash.nlu.context import remember_search
+from ash.privacy import egress
+from ash.privacy.permission import ask_permission_if_needed
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 
 _browser_launcher = BrowserLauncher()

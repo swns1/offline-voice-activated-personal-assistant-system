@@ -2,8 +2,9 @@
 ash/skills/catalog.py for the declarations and ash/skills/registry.py
 for everything built from them."""
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ash.actions.results import HandlerResult

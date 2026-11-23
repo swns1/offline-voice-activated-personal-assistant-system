@@ -49,7 +49,8 @@ def _registry(profile_directory=None) -> Registry:
 
 def test_search_speaks_ddg_answer(monkeypatch):
     monkeypatch.setattr(requests, "get",
-                         lambda url, params, timeout: FakeResponse({"Answer": "", "AbstractText": "Paris is the capital of France.", "Definition": ""}))
+                         lambda url, params, timeout: FakeResponse(
+                             {"Answer": "", "AbstractText": "Paris is the capital of France.", "Definition": ""}))
     tts = FakeTts()
 
     result = search.handle_search("capital of france", Registry(), tts, log, Config())
@@ -60,7 +61,8 @@ def test_search_speaks_ddg_answer(monkeypatch):
 
 def test_search_field_priority_order(monkeypatch):
     monkeypatch.setattr(requests, "get",
-                         lambda url, params, timeout: FakeResponse({"Answer": "Paris", "AbstractText": "should not use this", "Definition": ""}))
+                         lambda url, params, timeout: FakeResponse(
+                             {"Answer": "Paris", "AbstractText": "should not use this", "Definition": ""}))
     tts = FakeTts()
 
     # (Not "2+2": maths is now answered on the PC, before any search.)
@@ -122,7 +124,8 @@ def test_search_disabled_by_config_skips_network_call(monkeypatch):
 
 def test_search_remembers_the_query_on_success(monkeypatch):
     monkeypatch.setattr(requests, "get",
-                         lambda url, params, timeout: FakeResponse({"Answer": "", "AbstractText": "France is a country.", "Definition": ""}))
+                         lambda url, params, timeout: FakeResponse(
+                             {"Answer": "", "AbstractText": "France is a country.", "Definition": ""}))
 
     search.handle_search("france", Registry(), FakeTts(), log, Config())
 

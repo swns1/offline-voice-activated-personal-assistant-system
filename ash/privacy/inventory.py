@@ -17,9 +17,10 @@ File locations are looked up through the module that owns each file at
 call time (not copied here), so there's exactly one source of truth
 for where each file lives.
 """
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from ash.privacy import secure_store
 

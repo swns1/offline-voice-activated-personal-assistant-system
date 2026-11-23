@@ -245,7 +245,6 @@ def test_wait_for_speech_no_barge_in_when_tts_not_speaking():
 def test_listen_records_via_barge_in_without_the_wake_word(monkeypatch):
     monkeypatch.setattr(recorder_module.sd, "InputStream", lambda **kwargs: _NullStream())
 
-    speaking_calls = []
     barge_in_calls = []
 
     def is_speaking():

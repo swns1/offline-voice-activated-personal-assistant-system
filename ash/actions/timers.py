@@ -13,7 +13,6 @@ import time
 from datetime import datetime
 
 from ash.actions.results import HandlerResult
-from ash.privacy.redact import said
 from ash.audio.tts import TtsWorker
 from ash.config import Config
 from ash.nlu.duration import (
@@ -24,9 +23,10 @@ from ash.nlu.duration import (
     parse_duration,
     parse_recurrence,
 )
+from ash.privacy import secure_store
+from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.utils.notifications import show_toast
-from ash.privacy import secure_store
 from ash.utils.paths import TIMERS_STATE_PATH
 
 _MAX_ACTIVE_TIMERS = 20
