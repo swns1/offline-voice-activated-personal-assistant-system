@@ -94,6 +94,24 @@ def _ms(seconds: float) -> str:
     return f"{ms:.1f} ms" if ms < 10 else f"{ms:.0f} ms"
 
 
+def piper_time_to_first_audio(texts: list[str], voice_name: str) -> list[float]:
+    """Seconds until Piper has the first sentence's audio ready (it plays
+    as soon as it's ready; nothing is played here)."""
+    from piper import PiperVoice
+
+    from ash.setup_models import piper_voice_path
+
+    voice = PiperVoice.load(piper_voice_path(voice_name))
+    for _ in voice.synthesize("Ready."):  # warm-up, as Ash does at startup
+        pass
+    results = []
+    for text in texts:
+        start = time.perf_counter()
+        next(iter(voice.synthesize(text)))
+        results.append(time.perf_counter() - start)
+    return results
+
+
 def stats(values: list[float]) -> str:
     if not values:
         return "n/a"
@@ -104,6 +122,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model", default="small", help="Whisper model size (Ash uses small)")
     parser.add_argument("--repeat", type=int, default=3, help="times to run each command")
+    parser.add_argument("--voice", choices=["windows", "piper"], default="windows",
+                        help="which voice to time (piper needs piper-tts and the voice downloaded)")
     args = parser.parse_args()
 
     logging.disable(logging.CRITICAL)
@@ -141,7 +161,10 @@ def main() -> None:
             if voice.first_at is not None:
                 dispatch_times.append(voice.first_at - start)
                 replies.append(voice.replies[0])
-    tts_times = time_to_first_audio(replies[: len(COMMANDS)])
+    if args.voice == "piper":
+        tts_times = piper_time_to_first_audio(replies[: len(COMMANDS)], config.voice.piper_voice)
+    else:
+        tts_times = time_to_first_audio(replies[: len(COMMANDS)])
 
     silence = config.audio.silence_ms / 1000
     total = silence + statistics.median(stt_times) + statistics.median(dispatch_times) + statistics.median(tts_times)
@@ -152,7 +175,8 @@ def main() -> None:
     print(f"| End of speech (audio.silence_ms setting) | {silence * 1000:.0f} ms |")
     print(f"| Speech to text | {stats(stt_times)} |")
     print(f"| Understanding and running the command | {stats(dispatch_times)} |")
-    print(f"| Start of the spoken reply | {stats(tts_times)} |")
+    voice = "Piper " + config.voice.piper_voice if args.voice == "piper" else "Windows voice"
+    print(f"| Start of the spoken reply ({voice}) | {stats(tts_times)} |")
     print(f"| **Total (medians)** | **{total * 1000:.0f} ms** |")
     print(f"\nWhisper {args.model} took {load_seconds:.1f} s to load (once, at startup). "
           f"{understood}/{runs} transcripts ran the intended command.")

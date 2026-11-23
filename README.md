@@ -574,6 +574,33 @@ wake_word:
   keyword: models/hey_ash.onnx   # relative to the project folder, or an absolute path
 ```
 
+## A more natural voice (optional)
+
+Ash speaks with the built-in Windows voice by default. For a much more
+natural one, use [Piper](https://github.com/OHF-Voice/piper1-gpl), a
+neural voice that runs on this PC (no cloud, about 0.1 seconds before it
+starts speaking):
+
+```
+.venv\Scripts\pip install piper-tts
+```
+
+Then choose "Natural voice" in Settings (or set `voice.engine: piper`)
+and restart Ash. It offers to download the voice once, about 64 MB, or
+run `scripts\download_voice.py` yourself. Suggested voices, all trained
+on openly licensed recordings:
+
+| Voice | Sounds | Download | Licence |
+|---|---|---|---|
+| `en_US-ljspeech-medium` (default) | American English, female | 64 MB | public domain |
+| `en_US-ljspeech-high` | the same, higher quality | 115 MB | public domain |
+| `en_GB-alba-medium` | Scottish English, female | 64 MB | CC BY 4.0 |
+
+Piper is licensed under the GPL and Ash under MIT, so Piper isn't
+included in Ash's requirements or its packaged download. You install it
+yourself. If it or the voice is missing, Ash uses the Windows voice and
+notes it in the log. `--selftest` checks the voice loads.
+
 ## Configuration
 
 - `config/config.yaml` — wake word, audio, browser, hotkey, tray,

@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 from ash.config import Config, save_settings
 from ash.core import BUTTON
 from ash.privacy.redact import set_log_content
+from ash.setup_models import PIPER_VOICES
 from ash.utils import preferences
 from ash.utils.autostart import sync_autostart
 from ash.utils.paths import CONFIG_PATH
@@ -61,6 +62,13 @@ GROUPS = (
         Setting("audio.max_record_seconds", "Longest command (seconds)", "float", 2, 30, 1, restart=True),
         Setting("audio.barge_in_enabled", "Talk over Ash to interrupt it", "bool", restart=True,
                 tooltip="Turn off if Ash's own voice from your speakers interrupts it."),
+    )),
+    Group("Voice", (
+        Setting("voice.engine", "Ash's voice", "choice", options=(
+            ("Windows voice", "windows"), ("Natural voice (Piper, optional install)", "piper")),
+            restart=True, tooltip="Piper needs 'pip install piper-tts' and a one-time voice download."),
+        Setting("voice.piper_voice", "Natural voice", "choice", restart=True, options=tuple(
+            (f"{description} ({name})", name) for name, (description, _mb, _licence) in PIPER_VOICES.items())),
     )),
     Group("Answers", (
         Setting("search.enabled", "Web search (DuckDuckGo)", "bool",

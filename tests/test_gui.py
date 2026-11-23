@@ -273,7 +273,7 @@ def test_first_run_asks_before_downloading_the_speech_models(qapp, monkeypatch, 
     from ash.core import STATUS_DOWNLOADING
     from ash.gui.app import _ensure_models
 
-    monkeypatch.setattr(setup_models, "missing_downloads", lambda keyword: ["the wake-word model"])
+    monkeypatch.setattr(setup_models, "missing_downloads", lambda keyword, piper_voice=None: ["the wake-word model"])
     monkeypatch.setattr(setup_models, "wake_word_model_missing", lambda keyword: True)
     downloads = []
     monkeypatch.setattr(setup_models, "download_wake_word_model", downloads.append)

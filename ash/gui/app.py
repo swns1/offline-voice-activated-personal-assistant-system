@@ -152,7 +152,8 @@ def _ensure_models(bridge: CoreBridge, core, config: Config, log: logging.Logger
         without_voice(f"The custom wake-word model {keyword!r} wasn't found. "
                       "Check wake_word.keyword in config.yaml. Typing still works.")
         return False
-    missing = setup_models.missing_downloads(keyword)
+    piper_voice = config.voice.piper_voice if config.voice.engine == "piper" else None
+    missing = setup_models.missing_downloads(keyword, piper_voice=piper_voice)
     if not missing:
         return True
 
@@ -168,6 +169,9 @@ def _ensure_models(bridge: CoreBridge, core, config: Config, log: logging.Logger
     try:
         if setup_models.wake_word_model_missing(keyword):
             setup_models.download_wake_word_model(keyword)
+        if piper_voice and setup_models.piper_installed() and setup_models.piper_voice_missing(piper_voice):
+            setup_models.download_piper_voice(piper_voice)
+            bridge.voice_failed.emit("The new voice is downloaded; it's used from the next time Ash starts.")
     except NetworkBlocked:
         return True  # offline mode: VoiceLoop.load reports it, with how to fix it
     except Exception:

@@ -102,7 +102,9 @@ def start_assistant(config: Config, log: logging.Logger,
     the command worker, timers, reminders and the mute hotkey.
     `on_event` is subscribed before anything can speak (a timer that
     went off while Ash was closed announces itself right away)."""
-    tts = TtsWorker()
+    from ash.setup_models import piper_voice_path
+
+    tts = TtsWorker(engine=config.voice.engine, piper_model=piper_voice_path(config.voice.piper_voice))
     tts.start()
 
     if config.registry.auto_rescan_on_startup:

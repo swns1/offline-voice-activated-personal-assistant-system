@@ -14,14 +14,24 @@ it's checked and logged per download rather than passing through
 ash/privacy/egress.py's get().
 """
 import os
+from pathlib import Path
 
 from ash.privacy import egress
-from ash.utils.paths import resolve_wake_word_keyword
+from ash.utils.paths import MODELS_DIR, resolve_wake_word_keyword
 
 WHISPER_MODEL = "small"
 # Rough sizes, for the question you're asked.
 WAKE_WORD_MB = 10
 WHISPER_MB = {"tiny": 75, "base": 145, "small": 465, "medium": 1500}
+
+# Suggested Piper voices: all trained on openly licensed recordings
+# (several other Piper voices are non-commercial only).
+PIPER_VOICES = {
+    "en_US-ljspeech-medium": ("American English, female", 64, "public domain"),
+    "en_US-ljspeech-high": ("American English, female, higher quality", 115, "public domain"),
+    "en_GB-alba-medium": ("Scottish English, female", 64, "CC BY 4.0"),
+}
+_PIPER_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main"
 
 
 def wake_word_model_missing(keyword: str) -> bool:
@@ -47,9 +57,51 @@ def whisper_model_missing(size: str = WHISPER_MODEL) -> bool:
     return False
 
 
-def missing_downloads(keyword: str, whisper_size: str = WHISPER_MODEL) -> list[str]:
-    """What still has to be downloaded, described for a person."""
+def piper_voice_path(name: str) -> Path:
+    return MODELS_DIR / "piper" / f"{name}.onnx"
+
+
+def piper_installed() -> bool:
+    import importlib.util
+
+    return importlib.util.find_spec("piper") is not None
+
+
+def piper_voice_missing(name: str) -> bool:
+    path = piper_voice_path(name)
+    return not (path.exists() and path.with_suffix(".onnx.json").exists())
+
+
+def piper_voice_urls(name: str) -> list[str]:
+    """"en_US-ljspeech-medium" -> the model and its settings file, in
+    the rhasspy/piper-voices layout (en/en_US/ljspeech/medium/...)."""
+    locale, speaker, quality = name.split("-", 2)
+    folder = f"{_PIPER_BASE}/{locale.split('_')[0]}/{locale}/{speaker}/{quality}/{name}"
+    return [f"{folder}.onnx", f"{folder}.onnx.json"]
+
+
+def download_piper_voice(name: str) -> None:
+    """Raises egress.OfflineModeError in offline mode. Written to a
+    temporary name first, so an interrupted download is never used."""
+    target = piper_voice_path(name)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    for url, path in zip(piper_voice_urls(name), (target, target.with_suffix(".onnx.json")), strict=True):
+        response = egress.get(url, feature=egress.MODEL_DOWNLOAD.key, stream=True, timeout=60)
+        response.raise_for_status()
+        partial = path.with_name(path.name + ".part")
+        with open(partial, "wb") as f:
+            for block in response.iter_content(1024 * 1024):
+                f.write(block)
+        os.replace(partial, path)
+
+
+def missing_downloads(keyword: str, whisper_size: str = WHISPER_MODEL, piper_voice: str | None = None) -> list[str]:
+    """What still has to be downloaded, described for a person.
+    `piper_voice`: the Piper voice in use, if voice.engine is "piper"."""
     missing = []
+    if piper_voice and piper_installed() and piper_voice_missing(piper_voice):
+        size = PIPER_VOICES.get(piper_voice, ("", None, ""))[1]
+        missing.append(f"the {piper_voice} voice ({f'about {size} MB, ' if size else ''}from Hugging Face)")
     if wake_word_model_missing(keyword):
         missing.append(f"the wake-word model (about {WAKE_WORD_MB} MB, from the openWakeWord project on GitHub)")
     if whisper_model_missing(whisper_size):
@@ -59,7 +111,7 @@ def missing_downloads(keyword: str, whisper_size: str = WHISPER_MODEL) -> list[s
 
 
 def download_question(missing: list[str]) -> str:
-    listed = missing[0] if len(missing) == 1 else " and ".join(missing)
+    listed = missing[0] if len(missing) == 1 else ", ".join(missing[:-1]) + " and " + missing[-1]
     return (f"Before Ash can listen, it needs to download {listed}, once. "
             "Nothing about you is sent, and it's recorded in the network log. "
             "Download now?")

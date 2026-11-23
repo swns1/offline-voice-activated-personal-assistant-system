@@ -36,7 +36,9 @@ a = Analysis(
     pathex=[str(ROOT)],
     datas=datas,
     hiddenimports=hiddenimports,
-    excludes=["tkinter", "matplotlib", "IPython", "pytest"],
+    # piper: the optional natural voice is GPL-licensed, and Ash's
+    # release is MIT, so it's never bundled (users install it themselves).
+    excludes=["tkinter", "matplotlib", "IPython", "pytest", "piper"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

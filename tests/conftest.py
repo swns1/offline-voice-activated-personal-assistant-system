@@ -103,6 +103,8 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(device, "_pictures_dir", lambda: state_dir / "Pictures")
     from ash.actions import files
     monkeypatch.setattr(files, "_downloads_dir", lambda: state_dir / "Downloads")
+    from ash import setup_models
+    monkeypatch.setattr(setup_models, "MODELS_DIR", state_dir / "models")
     monkeypatch.setattr(device, "_set_theme", _blocked_setting)
     monkeypatch.setattr(device, "set_brightness", _blocked_setting)
 

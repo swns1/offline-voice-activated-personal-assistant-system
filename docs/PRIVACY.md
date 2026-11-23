@@ -94,7 +94,7 @@ module imports the HTTP library. The gate works like this:
 | Spotify | the songs you ask for and your playback commands | Spotify (`api.spotify.com`, `accounts.spotify.com`) | Spotify commands, if you've set Spotify up | asked at the first start after you set it up; "allow / stop allowing Spotify"; offline mode |
 | weather | the name of your city once, then its map coordinates — never your exact location | Open-Meteo (`geocoding-api.open-meteo.com`, `api.open-meteo.com`) | weather questions, and "my city is …" | asked at the first start after you set your city; "allow / stop allowing weather"; offline mode |
 | the AI server | what you say to the AI, and screenshots when you ask about your screen | your Ollama server, **only if you configure one on another machine** | AI replies | your Ollama settings; offline mode |
-| model downloads | requests for Ash's speech models (nothing about you) | GitHub and Hugging Face (`github.com` for the wake-word model, `huggingface.co` for the speech-recognition model) | **once**, when Ash is set up; the desktop window asks first | offline mode |
+| model downloads | requests for Ash's speech models (nothing about you) | GitHub and Hugging Face (`github.com` for the wake-word model, `huggingface.co` for the speech-recognition model and, if you choose it, a Piper voice) | **once**, when Ash is set up; the desktop window asks first | offline mode |
 
 **Spotify** uses its own library's HTTP calls, which can't pass through
 the gate. Each Spotify command checks permission in the same way and

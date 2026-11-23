@@ -19,7 +19,7 @@ from ash.config import Config
 Check = tuple[str, bool, str]
 
 # Reported, but not needed for Ash to work.
-OPTIONAL = {"Ollama", "Spotify"}
+OPTIONAL = {"Ollama", "Spotify", "Natural voice"}  # the voice falls back to Windows
 
 
 def _timed(name: str, fn) -> Check:
@@ -52,6 +52,19 @@ def _speech_recognition() -> str:
     segments, _ = model.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32), language="en")
     list(segments)
     return f"Whisper {setup_models.WHISPER_MODEL} loaded"
+
+
+def _piper_voice(config: Config) -> str:
+    from ash import setup_models
+    from ash.audio.tts import PiperEngine
+
+    name = config.voice.piper_voice
+    if not setup_models.piper_installed():
+        raise RuntimeError("piper-tts isn't installed (pip install piper-tts); Ash uses the Windows voice")
+    if setup_models.piper_voice_missing(name):
+        raise RuntimeError(f"voice {name} not downloaded yet (scripts/download_voice.py); Ash uses the Windows voice")
+    PiperEngine(setup_models.piper_voice_path(name))  # loads and warms up, silently
+    return f"Piper {name}"
 
 
 def _voice_output() -> str:
@@ -90,6 +103,7 @@ def run_selftest(config: Config) -> list[Check]:
         _timed("Wake word", lambda: _wake_word(config)),
         _timed("Speech recognition", _speech_recognition),
         _timed("Voice output", _voice_output),
+        *([_timed("Natural voice", lambda: _piper_voice(config))] if config.voice.engine == "piper" else []),
         _timed("Encryption", _encryption),
         _timed("Desktop window", _window),
     ]

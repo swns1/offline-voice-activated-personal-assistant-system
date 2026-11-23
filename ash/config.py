@@ -166,6 +166,17 @@ class OllamaConfig(BaseModel):
     )
 
 
+class VoiceConfig(BaseModel):
+    # "windows": the built-in Windows voice. "piper": a natural-sounding
+    # neural voice, run on this PC -- an optional install (pip install
+    # piper-tts; it's GPL-licensed, so it isn't bundled with Ash) plus a
+    # one-time voice download. Falls back to the Windows voice if either
+    # is missing. Applies the next time Ash starts.
+    engine: Literal["windows", "piper"] = "windows"
+    # One of PIPER_VOICES in ash/setup_models.py (or any Piper voice name).
+    piper_voice: str = "en_US-ljspeech-medium"
+
+
 class WeatherConfig(BaseModel):
     # Your city is set by voice ("my city is Manila") and stored encrypted
     # -- see ash/actions/weather.py -- not here.
@@ -199,6 +210,7 @@ class Config(BaseModel):
     desktop_control: DesktopControlConfig = DesktopControlConfig()
     privacy: PrivacyConfig = PrivacyConfig()
     weather: WeatherConfig = WeatherConfig()
+    voice: VoiceConfig = VoiceConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

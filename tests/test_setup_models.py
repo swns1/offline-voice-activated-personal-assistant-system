@@ -57,3 +57,63 @@ def test_offline_mode_blocks_the_download(monkeypatch):
     with pytest.raises(OfflineModeError):
         setup_models.download_wake_word_model("hey_jarvis")
     assert network_log.entries() == []
+
+
+# --- Piper voices ----------------------------------------------------------------------
+
+def test_piper_voice_urls_follow_the_voice_library_layout():
+    assert setup_models.piper_voice_urls("en_US-ljspeech-medium") == [
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx",
+        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx.json",
+    ]
+
+
+class _Download:
+    def __init__(self, body):
+        self.body = body
+
+    def raise_for_status(self):
+        pass
+
+    def iter_content(self, size):
+        yield self.body
+
+
+def test_a_voice_downloads_through_the_network_gate(monkeypatch):
+    requested = []
+
+    def fake_get(url, *, feature, **kwargs):
+        requested.append((url.rsplit("/", 1)[-1], feature, kwargs.get("stream")))
+        return _Download(b"model" if url.endswith(".onnx") else b"{}")
+    monkeypatch.setattr(setup_models.egress, "get", fake_get)
+
+    setup_models.download_piper_voice("en_GB-alba-medium")
+
+    path = setup_models.piper_voice_path("en_GB-alba-medium")
+    assert path.read_bytes() == b"model" and path.with_suffix(".onnx.json").read_bytes() == b"{}"
+    assert not list(path.parent.glob("*.part"))
+    assert requested == [("en_GB-alba-medium.onnx", "model_download", True),
+                         ("en_GB-alba-medium.onnx.json", "model_download", True)]
+    assert not setup_models.piper_voice_missing("en_GB-alba-medium")
+
+
+def test_offline_mode_blocks_a_voice_download():
+    consent.set_offline_mode(True)
+    with pytest.raises(OfflineModeError):
+        setup_models.download_piper_voice("en_US-ljspeech-medium")
+    assert setup_models.piper_voice_missing("en_US-ljspeech-medium")
+
+
+def test_the_voice_is_only_offered_when_piper_is_in_use_and_installed(monkeypatch, nothing_downloaded):
+    monkeypatch.setattr(setup_models, "piper_installed", lambda: True)
+    assert any("en_US-ljspeech-medium voice" in m
+               for m in setup_models.missing_downloads("hey_jarvis", piper_voice="en_US-ljspeech-medium"))
+    assert not any("voice (" in m for m in setup_models.missing_downloads("hey_jarvis"))
+    monkeypatch.setattr(setup_models, "piper_installed", lambda: False)
+    assert not any("voice (" in m
+                   for m in setup_models.missing_downloads("hey_jarvis", piper_voice="en_US-ljspeech-medium"))
+
+
+def test_three_downloads_read_naturally():
+    question = setup_models.download_question(["a", "b", "c"])
+    assert "download a, b and c, once" in question
