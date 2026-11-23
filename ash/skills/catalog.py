@@ -26,6 +26,7 @@ from ash.actions.device import (
     handle_storage,
 )
 from ash.actions.diagnostics import handle_diagnostics
+from ash.actions.email import handle_email_check, handle_email_send
 from ash.actions.help import handle_help, handle_thanks
 from ash.actions.media import (
     handle_media_next,
@@ -91,7 +92,7 @@ QUICK = "Quick answers"
 MUSIC = "Music"
 SYSTEM = "Your PC"
 TIMERS = "Timers, reminders and routines"
-CALENDAR = "Calendar"
+CALENDAR = "Calendar and email"
 SCREEN = "Your screen"
 MEMORY = "Memory"
 NOTES = "Notes and lists"
@@ -461,6 +462,22 @@ SKILLS: list[Skill] = [
         "calendar_add", handle_calendar_add, CALENDAR, "Add an event to your Outlook calendar (asks first).",
         examples=("add to my calendar team meeting at 3pm",),
         verbs=("add to my calendar", "add to calendar", "schedule an event"),
+        classifiable=True,
+    ),
+    Skill(
+        "email_check", handle_email_check, CALENDAR,
+        "Say how many emails are unread, and who the latest are from (Outlook; never the message itself).",
+        examples=("check my email",),
+        phrases=("check my email", "check my emails", "check email", "read my email", "read my emails",
+                 "any new emails", "do i have any new emails", "do i have any emails", "do i have new email",
+                 "what's in my inbox", "whats in my inbox"),
+        classifiable=True,
+    ),
+    Skill(
+        "email_send", handle_email_send, CALENDAR,
+        "Send an email through Outlook (says exactly what and to whom, then asks first).",
+        examples=("email Anna saying I'm running late",),
+        verbs=("send an email to", "send email to", "write an email to", "send a message to", "email"),
         classifiable=True,
     ),
 

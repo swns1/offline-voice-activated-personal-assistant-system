@@ -60,6 +60,13 @@ class SearchConfig(BaseModel):
     enabled: bool = True
 
 
+class EmailConfig(BaseModel):
+    # Read your inbox (sender and subject only) and send emails through
+    # desktop Outlook -- see ash/actions/email.py. Off by default: it
+    # touches personal data and needs Outlook installed and set up.
+    enabled: bool = False
+
+
 class CalendarConfig(BaseModel):
     # Reads/writes your local desktop Outlook calendar via COM -- no
     # account setup on Ash's side (unlike Spotify/Ollama), but it only
@@ -182,6 +189,7 @@ class Config(BaseModel):
     spotify: SpotifyConfig = SpotifyConfig()
     search: SearchConfig = SearchConfig()
     calendar: CalendarConfig = CalendarConfig()
+    email: EmailConfig = EmailConfig()
     ollama: OllamaConfig = OllamaConfig()
     tray: TrayConfig = TrayConfig()
     gui: GuiConfig = GuiConfig()

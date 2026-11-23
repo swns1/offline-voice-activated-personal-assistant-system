@@ -11,7 +11,7 @@ from ash.actions.results import HandlerResult
 from ash.actions.semantic_fallback import classify_intent
 from ash.audio.tts import TtsWorker
 from ash.config import Config
-from ash.nlu.context import resolve_target
+from ash.nlu.context import resolve_target, set_utterance
 from ash.nlu.grammar import parse
 from ash.privacy.redact import said
 from ash.registry.schema import Registry
@@ -24,6 +24,7 @@ _HANDLERS = skills.handlers()
 
 
 def dispatch(text: str, registry: Registry, tts: TtsWorker, log: logging.Logger, config: Config) -> HandlerResult:
+    set_utterance(text)
     if looks_like_chain(text) and ai_enabled(config):
         steps = resolve_chain(text, config)
         if steps is not None:

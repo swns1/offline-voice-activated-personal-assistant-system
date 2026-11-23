@@ -71,6 +71,8 @@ GROUPS = (
         Setting("weather.units", "Temperature", "choice",
                 options=(("Celsius", "celsius"), ("Fahrenheit", "fahrenheit"))),
         Setting("calendar.enabled", "Outlook calendar", "bool"),
+        Setting("email.enabled", "Outlook email", "bool",
+                tooltip="Who your latest emails are from, and sending (always asks first)."),
     )),
     Group("Privacy and safety", (
         Setting("privacy.log_transcripts", "Include what I say in log files", "bool",

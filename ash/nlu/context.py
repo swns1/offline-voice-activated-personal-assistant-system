@@ -61,3 +61,31 @@ def resolve_target(intent: str, target: str) -> str:
         return target
     value = getattr(_context, field)
     return value if value else target
+
+
+# --- the exact words of the command being handled -----------------------------------------
+# The grammar lowercases and tidies what you said before handlers see it,
+# which is right for matching commands but wrong for text Ash writes out
+# for you (an email). dispatch() records the original here; handlers that
+# write text get the original capitalisation back with original_case().
+# Commands run one at a time on one worker thread (ash/core.py), so a
+# plain module variable is enough.
+_utterance = ""
+
+
+def set_utterance(text: str) -> None:
+    global _utterance
+    _utterance = text
+
+
+def original_case(fragment: str) -> str:
+    """`fragment` (lowercased by the grammar) as it was actually written
+    in the current command, if it can be found there; else unchanged."""
+    import re
+
+    words = re.findall(r"[\w']+", fragment)
+    if not words:
+        return fragment
+    pattern = r"\W+".join(re.escape(word) for word in words)
+    match = re.search(pattern, _utterance, flags=re.IGNORECASE)
+    return match.group(0) if match else fragment

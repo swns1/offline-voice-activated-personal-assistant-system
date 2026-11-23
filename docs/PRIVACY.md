@@ -115,10 +115,13 @@ and it's logged and blocked by offline mode.
 - **"search in browser for …"** opens your web browser on a search
   page. From there your browser's own privacy settings apply.
 - **Outlook** syncs with your mail provider according to Outlook's own
-  settings. Ash only reads from it locally and asks before adding
-  calendar events.
-- Once data reaches DuckDuckGo, Spotify, or Hugging Face, their privacy
-  policies apply.
+  settings. Ash reads your calendar and inbox locally (for email: only
+  the sender and subject of the latest few, never the message). It asks
+  before adding a calendar event or sending an email, saying exactly
+  what will be sent and to whom; Outlook then sends it over your mail
+  account. Neither addresses nor message text are stored or logged.
+- Once data reaches DuckDuckGo, Spotify, Open-Meteo, GitHub or Hugging
+  Face, their privacy policies apply.
 
 ## 3. Mapping to RA 10173
 

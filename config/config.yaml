@@ -110,6 +110,12 @@ search:
   # point you at "search in browser for X" instead.
   enabled: true
 
+email:
+  # Read who your latest emails are from (never the messages themselves)
+  # and send emails, through desktop Outlook. Sending always says exactly
+  # what and to whom, then asks first. Off by default.
+  enabled: false
+
 calendar:
   # Reads/writes your local desktop Outlook calendar via COM. Requires
   # Outlook itself to be installed and configured -- no separate account

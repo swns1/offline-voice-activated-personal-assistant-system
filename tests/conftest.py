@@ -104,6 +104,18 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(device, "_set_theme", _blocked_setting)
     monkeypatch.setattr(device, "set_brightness", _blocked_setting)
 
+    # Nor reach your real Outlook (calendar, inbox, address book, sending).
+    import win32com.client
+
+    real_dispatch = win32com.client.Dispatch
+
+    def _no_outlook(prog_id, *args, **kwargs):
+        if str(prog_id).lower().startswith("outlook."):
+            raise RuntimeError("Tests must not use the real Outlook")
+        return real_dispatch(prog_id, *args, **kwargs)
+
+    monkeypatch.setattr(win32com.client, "Dispatch", _no_outlook)
+
     # Nor write to the real Windows registry (e.g. the "start at sign-in"
     # entry, which the Settings tab's save applies). Reading is fine.
     # tests/test_autostart.py swaps in its own fake functions.

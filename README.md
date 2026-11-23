@@ -246,6 +246,26 @@ Tune how far ahead and how often it checks with
 is the one feature where Ash initiates speech on its own, so it's worth
 turning on deliberately rather than defaulting into it.
 
+## Email (Outlook)
+
+With `email.enabled: true` (or Settings > Answers > Outlook email) and
+desktop Outlook set up:
+
+- "check my email": how many are unread, and who the latest three are
+  from, with their subjects. Ash never reads the messages themselves
+  out loud.
+- "email Anna saying I'm running late": Ash looks Anna up in Outlook's
+  address book, then tells you exactly what it's about to send, and to
+  whom, before asking. For example: "I'll email Anna Reyes,
+  anna@example.com, with the subject 'I'm running late', saying: 'I'm
+  running late.' Send it?" Only a clear yes sends it. If more than one
+  contact matches, nothing is sent. Say just "email Anna" and Ash asks
+  what it should say. An address said out loud ("bob at example dot
+  com") works too.
+
+Nothing about your email is stored, and neither addresses nor message
+text appear in Ash's logs.
+
 ## Quick answers (offline)
 
 Answered from this PC, with nothing sent anywhere — so they work in
