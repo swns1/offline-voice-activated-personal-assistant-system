@@ -11,6 +11,7 @@ import argparse
 import logging
 import os
 import sys
+import threading
 from collections.abc import Callable
 
 from ash.actions.proactive import start as start_proactive_nudges
@@ -116,7 +117,10 @@ def start_assistant(config: Config, log: logging.Logger,
 
     registry = load_registry()
     log.info("Ash starting (%d app entries, %d intents)", len(registry.apps), len(registry.intents))
-    _report_local_ai(config, log)
+    if _report_local_ai(config, log):
+        from ash.nlu.tools import warm_up
+
+        threading.Thread(target=warm_up, args=(config,), name="ai-warm-up", daemon=True).start()
 
     core = AssistantCore(registry, tts, log, config)
     if on_event is not None:
@@ -160,7 +164,7 @@ def _print_event(event: Event) -> None:
         print(f"  [{event.text}]")
 
 
-def _report_local_ai(config: Config, log: logging.Logger) -> None:
+def _report_local_ai(config: Config, log: logging.Logger) -> bool:
     """One line at startup saying whether the local-AI features are on,
     so "why doesn't it chat?" has an answer without digging into config."""
     setting = config.ollama.enabled
@@ -179,6 +183,7 @@ def _report_local_ai(config: Config, log: logging.Logger) -> None:
             message = f"Local AI: ON in config, but Ollama isn't reachable at {config.ollama.host}"
     print(message)
     log.info(message)
+    return setting is not False and status == READY
 
 
 if __name__ == "__main__":

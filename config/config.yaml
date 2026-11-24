@@ -153,6 +153,10 @@ ollama:
   # A separate pull from `model` -- needed only for "what's on my
   # screen"-style requests. See README's "Screen understanding" section.
   vision_model: "llama3.2-vision"
+  # Translation only: much better than llama3.2 outside European
+  # languages (see README "Translation"). Uses `model` if it isn't
+  # downloaded (ollama pull gemma3:4b); set to null to always use `model`.
+  translation_model: "gemma3:4b"
   system_prompt: >
     You are Ash, a local voice assistant running entirely offline on the
     user's PC. Keep answers brief (1-3 sentences) since they will be read

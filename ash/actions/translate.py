@@ -7,7 +7,6 @@ Spanish". For languages not written in the Latin alphabet, the reply
 includes how to pronounce it, since the Windows voice can't read, say,
 Japanese script aloud (the window shows the script itself).
 """
-import json
 import logging
 import re
 
@@ -19,6 +18,8 @@ from ash.privacy import egress
 from ash.privacy.redact import said
 from ash.registry.schema import Registry
 from ash.utils.ollama import ai_enabled, chat
+
+log = logging.getLogger("ash")
 
 LANGUAGES = {
     "afrikaans", "arabic", "bengali", "bulgarian", "burmese", "cantonese", "catalan", "cebuano", "chinese",
@@ -34,12 +35,13 @@ LANGUAGES = {
 _SPLIT = re.compile(r"^(?P<text>.+?)\s+(?:to|into|in)\s+(?P<language>[a-z]+(?:\s+[a-z]+)?)$")
 
 _SYSTEM = (
-    "You are a translator. Translate the user's text into the requested language. Reply with JSON only: "
-    '{"translation": "<the translation, in that language\'s own script>", '
-    '"pronunciation": "<how to pronounce it, in the Latin alphabet, only if the language is not written '
-    'in the Latin alphabet; otherwise an empty string>"}. '
-    "Translate naturally, as a native speaker would say it. Never explain or add anything else."
+    "You are a translator. Translate the user's text into the language they name, as a native speaker would "
+    "say it. Reply with the translation, in that language's own writing system, then how to pronounce it, "
+    "spelled for an English speaker, in parentheses. No explanations, no quotes."
 )
+# Plain text rather than JSON: asked for JSON, llama3.2 returned an
+# empty translation for Japanese every time (measured).
+_WITH_PRONUNCIATION = re.compile(r"^(?P<text>.+?)\s*[(\uff08](?P<pronunciation>[^()\uff08\uff09]+)[)\uff09]\s*$", re.DOTALL)
 
 NEEDS_AI = ("Translation needs the local AI, which isn't running. Install Ollama and run "
             "'ollama pull llama3.2', and Ash will use it automatically.")
@@ -60,11 +62,38 @@ def parse_request(target: str) -> tuple[str, str | None]:
     return match["text"].strip().strip("\"'"), language.capitalize()
 
 
+def _plain(text: str) -> str:
+    return re.sub(r"[^\w]", "", text).lower()
+
+
 def translate(text: str, language: str, config: Config) -> tuple[str, str]:
-    message = chat(config, [{"role": "user", "content": f"Language: {language}\nText: {text}"}],
-                   system=_SYSTEM, format="json")
-    data = json.loads(message.get("content") or "{}")
-    return str(data.get("translation", "")).strip(), str(data.get("pronunciation", "")).strip()
+    """(translation, how to pronounce it -- or "" if the model gave none)."""
+    message = _ask(text, language, config, config.ollama.translation_model)
+    reply = (message.get("content") or "").strip().strip("\"\u201c\u201d")
+    match = _WITH_PRONUNCIATION.match(reply)
+    if match is None:
+        return reply, ""
+    translation, pronunciation = match["text"].strip(), match["pronunciation"].strip()
+    if _plain(pronunciation) == _plain(translation):  # "Ich bin zu spät. (Ich bin zu spät)"
+        pronunciation = ""
+    return translation, pronunciation
+
+
+def _ask(text: str, language: str, config: Config, model: str | None) -> dict:
+    """Ask the translation model; if it isn't downloaded, the main model."""
+    try:
+        # A separate translation model is let go of a minute later, rather
+        # than staying loaded next to the main model: two 3-4B models on
+        # an 8 GB graphics card left too little room (measured: every
+        # request several times slower).
+        return chat(config, [{"role": "user", "content": f"Translate into {language}: {text}"}], system=_SYSTEM,
+                    options={"temperature": 0}, model=model, keep_alive="1m" if model else None)
+    except egress.RequestError as error:
+        if model is None or getattr(error.response, "status_code", None) != 404:
+            raise
+        log.warning("Translation model %s isn't downloaded (ollama pull %s); using %s",
+                    model, model, config.ollama.model)
+        return _ask(text, language, config, None)
 
 
 def handle_translate(target: str, registry: Registry, tts: TtsWorker, log: logging.Logger,
@@ -95,6 +124,10 @@ def _translate_and_say(text: str, language: str, tts: TtsWorker, log: logging.Lo
     except egress.NetworkUnreachable:
         tts.say("I can't reach the local AI right now.")
         return HandlerResult()
+    except egress.RequestError:
+        log.warning("Translation failed", exc_info=True)
+        tts.say("Something went wrong translating that.")
+        return HandlerResult()
     except Exception:
         log.warning("Translation failed", exc_info=True)
         tts.say("Something went wrong translating that.")
@@ -103,8 +136,8 @@ def _translate_and_say(text: str, language: str, tts: TtsWorker, log: logging.Lo
         tts.say("I couldn't translate that.")
         return HandlerResult()
     log.info("Translated %s into %s", said(text), language)
-    reply = f"In {language}: {translation}"
-    if pronunciation and pronunciation.lower() != translation.lower():
-        reply += f". It's pronounced {pronunciation}"
+    reply = f"In {language}: {translation.rstrip('.')}"
+    if pronunciation:
+        reply += f". It's pronounced {pronunciation.rstrip('.')}"
     tts.say(reply + ("" if reply.endswith((".", "!", "?", "。")) else "."))
     return HandlerResult()

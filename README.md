@@ -40,9 +40,10 @@ about 1,000 tests, run on Windows CI. See
 ### Measured
 
 From the end of a spoken command to the first word of the reply, Ash
-takes about **2.8 seconds** on a 6-core desktop CPU (Ryzen 5 5600, no
-GPU). Measured with `scripts/benchmark.py`: 30 runs of 10 offline
-commands, spoken by a Windows voice.
+takes about **2.8 seconds**, with speech recognition running on a 6-core
+desktop CPU (Ryzen 5 5600; it doesn't use the graphics card). Measured
+with `scripts/benchmark.py`: 30 runs of 10 offline commands, spoken by a
+Windows voice.
 
 | Stage | Median |
 |---|---|
@@ -422,8 +423,11 @@ mean" — no cloud, no account, runs entirely on your PC via
 [Ollama](https://ollama.com):
 
 1. Install Ollama (separate installer, not a pip package) from
-   https://ollama.com — it runs as a local background server.
-2. Pull a model: `ollama pull llama3.2` (a few GB, one-time).
+   https://ollama.com (or `winget install Ollama.Ollama`). It runs as a
+   local background server.
+2. Pull the model: `ollama pull llama3.2` (2 GB, one-time).
+3. For translation, optionally `ollama pull gemma3:4b` (3.4 GB). See
+   "Translation" below for why.
 
 That's it — no config change needed. With `ollama.enabled: auto` (the
 default), Ash uses the local-AI features whenever Ollama is running with
@@ -434,8 +438,11 @@ login) is picked up without a restart. Ash prints whether local AI is on
 when it starts, and "run diagnostics" reports it too. Set
 `ollama.enabled: true` or `false` to force it on or off instead.
 
-Replies can take a few seconds on CPU — Ash says "Let me think" while it
-waits. It
+Replies take a few seconds; Ash says "Let me think" while it waits.
+Measured on an RTX 4060 (8 GB): about 2.5 seconds once the model is
+loaded. The first request after Ollama loads the model is slower, so Ash
+gets the model ready in the background when it starts. On a PC without a
+graphics card Ollama runs on the CPU and is several times slower. It
 remembers the last few exchanges, so a follow-up like "what's its
 population" after "what's the capital of France" works; say "stop" to
 end the conversation early.
@@ -462,23 +469,54 @@ Whatever the model asks for is checked before anything runs. It must be
 a command it was offered, with a text target; if any call in a plan is
 invalid, none of them run. Commands it picks still ask for confirmation
 exactly as when spoken. Normal commands never wait for the model: this
-only runs when the phrase parser didn't understand. The model reads
-about 4,000 tokens of command descriptions per request; Ollama reuses
-them between requests, so only the first one after the model loads is
-slow.
+only runs when the phrase parser didn't understand.
+
+How well it works, measured with llama3.2 on an RTX 4060, on a small set
+I wrote (16 loose phrasings, including small talk that should be left
+alone, and 3 multi-step requests):
+- **Loose phrasing: 12 of 16 right**, about 2.5 to 3 seconds each.
+  "Make it a bit quieter" turned the volume down, "power off the
+  computer" asked to shut down, and "tell me a joke" was left to
+  conversation. Misses included "wake me up in 20 minutes" (no command)
+  and "jot this down" (chose file search).
+- **Multi-step requests: 3 of 3 right.**
+
+Two settings made a large difference:
+- **Temperature 0.** At Ollama's default, the same sentence chose a
+  different command on different tries.
+- **One context size for every request.** Mixing sizes made Ollama
+  reload the model each time, up to 47 seconds.
+
+The model reads about 3,700 tokens of command descriptions per request.
+Ollama reuses them between requests, and Ash has the model read them
+once, in the background, when it starts.
 
 ### Translation
 
 "translate good morning to Japanese", "how do you say thank you in
 Spanish". The local AI translates on this PC, so what you translate
-never leaves it. For languages not written in the Latin alphabet, Ash
-adds how to say it ("In Japanese: おはようございます. It's pronounced
-ohayou gozaimasu"), because the Windows voice can't read other scripts
-aloud. The window shows the script itself. If you don't say a language
-Ash knows, it asks which one, so "translate meet me in Paris" doesn't
-end up translated into "Paris". How good the translation is depends on
-the model: llama3.2 is fine for everyday phrases, and a larger model
-does better.
+never leaves it. Ash adds how to say it ("In Japanese: おはようございます.
+It's pronounced Ohayō gozaimasu"), because the Windows voice can't read
+other scripts aloud; the window shows the script itself. If you don't
+say a language Ash knows, it asks which one, so "translate meet me in
+Paris" doesn't end up translated into "Paris".
+
+**Which model translates matters a lot.** On 10 everyday phrases in 8
+languages:
+- **llama3.2 (3B)** got most non-European ones wrong. "Good morning" in
+  Japanese came back garbled, "how are you" in Tagalog as "Kailan ka?"
+  ("when are you?"), and even Spanish as "Gracias mucho".
+- **Gemma 3 (4B)** got all 10 right ("Kumusta ka?", "Maraming salamat
+  po", "这多少钱？"), at about 3 seconds each on an RTX 4060.
+
+So Ash translates with `gemma3:4b` if it's downloaded
+(`ollama pull gemma3:4b`), and with the main model otherwise. Gemma 3
+can't call Ash's commands (Ollama doesn't support tools for it), so it
+doesn't replace llama3.2. To leave room for llama3.2 on the graphics
+card, Gemma is unloaded a minute after each translation; with both
+loaded, an 8 GB card slowed every request down several times. Set
+`ollama.translation_model` to choose another model, or `null` to use the
+main one.
 
 ### Persistent memory
 

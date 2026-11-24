@@ -26,6 +26,21 @@
   error rate from 12.6% to 5.7%, and raised commands run correctly from
   86% to 94%, for about 0.1 s. Whisper small stays the default: the
   smaller models get about 1 command in 4 wrong.
+- **Local AI tested with real Ollama** (RTX 4060):
+  - Choosing commands now uses temperature 0. At the default, the same
+    sentence picked different commands.
+  - Every request uses one context size. Mixing sizes made Ollama reload
+    the model, up to 47 s.
+  - Ash warms the model up in the background at startup.
+  - Loose phrasing: 12 of 16 right, about 2.5–3 s each. Multi-step
+    requests: 3 of 3.
+- **Translation uses Gemma 3 (4B) when it's downloaded.** It got 10 of
+  10 test phrases right; llama3.2 got most non-European ones wrong.
+  Gemma is unloaded a minute after use, to leave the graphics card to
+  the main model. Translation is plain text now (as JSON, llama3.2
+  returned empty Japanese), with a pronunciation for every language.
+- Clearer descriptions for the screenshot and note commands. They're
+  what the local AI reads when choosing a command.
 - Wording found by the study now works: "what is …" for every "what's …"
   command, "goto sleep", "search browser for …", and "set the timer for …".
 

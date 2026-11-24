@@ -158,6 +158,12 @@ class OllamaConfig(BaseModel):
     # ITSELF is text-only) are a different, usually larger download.
     # Only used for "what's on my screen"-style requests.
     vision_model: str = "llama3.2-vision"
+    # Translation only. Measured: llama3.2 (3B) got most non-European
+    # phrases wrong ("good morning" in Japanese came back garbled); Gemma 3
+    # 4B got all 10 test phrases right, at ~3 s each on a GPU. If it isn't
+    # downloaded (ollama pull gemma3:4b), `model` is used instead; set to
+    # null to always use `model`.
+    translation_model: str | None = "gemma3:4b"
     system_prompt: str = (
         "You are Ash, a local voice assistant running entirely offline on "
         "the user's PC. Keep answers brief (1-3 sentences) since they will "

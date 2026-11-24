@@ -22,6 +22,12 @@ from ash.utils.ollama import chat
 
 _TARGET = {"type": "string", "description": "What it acts on, in the user's words."}
 
+# Picking a command is a decision, not creative writing: at Ollama's
+# default temperature (0.8) the same sentence was measured mapping to
+# volume down one time and brightness down the next. (The context window
+# is set for every request, in ollama.chat.)
+_OPTIONS = {"temperature": 0}
+
 
 def tool_definitions(intents: tuple[str, ...]) -> list[dict]:
     """One function per command: its name, what it does, an example, and
@@ -67,7 +73,7 @@ def plan(text: str, config: Config, intents: tuple[str, ...], system: str,
     chose none -- or if any call is invalid, in which case none of them
     run (a half-understood request is safer ignored than half-done)."""
     message = chat(config, [{"role": "user", "content": text}], system=system,
-                   tools=tool_definitions(intents), timeout=timeout)
+                   tools=tool_definitions(intents), options=_OPTIONS, timeout=timeout)
     calls = message.get("tool_calls") or []
     commands = []
     for call in calls:
@@ -78,3 +84,17 @@ def plan(text: str, config: Config, intents: tuple[str, ...], system: str,
             return None
         commands.append(ParsedCommand(intent=name, target=target.strip()))
     return commands or None
+
+
+def warm_up(config: Config) -> None:
+    """Load the model and have it read the tool list once, in the
+    background at startup. Measured: the first request after the model
+    loads took 8 to 20+ seconds (longer than the fallback waits); later
+    ones about 2.5 s on a GPU, because Ollama reuses the unchanged start
+    of the prompt."""
+    from ash.actions.semantic_fallback import _SYSTEM
+
+    try:
+        plan("hello", config, skills.classifiable_intents(), _SYSTEM, timeout=120)
+    except Exception:
+        pass  # only ever a head start

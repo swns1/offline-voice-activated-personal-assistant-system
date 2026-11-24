@@ -77,17 +77,23 @@ def _probe(host: str, model: str) -> str:
 
 
 CHAT_TIMEOUT_SECONDS = 60.0  # CPU inference on a long answer can take a while
+# One context size for every request. Ollama loads a model for a given
+# context size, so mixing sizes (8192 for tool calls, the 4096 default
+# for everything else) reloads the model on each switch: measured at up
+# to 47 s. 8192 leaves room for the ~3,700-token tool list.
+CONTEXT_TOKENS = 8192
 
 
 def chat(config: Config, messages: list[dict], *, system: str | None = None, format: str | dict | None = None,
-         tools: list[dict] | None = None, timeout: float = CHAT_TIMEOUT_SECONDS) -> dict:
+         tools: list[dict] | None = None, options: dict | None = None, model: str | None = None,
+         keep_alive: str | None = None, timeout: float = CHAT_TIMEOUT_SECONDS) -> dict:
     """One /api/chat call to the configured model, through the network
     gate (a local server never leaves the PC; one on another machine is
     the "AI server" online feature). Returns the reply message: its
     "content", and "tool_calls" if `tools` were offered. Raises on
     failure (egress.NetworkUnreachable if Ollama isn't running)."""
     payload: dict = {
-        "model": config.ollama.model,
+        "model": model or config.ollama.model,
         "messages": ([{"role": "system", "content": system}] if system else []) + messages,
         "stream": False,
     }
@@ -95,6 +101,9 @@ def chat(config: Config, messages: list[dict], *, system: str | None = None, for
         payload["format"] = format
     if tools:
         payload["tools"] = tools
+    payload["options"] = {"num_ctx": CONTEXT_TOKENS, **(options or {})}
+    if keep_alive is not None:  # how long the model stays loaded afterwards (Ollama's default: 5 minutes)
+        payload["keep_alive"] = keep_alive
     response = egress.post(f"{config.ollama.host}/api/chat", feature=egress.LOCAL_AI.key, json=payload,
                            timeout=timeout)
     response.raise_for_status()

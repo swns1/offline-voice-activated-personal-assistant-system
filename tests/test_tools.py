@@ -34,3 +34,21 @@ def test_an_invalid_call_cancels_the_whole_plan(monkeypatch):
         {"function": {"name": "not_a_command", "arguments": {}}},
     ]})
     assert tools.plan("x", None, ("media_pause",), "", 1) is None
+
+
+def test_choosing_a_command_is_deterministic(monkeypatch):
+    seen = {}
+
+    def fake_chat(config, messages, **kwargs):
+        seen.update(kwargs)
+        return {"tool_calls": [{"function": {"name": "media_pause", "arguments": {}}}]}
+    monkeypatch.setattr(tools, "chat", fake_chat)
+    assert tools.plan("hush", None, ("media_pause",), "", 1)[0].intent == "media_pause"
+    assert seen["options"]["temperature"] == 0
+
+
+def test_warm_up_never_raises(monkeypatch):
+    def unreachable(*args, **kwargs):
+        raise OSError("refused")
+    monkeypatch.setattr(tools, "chat", unreachable)
+    tools.warm_up(None)

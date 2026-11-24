@@ -354,7 +354,7 @@ SKILLS: list[Skill] = [
         classifiable=True,
     ),
     Skill(
-        "screenshot", handle_screenshot, SYSTEM, "Take a screenshot (saved to Pictures, Screenshots).",
+        "screenshot", handle_screenshot, SYSTEM, "Save a picture of your screen (a screenshot) to your Pictures folder.",
         examples=("take a screenshot",),
         phrases=("take a screenshot", "take a screen shot", "screenshot", "capture my screen", "capture the screen",
                  "grab a screenshot"),
@@ -425,7 +425,7 @@ SKILLS: list[Skill] = [
 
     # --- timers, reminders and routines --------------------------------------
     Skill(
-        "timer_set", handle_timer_set, TIMERS, "Set a timer.",
+        "timer_set", handle_timer_set, TIMERS, "Set a countdown timer that rings after a while.",
         examples=("set a timer for 10 minutes",),
         verbs=("set a timer for", "set the timer for", "set timer for", "start a timer for",
                "start the timer for", "timer for", "set an alarm for", "set the alarm for", "set alarm for",
@@ -568,7 +568,7 @@ SKILLS: list[Skill] = [
 
     # --- notes and lists --------------------------------------------------------------------
     Skill(
-        "note_add", handle_note_add, NOTES, "Take a note.",
+        "note_add", handle_note_add, NOTES, "Write down a note you dictate (take a note, jot something down).",
         examples=("take a note buy flowers for mom",),
         verbs=("take a note", "make a note", "add a note", "take note", "note that", "write down", "jot down"),
         chainable=True, classifiable=True,
@@ -591,7 +591,7 @@ SKILLS: list[Skill] = [
         chainable=True, classifiable=True,
     ),
     Skill(
-        "list_read", handle_list_read, NOTES, "Read a list.",
+        "list_read", handle_list_read, NOTES, "Read out a list, such as your shopping list.",
         examples=("what's on my shopping list",),
         verbs=("what's on my", "whats on my", "what is on my", "read my", "read me my", "show me my"),
         classifiable=True,
