@@ -31,10 +31,30 @@ def handlers() -> dict[str, Handler]:
     return {skill.intent: skill.handler for skill in all_skills()}
 
 
+def _spellings(phrase: str) -> list[str]:
+    """A phrase as written in the catalog, plus how speech-to-text may
+    spell it: Whisper writes "what's my city" as "what is my city" as
+    often as not (found by scripts/stt_accuracy.py)."""
+    spellings = [phrase]
+    for short, long in (("what's ", "what is "), ("whats ", "what is ")):
+        if phrase.startswith(short):
+            spellings.append(long + phrase[len(short):])
+    return spellings
+
+
 @cache
 def bare_phrases() -> dict[str, str]:
-    """Whole-utterance phrase -> intent."""
-    return {phrase: skill.intent for skill in all_skills() for phrase in skill.phrases}
+    """Whole-utterance phrase -> intent. A phrase written explicitly in
+    the catalog wins over another phrase's alternative spelling."""
+    phrases: dict[str, str] = {}
+    for skill in all_skills():
+        for phrase in skill.phrases:
+            for spelling in _spellings(phrase)[1:]:
+                phrases.setdefault(spelling, skill.intent)
+    for skill in all_skills():
+        for phrase in skill.phrases:
+            phrases[phrase] = skill.intent
+    return phrases
 
 
 @cache
@@ -43,7 +63,9 @@ def verb_phrases() -> tuple[tuple[str, str], ...]:
     utterance starts with wins, so "search in browser for X" beats
     "search X" and "run my X routine" beats "run X" without any
     hand-maintained ordering."""
-    pairs = [(verb, skill.intent) for skill in all_skills() for verb in skill.verbs]
+    explicit = {verb for skill in all_skills() for verb in skill.verbs}
+    pairs = [(spelling, skill.intent) for skill in all_skills() for verb in skill.verbs
+             for spelling in _spellings(verb) if spelling == verb or spelling not in explicit]
     return tuple(sorted(pairs, key=lambda pair: len(pair[0]), reverse=True))
 
 

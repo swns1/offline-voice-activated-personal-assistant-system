@@ -40,3 +40,13 @@ def test_summary():
     assert summary.clips == 2 and summary.command_accuracy == 0.5
     assert summary.wer == pytest.approx(1 / 3)
     assert percentile([3, 1, 2], 0.5) == 2 and percentile([], 0.9) == 0.0
+
+
+def test_found_in_the_accuracy_study():
+    """Transcripts from a real recording session that ran the right
+    command but were scored as misses."""
+    assert same_command("remind me at 3pm to call mom", "Remind me at 3 p.m. to call mom.")
+    assert same_command("go to sleep", "Goto Sleep")
+    assert same_command("search in browser for pizza near me", "Searching browser for pizza near me.")
+    assert same_command("open Spotify", "OPEN SPATIFY")       # app names match fuzzily
+    assert not same_command("close Discord", "Close this cord.")

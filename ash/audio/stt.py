@@ -14,6 +14,7 @@ to the network log like any other request.
 import numpy as np
 from faster_whisper import WhisperModel
 
+from ash.audio.vocabulary import hotwords
 from ash.privacy import egress
 
 SAMPLE_RATE = 16_000
@@ -31,12 +32,14 @@ def load_whisper_model(model_size: str, device: str, compute_type: str) -> Whisp
 
 class SpeechToText:
     def __init__(self, model_size: str = "small", device: str = "cpu",
-                 compute_type: str = "int8"):
+                 compute_type: str = "int8", command_hints: bool = True):
         self._model = load_whisper_model(model_size, device, compute_type)
+        # Ash's command words, as Whisper hotwords (see ash/audio/vocabulary.py).
+        self._hotwords = hotwords() if command_hints else None
 
     def transcribe(self, audio: np.ndarray, initial_prompt: str | None = None) -> str:
         """audio: mono float32 PCM at SAMPLE_RATE."""
         segments, _info = self._model.transcribe(
-            audio, language="en", initial_prompt=initial_prompt
+            audio, language="en", initial_prompt=initial_prompt, hotwords=self._hotwords,
         )
         return " ".join(segment.text.strip() for segment in segments).strip()

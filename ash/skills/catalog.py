@@ -145,7 +145,9 @@ SKILLS: list[Skill] = [
     Skill(
         "browser_search", handle_browser_search, SEARCH, "Open a web search in your browser.",
         examples=("search in browser for pizza near me",),
-        verbs=("search in browser for", "browser search for", "search the web for"),
+        # "searching browser for": how Whisper often hears "search in browser for".
+        verbs=("search in browser for", "search browser for", "searching browser for", "browser search for",
+               "search the web for"),
         classifiable=True,
     ),
 

@@ -28,6 +28,7 @@ def normalize(text: str) -> list[str]:
     digits, and "%" as "percent"."""
     text = text.lower().replace("%", " percent ")
     text = re.sub(r"[^\w\s']", " ", text)
+    text = re.sub(r"(\d)([a-z])", r"\1 \2", text)  # "3pm" and "3 pm" are the same words
     return [_NUMBER_WORDS.get(word, word) for word in text.split()]
 
 
@@ -58,10 +59,23 @@ def word_error_rate(references: list[str], hypotheses: list[str]) -> float:
     return errors / words if words else 0.0
 
 
+# App names are matched fuzzily by Ash (ash/nlu/matcher.py), so "open
+# Spatify" still opens Spotify; this similarity approximates that.
+_APP_NAME_SIMILARITY = 80
+
+
 def same_command(reference: str, hypothesis: str) -> bool:
-    """Would the transcript run the same command, with the same target?"""
+    """Would the transcript run the same command, with the same target?
+    Strict about the words of the target, except app names, which Ash
+    matches fuzzily."""
     expected, heard = parse(reference), parse(hypothesis)
-    return expected.intent == heard.intent and normalize(expected.target) == normalize(heard.target)
+    if expected.intent != heard.intent:
+        return False
+    if expected.intent in ("open", "close_app"):
+        from rapidfuzz import fuzz
+
+        return fuzz.ratio(" ".join(normalize(expected.target)), " ".join(normalize(heard.target))) >= _APP_NAME_SIMILARITY
+    return normalize(expected.target) == normalize(heard.target)
 
 
 @dataclass(frozen=True)

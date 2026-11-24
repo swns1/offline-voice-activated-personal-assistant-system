@@ -51,9 +51,35 @@ commands, spoken by a Windows voice.
 | Understanding and running the command | 0.1 ms |
 | Start of the spoken reply (Windows voice) | 45 ms |
 
-Speech recognition is most of the wait. `scripts/stt_accuracy.py`
-measures the trade-off between model size, speed and accuracy on a real
-user's voice.
+Speech recognition is most of the wait, so it was worth checking
+whether a smaller, faster model would do. `scripts/stt_accuracy.py`
+recorded one speaker saying 50 of Ash's commands, then ran each
+Whisper model size on them, with and without **command hints**: Ash's
+command words given to Whisper as hotwords (`ash/audio/vocabulary.py`).
+
+| Whisper model | Word error rate | Commands run correctly | Median time per command |
+|---|---|---|---|
+| tiny | 17.1% | 72% | 0.29 s |
+| tiny + command hints | 16.0% | 78% | 0.30 s |
+| base + command hints | 13.7% | 76% | 0.59 s |
+| small | 12.6% | 86% | 1.82 s |
+| **small + command hints (what Ash uses)** | **5.7%** | **94%** | 1.94 s |
+
+"Commands run correctly" is stricter than it sounds: the same command,
+with the same words for what it acts on (app names are compared
+fuzzily, as Ash matches them). The smaller models are 3 to 6 times
+faster but get about 1 command in 4 wrong, so Ash keeps small. The
+hints more than halve its word errors for about 0.1 s more. Short
+command words were the problem: "pause" heard as "boss", "list" as
+"lease", "city" as "CT". Two of the three remaining misses were
+recordings where the phrase was said twice. The study also found
+wording Ash didn't accept ("what is my city", "goto sleep", "set the
+timer for"); those are fixed. Free-form sentences (searches, notes)
+transcribed the same with and without the hints.
+
+Limits: one speaker and 50 short commands. Record your own with
+`scripts/stt_accuracy.py`, which keeps the recordings in a folder you
+choose.
 
 ## Privacy
 

@@ -20,7 +20,14 @@
   calling), generated from the command list. This is used for loose
   phrasing and multi-step requests. Every call is validated, and
   confirmations still apply.
-- "set the timer for …" now works as well as "set a timer for …".
+- **Speech recognition accuracy, measured and improved.** 50 recordings
+  of a real user saying Ash's commands, run through each Whisper model
+  size. Giving Whisper Ash's command words as hotwords cut the word
+  error rate from 12.6% to 5.7%, and raised commands run correctly from
+  86% to 94%, for about 0.1 s. Whisper small stays the default: the
+  smaller models get about 1 command in 4 wrong.
+- Wording found by the study now works: "what is …" for every "what's …"
+  command, "goto sleep", "search browser for …", and "set the timer for …".
 
 ### Desktop app
 

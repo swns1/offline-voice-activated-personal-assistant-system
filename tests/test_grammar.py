@@ -337,3 +337,13 @@ def test_polite_phrasing_is_understood(said, intent, target):
 @pytest.mark.parametrize("said, intent", [("Thank you.", "thanks"), ("thanks", "thanks"), ("please", "open")])
 def test_politeness_alone_is_not_stripped_to_nothing(said, intent):
     assert parse(said).intent == intent
+
+
+def test_what_is_spelled_out_reaches_the_same_command():
+    """Whisper writes "what's my city" as "what is my city" (found by
+    scripts/stt_accuracy.py on real recordings)."""
+    from ash.nlu.grammar import parse
+    for short, long in [("what's my city", "what is my city"), ("what's playing", "what is playing"),
+                        ("what's the weather tomorrow", "what is the weather tomorrow")]:
+        assert parse(long) == parse(short)
+    assert parse("what is the eiffel tower").intent == "search"  # questions still search

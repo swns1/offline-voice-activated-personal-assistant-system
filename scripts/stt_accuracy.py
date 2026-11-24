@@ -11,6 +11,9 @@ reports, per model:
   misheard names ("open Spatifi" -> Spotify).
 - time per command on this PC (median and 90th percentile)
 
+Each model is run twice: as is, and with Ash's command words given to
+Whisper as hotwords, which is how Ash runs it (ash/audio/vocabulary.py).
+
 Your recordings stay in the folder you choose (never in Ash's data
 folder) with a manifest.json of what each clip says. Delete the folder
 when you're done.
@@ -115,21 +118,23 @@ def evaluate(folder: Path, models: list[str], report_path: Path | None) -> None:
     clips = [(read_wav(folder / name), text, name) for name, text in sorted(manifest.items())]
     rows, details = [], []
     for size in models:
-        print(f"Whisper {size}: loading...", flush=True)
-        stt = SpeechToText(model_size=size)
-        stt.transcribe(clips[0][0])  # warm-up, not timed
-        heard, seconds = [], []
-        for audio, text, name in clips:
-            start = time.perf_counter()
-            transcript = stt.transcribe(audio)
-            seconds.append(time.perf_counter() - start)
-            heard.append(transcript)
-            details.append({"model": size, "clip": name, "said": text, "heard": transcript,
-                            "same_command": same_command(text, transcript)})
-        summary = summarize([text for _, text, _ in clips], heard, seconds)
-        rows.append((size, summary))
-        print(f"  WER {summary.wer:.1%}, command accuracy {summary.command_accuracy:.1%}, "
-              f"median {summary.median_seconds:.2f} s")
+        for hints in (False, True):
+            label = f"{size} + command hints" if hints else size
+            print(f"Whisper {label}: loading...", flush=True)
+            stt = SpeechToText(model_size=size, command_hints=hints)
+            stt.transcribe(clips[0][0])  # warm-up, not timed
+            heard, seconds = [], []
+            for audio, text, name in clips:
+                start = time.perf_counter()
+                transcript = stt.transcribe(audio)
+                seconds.append(time.perf_counter() - start)
+                heard.append(transcript)
+                details.append({"model": label, "clip": name, "said": text, "heard": transcript,
+                                "same_command": same_command(text, transcript)})
+            summary = summarize([text for _, text, _ in clips], heard, seconds)
+            rows.append((label, summary))
+            print(f"  WER {summary.wer:.1%}, command accuracy {summary.command_accuracy:.1%}, "
+                  f"median {summary.median_seconds:.2f} s")
 
     table = ["| Model | Clips | Word error rate | Command accuracy | Median time | 90th percentile |",
              "|---|---|---|---|---|---|"]

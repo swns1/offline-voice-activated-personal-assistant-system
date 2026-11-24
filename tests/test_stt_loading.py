@@ -3,6 +3,7 @@ this PC; the one-time first download is gated and logged
 (ash/audio/stt.py)."""
 import logging
 
+import numpy as np
 import pytest
 
 from ash.actions import privacy_controls
@@ -69,3 +70,32 @@ def test_model_downloads_are_not_a_voice_toggle():
     tts = _Tts()
     privacy_controls.handle_disallow("model downloads", Registry(), tts, logging.getLogger("t"), Config())
     assert "only happens once" in tts.said[-1]
+
+
+# --- command hints ---------------------------------------------------------------------
+
+class _Segment:
+    text = " Pause Spotify. "
+
+
+def _capture_transcribe(monkeypatch):
+    seen = {}
+
+    def transcribe(self, audio, **kwargs):
+        seen.update(kwargs)
+        return [_Segment()], None
+    monkeypatch.setattr(FakeWhisper, "transcribe", transcribe, raising=False)
+    return seen
+
+
+def test_whisper_is_given_ashs_command_words(monkeypatch):
+    seen = _capture_transcribe(monkeypatch)
+    assert stt.SpeechToText().transcribe(np.zeros(16000, dtype=np.float32)) == "Pause Spotify."
+    assert "pause" in seen["hotwords"].split() and "Spotify" in seen["hotwords"].split()
+    assert seen["language"] == "en"
+
+
+def test_command_hints_can_be_switched_off(monkeypatch):
+    seen = _capture_transcribe(monkeypatch)
+    stt.SpeechToText(command_hints=False).transcribe(np.zeros(16000, dtype=np.float32))
+    assert seen["hotwords"] is None

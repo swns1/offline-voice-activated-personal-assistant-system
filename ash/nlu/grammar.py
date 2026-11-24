@@ -95,5 +95,6 @@ def _normalize(text: str) -> str:
     text = re.sub(r"[^\w\s'%+*/^×÷.:,\-]", "", text)
     text = re.sub(r"(?<!\d)[.:]|[.:](?!\d)", "", text)  # "." and ":" only inside numbers
     text = re.sub(r"-(?!\s*\d)", "", text)              # "-" only as a minus sign
+    text = re.sub(r"\bgoto\b", "go to", text)        # Whisper's spelling of "go to"
     text = re.sub(r"\s+", " ", text)
     return text.strip()
