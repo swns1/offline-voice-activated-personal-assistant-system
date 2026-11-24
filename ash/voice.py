@@ -39,7 +39,7 @@ class VoiceLoop:
         """Loads the speech models (a few seconds). Raises
         ash.privacy.egress.OfflineModeError if the speech-recognition
         model still has to be downloaded and offline mode is on."""
-        stt = SpeechToText()
+        stt = SpeechToText(model_size=config.speech.model, device=config.speech.device)
         wake_detector = WakeWordDetector(keyword=config.wake_word.keyword, threshold=config.wake_word.threshold)
         tts = core.tts
         listener = ContinuousListener(

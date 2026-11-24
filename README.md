@@ -40,25 +40,40 @@ about 1,000 tests, run on Windows CI. See
 ### Measured
 
 From the end of a spoken command to the first word of the reply, Ash
-takes about **2.8 seconds**, with speech recognition running on a 6-core
-desktop CPU (Ryzen 5 5600; it doesn't use the graphics card). Measured
-with `scripts/benchmark.py`: 30 runs of 10 offline commands, spoken by a
-Windows voice.
+takes about **1.1 seconds** with speech recognition on an NVIDIA
+graphics card (RTX 4060), or **2.8 seconds** on the processor alone
+(Ryzen 5 5600, 6 cores). Measured with `scripts/benchmark.py`: 30 runs
+of 10 offline commands, spoken by a Windows voice.
 
-| Stage | Median |
-|---|---|
-| Waiting for 900 ms of silence (`audio.silence_ms`) | 900 ms |
-| Speech to text (Whisper small, int8, CPU) | 1.8 s |
-| Understanding and running the command | 0.1 ms |
-| Start of the spoken reply (Windows voice) | 45 ms |
+| Stage | Median, GPU | Median, CPU only |
+|---|---|---|
+| Waiting for 900 ms of silence (`audio.silence_ms`) | 900 ms | 900 ms |
+| Speech to text (Whisper small) | **139 ms** | 1.8 s |
+| Understanding and running the command | 0.1 ms | 0.1 ms |
+| Start of the spoken reply (Windows voice) | 47 ms | 45 ms |
 
-Speech recognition is most of the wait, so it was worth checking
-whether a smaller, faster model would do. `scripts/stt_accuracy.py`
+On the GPU, most of the remaining wait is the pause Ash waits for to be
+sure you've finished; `audio.silence_ms` sets it. The graphics card is
+used automatically if it can be (`speech.device: auto`). It needs one
+optional install:
+
+```
+.venv\Scripts\pip install -r requirements-gpu.txt
+```
+
+That's NVIDIA's cuBLAS library, about 900 MB, only useful with an NVIDIA
+card. Without it, or if anything goes wrong on the GPU, Ash uses the
+processor, as before. `--selftest` says which one is in use. On the
+same 50 recordings, the GPU (int8_float16) got the same 94% of commands
+right as the CPU.
+
+On the processor, speech recognition was most of the wait, so it was
+worth checking whether a smaller, faster model would do. `scripts/stt_accuracy.py`
 recorded one speaker saying 50 of Ash's commands, then ran each
 Whisper model size on them, with and without **command hints**: Ash's
 command words given to Whisper as hotwords (`ash/audio/vocabulary.py`).
 
-| Whisper model | Word error rate | Commands run correctly | Median time per command |
+| Whisper model | Word error rate | Commands run correctly | Median time per command (CPU) |
 |---|---|---|---|
 | tiny | 17.1% | 72% | 0.29 s |
 | tiny + command hints | 16.0% | 78% | 0.30 s |

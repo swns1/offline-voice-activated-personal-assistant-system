@@ -29,7 +29,7 @@ flowchart LR
 |---|---|---|
 | Wake word | `ash/audio/wake_word.py` | openWakeWord's pretrained `hey_jarvis` model, 80 ms frames |
 | Recording | `ash/audio/recorder.py` | WebRTC voice-activity detection cuts the command off after `audio.silence_ms` of silence. Also detects you talking over Ash (barge-in), and has a real microphone off switch that closes the audio stream. Audio stays in memory. |
-| Speech to text | `ash/audio/stt.py` | faster-whisper (Whisper `small`, int8 on CPU). Loaded with `local_files_only` so it never contacts Hugging Face after the one-time download. |
+| Speech to text | `ash/audio/stt.py`, `gpu.py` | faster-whisper (Whisper `small`) on an NVIDIA GPU when one can run it (int8_float16, ~140 ms per command), else the CPU (int8, ~1.9 s). It checks the GPU with a test transcription at startup and falls back to the CPU on any failure. Loaded with `local_files_only` so it never contacts Hugging Face after the one-time download. |
 | Understanding | `ash/nlu/grammar.py`, `ash/skills/` | Rule-based first (fast and predictable); the optional local AI only handles what the rules don't match |
 | Doing | `ash/actions/` | One module per area: apps, timers, notes, weather, media, privacy, ... |
 | Voice | `ash/audio/tts.py` | One speech thread (SAPI is COM, which isn't safe to call from arbitrary threads). The Windows voice, or optionally a Piper neural voice that runs on this PC. Piper plays a sentence while it generates the next, and falls back to Windows if it's unavailable. |

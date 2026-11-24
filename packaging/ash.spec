@@ -38,7 +38,9 @@ a = Analysis(
     hiddenimports=hiddenimports,
     # piper: the optional natural voice is GPL-licensed, and Ash's
     # release is MIT, so it's never bundled (users install it themselves).
-    excludes=["tkinter", "matplotlib", "IPython", "pytest", "piper"],
+    # nvidia: the optional GPU library for speech recognition (900 MB);
+    # the packaged app runs speech recognition on the CPU.
+    excludes=["tkinter", "matplotlib", "IPython", "pytest", "piper", "nvidia"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -115,6 +115,11 @@ and it's logged and blocked by offline mode.
     models (it goes through the same check as the window's first-run
     download: blocked in offline mode, and logged)
   - `ollama pull` downloads AI models (Ollama is a separate program)
+  - `pip install -r requirements-gpu.txt` (optional) downloads NVIDIA's
+    GPU library from PyPI
+- **Ollama itself** checks online for its own updates, under its own
+  settings. Ash's requests to Ollama never leave the PC. No Ollama
+  account is needed.
 - **"search in browser for …"** opens your web browser on a search
   page. From there your browser's own privacy settings apply.
 - **Outlook** syncs with your mail provider according to Outlook's own

@@ -71,6 +71,15 @@ security:
   # voice, especially on a short answer like a single word "yes").
   voice_match_threshold: 0.85
 
+speech:
+  # Whisper model size. "small" was chosen by measuring accuracy and speed
+  # on real recordings (README "Measured"); another size downloads once.
+  model: small
+  # auto: an NVIDIA graphics card if it can run Whisper (needs
+  # `pip install -r requirements-gpu.txt`), otherwise the CPU. Or cpu / cuda.
+  # Measured: 141 ms per command on an RTX 4060, 1,957 ms on a 6-core CPU.
+  device: auto
+
 voice:
   # windows: the built-in Windows voice. piper: a natural-sounding neural
   # voice that runs on this PC -- needs `pip install piper-tts` (it's

@@ -109,7 +109,7 @@ def make_synthetic(folder: Path, count: int) -> None:
     print(f"Made {len(manifest)} synthetic clips in {folder} (Windows voices, not yours).")
 
 
-def evaluate(folder: Path, models: list[str], report_path: Path | None) -> None:
+def evaluate(folder: Path, models: list[str], report_path: Path | None, device: str = "auto") -> None:
     from ash.audio.stt import SpeechToText
 
     manifest = _load_manifest(folder)
@@ -121,7 +121,7 @@ def evaluate(folder: Path, models: list[str], report_path: Path | None) -> None:
         for hints in (False, True):
             label = f"{size} + command hints" if hints else size
             print(f"Whisper {label}: loading...", flush=True)
-            stt = SpeechToText(model_size=size, command_hints=hints)
+            stt = SpeechToText(model_size=size, device=device, command_hints=hints)
             stt.transcribe(clips[0][0])  # warm-up, not timed
             heard, seconds = [], []
             for audio, text, name in clips:
@@ -166,6 +166,8 @@ def main() -> None:
     ev.add_argument("--clips", type=Path, required=True)
     ev.add_argument("--models", nargs="+", default=list(MODELS), help="e.g. tiny base small medium")
     ev.add_argument("--report", type=Path, help="also save the results table (Markdown) here")
+    ev.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto",
+                    help="where Whisper runs (auto: the NVIDIA GPU if it works)")
     args = parser.parse_args()
 
     if args.command == "record":
@@ -173,7 +175,7 @@ def main() -> None:
     elif args.command == "synthesize":
         make_synthetic(args.out, args.count)
     else:
-        evaluate(args.clips, args.models, args.report)
+        evaluate(args.clips, args.models, args.report, args.device)
 
 
 if __name__ == "__main__":

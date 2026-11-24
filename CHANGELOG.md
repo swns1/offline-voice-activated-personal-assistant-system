@@ -4,6 +4,13 @@
 
 ### Integrations and AI
 
+- **Speech recognition on an NVIDIA graphics card**, when available
+  (`speech.device: auto`; optional `requirements-gpu.txt`). Measured on
+  an RTX 4060: 139 ms per command instead of 1.8 s on the CPU, with the
+  same accuracy. End of speech to first word of the reply: 2.8 s → 1.1 s.
+  It falls back to the CPU if anything goes wrong. The model size is now
+  a setting (`speech.model`).
+
 - **Email through Outlook:** "check my email" says the unread count and
   who the latest emails are from, never the messages themselves. "Email
   Anna saying I'm running late" says exactly who, which address and

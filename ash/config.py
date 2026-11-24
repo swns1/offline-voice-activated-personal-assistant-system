@@ -172,6 +172,18 @@ class OllamaConfig(BaseModel):
     )
 
 
+class SpeechConfig(BaseModel):
+    # Whisper model size: tiny, base, small, medium, large-v3-turbo...
+    # "small" was chosen by measurement on real recordings (see README
+    # "Measured"); a different size downloads once when Ash next starts.
+    model: str = "small"
+    # "auto": an NVIDIA graphics card if it can run Whisper (needs
+    # `pip install -r requirements-gpu.txt`), else the CPU. "cpu" or
+    # "cuda" to choose. Measured: 141 ms per command on an RTX 4060,
+    # 1,957 ms on a 6-core CPU, same accuracy.
+    device: Literal["auto", "cpu", "cuda"] = "auto"
+
+
 class VoiceConfig(BaseModel):
     # "windows": the built-in Windows voice. "piper": a natural-sounding
     # neural voice, run on this PC -- an optional install (pip install
@@ -217,6 +229,7 @@ class Config(BaseModel):
     privacy: PrivacyConfig = PrivacyConfig()
     weather: WeatherConfig = WeatherConfig()
     voice: VoiceConfig = VoiceConfig()
+    speech: SpeechConfig = SpeechConfig()
     # Launch Ash automatically at login (via the Windows Registry Run
     # key -- see ash/utils/autostart.py). Applied on every startup, so
     # editing this and restarting Ash is enough; no separate script

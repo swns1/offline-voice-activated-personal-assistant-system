@@ -105,6 +105,11 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(files, "_downloads_dir", lambda: state_dir / "Downloads")
     from ash import setup_models
     monkeypatch.setattr(setup_models, "MODELS_DIR", state_dir / "models")
+
+    # The same results on every PC: speech recognition behaves as if
+    # there's no usable GPU unless a test says otherwise.
+    from ash.audio import gpu
+    monkeypatch.setattr(gpu, "cuda_available", lambda: False)
     monkeypatch.setattr(device, "_set_theme", _blocked_setting)
     monkeypatch.setattr(device, "set_brightness", _blocked_setting)
 

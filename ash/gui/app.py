@@ -153,7 +153,7 @@ def _ensure_models(bridge: CoreBridge, core, config: Config, log: logging.Logger
                       "Check wake_word.keyword in config.yaml. Typing still works.")
         return False
     piper_voice = config.voice.piper_voice if config.voice.engine == "piper" else None
-    missing = setup_models.missing_downloads(keyword, piper_voice=piper_voice)
+    missing = setup_models.missing_downloads(keyword, config.speech.model, piper_voice=piper_voice)
     if not missing:
         return True
 

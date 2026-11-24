@@ -42,16 +42,15 @@ def _wake_word(config: Config) -> str:
     return f"{config.wake_word.keyword} loaded"
 
 
-def _speech_recognition() -> str:
+def _speech_recognition(config: Config) -> str:
     from ash import setup_models
-    from ash.audio.stt import SAMPLE_RATE, load_whisper_model
+    from ash.audio.stt import SAMPLE_RATE, SpeechToText
 
-    if setup_models.whisper_model_missing():
+    if setup_models.whisper_model_missing(config.speech.model):
         raise RuntimeError("model not downloaded yet (Ash asks to download it when it starts)")
-    model = load_whisper_model(setup_models.WHISPER_MODEL, "cpu", "int8")
-    segments, _ = model.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32), language="en")
-    list(segments)
-    return f"Whisper {setup_models.WHISPER_MODEL} loaded"
+    stt = SpeechToText(model_size=config.speech.model, device=config.speech.device)
+    stt.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32))
+    return f"Whisper {config.speech.model} on the {'GPU' if stt.device == 'cuda' else 'CPU'}"
 
 
 def _piper_voice(config: Config) -> str:
@@ -101,7 +100,7 @@ def _window() -> str:
 def run_selftest(config: Config) -> list[Check]:
     checks = [
         _timed("Wake word", lambda: _wake_word(config)),
-        _timed("Speech recognition", _speech_recognition),
+        _timed("Speech recognition", lambda: _speech_recognition(config)),
         _timed("Voice output", _voice_output),
         *([_timed("Natural voice", lambda: _piper_voice(config))] if config.voice.engine == "piper" else []),
         _timed("Encryption", _encryption),

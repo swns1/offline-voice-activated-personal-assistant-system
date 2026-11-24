@@ -1,0 +1,7 @@
+# Optional: run speech recognition on an NVIDIA graphics card, about 14x
+# faster than the CPU (measured: 141 ms vs 1,957 ms per command). Needs an
+# NVIDIA card and driver; about 900 MB. Install on top of requirements.txt:
+#   .venv\Scripts\pip install -r requirements-gpu.txt
+# Ash finds it automatically (speech.device: auto). Without it, or without
+# an NVIDIA card, speech recognition runs on the CPU as before.
+nvidia-cublas-cu12

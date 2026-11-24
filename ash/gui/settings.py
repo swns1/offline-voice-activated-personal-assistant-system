@@ -63,6 +63,12 @@ GROUPS = (
         Setting("audio.barge_in_enabled", "Talk over Ash to interrupt it", "bool", restart=True,
                 tooltip="Turn off if Ash's own voice from your speakers interrupts it."),
     )),
+    Group("Speech recognition", (
+        Setting("speech.device", "Run it on", "choice", restart=True, options=(
+            ("Automatic: the graphics card if it can", "auto"), ("The processor (CPU)", "cpu"),
+            ("The NVIDIA graphics card", "cuda")),
+            tooltip="The graphics card needs 'pip install -r requirements-gpu.txt'. About 14x faster when it works."),
+    )),
     Group("Voice", (
         Setting("voice.engine", "Ash's voice", "choice", options=(
             ("Windows voice", "windows"), ("Natural voice (Piper, optional install)", "piper")),

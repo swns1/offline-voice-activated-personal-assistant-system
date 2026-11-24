@@ -122,6 +122,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model", default="small", help="Whisper model size (Ash uses small)")
     parser.add_argument("--repeat", type=int, default=3, help="times to run each command")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto",
+                        help="where speech recognition runs (auto: the NVIDIA GPU if it works)")
     parser.add_argument("--voice", choices=["windows", "piper"], default="windows",
                         help="which voice to time (piper needs piper-tts and the voice downloaded)")
     args = parser.parse_args()
@@ -143,7 +145,7 @@ def main() -> None:
 
     print(f"Loading Whisper {args.model}...")
     load_start = time.perf_counter()
-    stt = SpeechToText(model_size=args.model)
+    stt = SpeechToText(model_size=args.model, device=args.device)
     load_seconds = time.perf_counter() - load_start
     stt.transcribe(clips[0][1])  # warm-up, not timed
 
@@ -169,7 +171,9 @@ def main() -> None:
     silence = config.audio.silence_ms / 1000
     total = silence + statistics.median(stt_times) + statistics.median(dispatch_times) + statistics.median(tts_times)
     runs = args.repeat * len(COMMANDS)
-    print(f"\nEnd of speech to first spoken word, {runs} runs of {len(COMMANDS)} commands, Whisper {args.model}:\n")
+    where = "GPU" if stt.device == "cuda" else "CPU"
+    print(f"\nEnd of speech to first spoken word, {runs} runs of {len(COMMANDS)} commands, "
+          f"Whisper {args.model} on the {where}:\n")
     print("| Stage | Median (90th percentile) |")
     print("|---|---|")
     print(f"| End of speech (audio.silence_ms setting) | {silence * 1000:.0f} ms |")
