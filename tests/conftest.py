@@ -87,6 +87,8 @@ def _no_real_side_effects(monkeypatch, tmp_path):
     monkeypatch.setattr(memory, "MEMORY_PATH", state_dir / "memory.json")
     monkeypatch.setattr(timers, "TIMERS_STATE_PATH", state_dir / "timers.json")
     monkeypatch.setattr(voice_gate, "VOICEPRINT_PATH", state_dir / "voiceprint.json")
+    from ash.audio import personal_wake_word
+    monkeypatch.setattr(personal_wake_word, "PERSONAL_WAKE_WORD_PATH", state_dir / "wake_word.json")
     monkeypatch.setattr(notes, "NOTES_PATH", state_dir / "notes.json")
     monkeypatch.setattr(preferences, "PREFERENCES_PATH", state_dir / "preferences.json")
     monkeypatch.setattr(spotify, "_CACHE_PATH", state_dir / ".spotify_cache")

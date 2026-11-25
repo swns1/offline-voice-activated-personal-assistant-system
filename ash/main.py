@@ -79,7 +79,9 @@ def main(argv: list[str] | None = None) -> None:
             run_gui(config, log, minimized=args.minimized or config.gui.start_minimized)
             return
 
-    check_wake_word_models(config.wake_word.keyword)
+    from ash.audio.personal_wake_word import effective_keyword
+
+    check_wake_word_models(effective_keyword(config.wake_word.keyword))
     if config.tray.enabled:
         run_with_tray(lambda: run_console(config, log), log)
     else:

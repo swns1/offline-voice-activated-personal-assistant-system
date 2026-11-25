@@ -15,6 +15,10 @@ rapidfuzz
 # Phase 5: wake word (fully open-source, no account/API key)
 openwakeword
 
+# Training your own wake word on top of openWakeWord's audio embeddings
+# (scripts/train_wake_word.py); already installed with openwakeword
+scikit-learn
+
 # Phase 6-7: Steam/app discovery
 vdf
 

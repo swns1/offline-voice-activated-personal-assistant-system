@@ -46,3 +46,15 @@ class WakeWordDetector:
 
     def delete(self) -> None:
         pass  # no explicit resource cleanup needed
+
+
+def make_wake_detector(keyword: str, threshold: float = 0.5):
+    """Your personal wake word if `keyword` names one you trained (and its
+    model still exists), else a built-in or .onnx openWakeWord model --
+    falling back to "hey jarvis" if your personal model was deleted."""
+    from ash.audio import personal_wake_word
+
+    keyword = personal_wake_word.effective_keyword(keyword)
+    if personal_wake_word.is_personal(keyword):
+        return personal_wake_word.PersonalWakeWord(personal_wake_word.load_model())
+    return WakeWordDetector(keyword=keyword, threshold=threshold)

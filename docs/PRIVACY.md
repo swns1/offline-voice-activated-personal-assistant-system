@@ -38,6 +38,7 @@ list, or if the inventory lists something this table doesn't.
 | your city | `preferences.json` | the weather where you live (you tell Ash; it never works out your location) | until you change or delete it ("forget my city") | yes | yes | yes |
 | timers and reminders | `timers.json` | so pending timers and reminders survive a restart | until they go off or you cancel them | yes | yes | yes |
 | your voiceprint | `voiceprint.json` | checking it's really you before risky actions (only if voice-verified confirmation is on) | until you delete it | yes | listed only (biometric) | yes |
+| your wake word model | `wake_word.json` | recognising your own wake word ("Okay Ash"), if you trained one; derived from recordings of your voice, which Ash doesn't keep | until you delete it | yes | listed only (derived from your voice) | yes |
 | your Spotify login | `.spotify_cache` | controlling Spotify without signing in every time | until you delete it | yes | listed only (a secret) | yes |
 | your privacy choices | `privacy_state.json` | which online features you allowed, and offline mode | until you change or delete them | yes | yes | yes |
 | the network log | `network_log.json` | a record of when and where Ash went online, so you can check | 30 days | yes | yes | yes |

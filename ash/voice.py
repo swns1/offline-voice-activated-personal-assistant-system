@@ -10,7 +10,7 @@ import logging
 
 from ash.audio.recorder import ContinuousListener
 from ash.audio.stt import SpeechToText
-from ash.audio.wake_word import WakeWordDetector
+from ash.audio.wake_word import make_wake_detector
 from ash.config import Config
 from ash.core import STATUS_LISTENING, STATUS_MIC_OFF, STATUS_READY, STATUS_TRANSCRIBING, VOICE, AssistantCore
 from ash.security import voice_gate
@@ -40,7 +40,7 @@ class VoiceLoop:
         ash.privacy.egress.OfflineModeError if the speech-recognition
         model still has to be downloaded and offline mode is on."""
         stt = SpeechToText(model_size=config.speech.model, device=config.speech.device)
-        wake_detector = WakeWordDetector(keyword=config.wake_word.keyword, threshold=config.wake_word.threshold)
+        wake_detector = make_wake_detector(config.wake_word.keyword, config.wake_word.threshold)
         tts = core.tts
         listener = ContinuousListener(
             wake_detector,

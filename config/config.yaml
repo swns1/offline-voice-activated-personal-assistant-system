@@ -1,11 +1,9 @@
 wake_word:
   engine: openwakeword
-  # Bundled pretrained openWakeWord model name, fully offline/free, no
-  # account needed. A real "Hey Ash" phrase needs a model trained via
-  # openWakeWord's own training pipeline -- see README. This value also
-  # accepts a path to that trained .onnx file directly, e.g.
-  # "models/hey_ash.onnx" (resolved relative to the project's models/
-  # folder) or an absolute path.
+  # A built-in openWakeWord model (hey_jarvis, alexa, hey_mycroft...), your
+  # own wake word trained with scripts/train_wake_word.py (e.g. okay_ash --
+  # see README), or a path to a .onnx model from openWakeWord's own
+  # training pipeline. If your own model was deleted, hey_jarvis is used.
   keyword: hey_jarvis
   threshold: 0.5
 

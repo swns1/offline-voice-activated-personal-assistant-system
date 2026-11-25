@@ -17,7 +17,9 @@ from ash.gui.settings import SettingsTab
 
 
 def wake_phrase(config: Config) -> str:
-    return config.wake_word.keyword.replace("_", " ")
+    from ash.audio.personal_wake_word import effective_keyword
+
+    return effective_keyword(config.wake_word.keyword).replace("_", " ")
 
 
 class MainWindow(QMainWindow):

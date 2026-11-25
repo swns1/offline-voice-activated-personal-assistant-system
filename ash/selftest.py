@@ -33,13 +33,15 @@ def _timed(name: str, fn) -> Check:
 
 def _wake_word(config: Config) -> str:
     from ash import setup_models
-    from ash.audio.wake_word import FRAME_LENGTH, WakeWordDetector
+    from ash.audio.personal_wake_word import effective_keyword, is_personal
+    from ash.audio.wake_word import FRAME_LENGTH, make_wake_detector
 
-    if setup_models.wake_word_model_missing(config.wake_word.keyword):
+    keyword = effective_keyword(config.wake_word.keyword)
+    if setup_models.wake_word_model_missing(keyword):
         raise RuntimeError("model not downloaded yet (Ash asks to download it when it starts)")
-    detector = WakeWordDetector(config.wake_word.keyword, config.wake_word.threshold)
+    detector = make_wake_detector(keyword, config.wake_word.threshold)
     detector.process(np.zeros(FRAME_LENGTH, dtype="int16"))
-    return f"{config.wake_word.keyword} loaded"
+    return f"{keyword} ({'your own, trained on your voice' if is_personal(keyword) else 'built in'})"
 
 
 def _speech_recognition(config: Config) -> str:

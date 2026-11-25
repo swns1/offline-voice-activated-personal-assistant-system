@@ -37,7 +37,9 @@ _PIPER_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main"
 def wake_word_model_missing(keyword: str) -> bool:
     from openwakeword import get_pretrained_model_paths
 
-    if keyword.endswith(".onnx"):  # a custom model you trained: nothing to download
+    from ash.audio.personal_wake_word import is_personal
+
+    if keyword.endswith(".onnx") or is_personal(keyword):  # one you trained: nothing to download
         return False
     paths = get_pretrained_model_paths(inference_framework="onnx")
     return not any(os.path.basename(p).startswith(keyword) and os.path.exists(p) for p in paths)

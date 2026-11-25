@@ -145,9 +145,10 @@ def _ensure_models(bridge: CoreBridge, core, config: Config, log: logging.Logger
     the wake-word model here (VoiceLoop.load downloads the speech model).
     False if voice can't start."""
     from ash import setup_models
+    from ash.audio.personal_wake_word import effective_keyword
     from ash.privacy.egress import NetworkBlocked
 
-    keyword = config.wake_word.keyword
+    keyword = effective_keyword(config.wake_word.keyword)
     if setup_models.custom_wake_word_missing(keyword):
         without_voice(f"The custom wake-word model {keyword!r} wasn't found. "
                       "Check wake_word.keyword in config.yaml. Typing still works.")

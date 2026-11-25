@@ -63,6 +63,11 @@ def _timers() -> list[Path]:
     return [timers.TIMERS_STATE_PATH]
 
 
+def _wake_word() -> list[Path]:
+    from ash.audio import personal_wake_word
+    return [personal_wake_word.PERSONAL_WAKE_WORD_PATH]
+
+
 def _voiceprint() -> list[Path]:
     from ash.security import voice_gate
     return [voice_gate.VOICEPRINT_PATH]
@@ -119,6 +124,13 @@ INVENTORY: list[StoredData] = [
         purpose="checking it's really you before risky actions, if voice-verified confirmation is on",
         kept="until you delete it", sensitive=True, encrypted=True, paths=_voiceprint,
         exportable=False, export_note="Biometric data: listed, but not copied into the export file for safety.",
+    ),
+    StoredData(
+        key="wake_word", name="your wake word model",
+        purpose="recognising your own wake word (\"Okay Ash\"); trained on recordings of your voice, "
+                "which aren't kept by Ash",
+        kept="until you delete it", sensitive=True, encrypted=True, paths=_wake_word,
+        exportable=False, export_note="Derived from your voice: listed, but not copied into the export file.",
     ),
     StoredData(
         key="spotify_token", name="your Spotify login",

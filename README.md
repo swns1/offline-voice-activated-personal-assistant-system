@@ -649,19 +649,47 @@ actually receive keypresses on some Windows setups even though
 registering it never errors either way — if the hotkey doesn't respond,
 try running Ash as Administrator.
 
-**A real "Hey Ash" wake word**: Ash ships with openWakeWord's
-pretrained `hey_jarvis` model as a stand-in — training an actual "Hey
-Ash" model needs openWakeWord's own training pipeline (`torch`,
-`torchaudio`, `speechbrain`, and multi-GB datasets — a genuinely heavy,
-separate undertaking, not something this project installs or runs for
-you). See openWakeWord's own docs/training notebook
-(https://github.com/dscripka/openWakeWord) for how to train one. Once
-you have a trained `.onnx` file, point Ash at it directly:
+**Your own wake word: "Okay Ash".** Ash starts with openWakeWord's
+built-in "hey Jarvis". You can train "Okay Ash" on your own voice in a
+few minutes, with no big downloads:
 
-```yaml
-wake_word:
-  keyword: models/hey_ash.onnx   # relative to the project folder, or an absolute path
 ```
+.venv\Scripts\python.exe scripts\train_wake_word.py record --out "$HOME/Documents/okay-ash"
+.venv\Scripts\python.exe scripts\train_wake_word.py train --clips "$HOME/Documents/okay-ash"
+```
+
+You say "Okay Ash" about 40 times, some near-misses ("okay", "ask",
+"Ashley") and 20 seconds of room sound. How it works:
+- **Transfer learning.** openWakeWord's pretrained audio-embedding
+  model stays as it is; only a small neural network on top of it is
+  trained (scikit-learn, a minute or two on the CPU).
+- **Examples are built the way Ash listens.** Each recording is streamed
+  through the same 80 ms feature pipeline as the live detector, so
+  training and live use see identical numbers. Each recording is
+  replayed 12 times with different loudness, speed, timing and
+  background noise.
+- **Negatives:** near-misses, room sound, your other recordings, the
+  first half of your own phrase ("Okay…", so it waits for "Ash"), and
+  sentences said by the Windows voices. Synthetic voices are only ever
+  negatives: used as positives, the model learned "a Windows voice"
+  instead of the phrase.
+- **It wakes when the score stays high for 3 frames in a row** (240 ms).
+  Your phrase stays high for 8–10 frames; false triggers like "okay"
+  on its own were 1–2-frame spikes.
+- **It's measured on recordings it never saw**, by streaming them
+  through the real detector: how many of your held-out recordings it
+  recognised, and how often it woke by mistake per hour of other
+  speech and room sound. It's saved only if it passes (at least 80%
+  recognised, at most 2 false wake-ups an hour), and only if you agree.
+
+The model is derived from your voice, so it's treated like your
+voiceprint: stored encrypted, listed in "what data do you have", not
+copied into exports, and erased by "delete all my data", after which Ash
+goes back to "hey Jarvis". Your recordings stay in the folder you
+chose. It's trained on one voice, so it works best for you.
+
+A model trained with openWakeWord's full training pipeline (a `.onnx`
+file) works too: set `wake_word.keyword` to its path.
 
 ## A more natural voice (optional)
 
